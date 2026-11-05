@@ -10,14 +10,15 @@ GitHub Pages ให้บริการหน้าแอป static ใน `sit
 
 ## ติดตั้ง
 
-1. สร้าง Google Spreadsheet เปล่า และคัดลอก ID จาก URL
-2. สร้างโปรเจกต์ Apps Script แบบ standalone และเพิ่มไฟล์ `Code.gs`, `Index.html`, `Styles.html`, `Client.html`, `Bridge.html` และ manifest จาก repo นี้ (เปิดใช้การแสดง `appsscript.json` ใน Project Settings)
-3. ใน **Project Settings → Script Properties** เพิ่ม `SPREADSHEET_ID` (จำเป็น) และ `DRIVE_FOLDER_ID` (เผื่อใช้ไฟล์ Drive ในการต่อยอด). เพิ่ม `BOOTSTRAP_NAME` เป็นชื่อผู้ดูแลเริ่มต้นก่อนสร้างผู้ดูแล
-4. จาก editor รัน `setup()` แล้วอนุญาตสิทธิ์ Google ที่ร้องขอ ฟังก์ชันนี้สร้างแท็บ/หัวคอลัมน์ที่ขาดโดยไม่ล้างข้อมูล
-5. จาก editor รัน `bootstrapFirstTeacher()` เพียงครั้งเดียว จด username/password ที่ผลการรันแสดงไว้ทันที จากนั้นลบ `BOOTSTRAP_NAME` ออกจาก Script Properties. การ bootstrap หยุดทำงานเองเมื่อพบบัญชีครูแล้ว
-6. Deploy → New deployment → Web app. แนะนำ **Execute as: Me** และ **Who has access: Anyone** (จำเป็นสำหรับ Pages bridge); สิทธิ์ในแอปตรวจด้วย session และ authorization ฝั่ง backend. หากนโยบาย Google Workspace ไม่อนุญาต Anyone ให้ใช้หน้า Apps Script โดยตรงในโดเมนโรงเรียนแทน Pages bridge
-7. เปิด Pages URL แล้ววาง Apps Script `/exec` URL ในหน้าตั้งค่าครั้งแรก. URL เก็บเฉพาะใน localStorage ของ browser นั้น คัดลอก URL ให้ผู้ใช้อื่นตั้งค่าแยก
-8. ใน Pages ให้ตั้ง **Repository Settings → Pages → Build and deployment → Source: GitHub Actions**. Workflow สร้าง `site/app.html` จาก UI กลาง และ deploy `site/` เมื่อ push
+1. สร้าง standalone Apps Script project แล้วคัดลอก `Code.gs`, `Index.html`, `Styles.html`, `Client.html`, `Bridge.html` และ `appsscript.json` เข้าไป (เปิดการแสดง manifest ใน Project Settings)
+2. ผู้สร้างโปรเจกต์รัน `prepareAdminBootstrap_()` จาก Apps Script editor หนึ่งครั้ง แล้วคัดลอกรหัส bootstrap ที่แสดงไว้ รหัสนี้ใช้ได้ 30 นาทีและใช้ได้ครั้งเดียว ยังไม่ต้องตั้ง Spreadsheet ID หรือรัน `setup()`
+3. Deploy → New deployment → Web app. เลือก **Execute as: Me** และตั้งผู้เข้าถึงเป็น **Anyone, including anonymous** เพื่อให้หน้า GitHub Pages เรียก bridge ได้. ผู้ deploy อนุญาต scopes ของ Sheets/Drive ตามที่ระบบร้องขอ เก็บรหัส bootstrap เป็นความลับและห้ามใส่ใน repo
+4. เปิด [หน้า GitHub Pages](https://krupondcompute.github.io/Classroom-Plus/), เลือกเปิดแอป, วาง Apps Script `/exec` URL แล้วกรอกรหัส bootstrap เพื่อสร้างบัญชี Admin ด้วย username/password ของตนเอง
+5. Admin ลงชื่อเข้าใช้ แล้วกรอก Spreadsheet ID และ Drive folder ID ในหน้าตั้งค่าครั้งแรก Backend ตรวจว่าเปิดทั้งสองรายการได้ สร้างแท็บ/หัวคอลัมน์ที่ขาดโดยไม่ลบข้อมูล และบันทึก ID ใน Script Properties เท่านั้น
+6. Admin สร้างห้องเรียนก่อน จากนั้นตั้งนโยบายว่าจะเปิดสมัครนักเรียน/ต้องอนุมัติหรือไม่ หรือสร้างคำเชิญครู/นักเรียน ระบบแสดงรหัสผ่านชั่วคราวครั้งเดียวและบังคับผู้รับเปลี่ยนหลัง login
+7. ส่ง URL Pages ให้ผู้ใช้ตั้งค่า Apps Script `/exec` ใน browser ของตนเอง การเชื่อมต่อถูกเก็บใน localStorage แยกตาม browser
+
+การตั้ง **Anyone, including anonymous** ทำให้ URL Apps Script เรียกได้จากอินเทอร์เน็ต; endpoint ที่เข้าถึงข้อมูลจะตรวจ session และ role ฝั่ง server ทุกครั้ง และหน้า Pages ส่งคำขอผ่าน bridge ที่จำกัด origin. ถ้านโยบาย Workspace ไม่อนุญาต anonymous access ให้ใช้โฮสติ้ง/backend ที่โรงเรียนอนุญาต หรือเปิดหน้า Apps Script โดยตรง
 
 ### การอัปเดต
 
@@ -25,26 +26,28 @@ GitHub Pages ให้บริการหน้าแอป static ใน `sit
 
 ## การตั้งค่าข้อมูล
 
-`SPREADSHEET_ID` และ `DRIVE_FOLDER_ID` อยู่ใน Script Properties เท่านั้น; ห้ามใส่ secret ใน HTML/ชีต. แท็บ Config รองรับ `requireApproval` (`true`/`false`, ค่าเริ่มต้น false). เปิดอนุมัติบัญชีโดยแก้ค่าในแถว Config. DRIVE_FOLDER_ID เตรียมไว้ให้ workflow อัปโหลดไฟล์รุ่นต่อไป; รุ่นนี้ให้แนบลิงก์ HTTPS ไปยัง Drive/สื่อเท่านั้น และไม่ได้เปลี่ยนสิทธิ์แชร์ Drive ให้อัตโนมัติ
+`SPREADSHEET_ID` และ `DRIVE_FOLDER_ID` ตั้งค่าจากหน้า Admin แล้วเก็บใน Script Properties; ไม่ส่งกลับไปหน้าเว็บ. แท็บ Config จัดเก็บ `requireApproval` และ `allowStudentSignup` (ค่าเริ่มต้นปิดการสมัคร). รุ่นนี้ใช้ URL HTTPS สำหรับไฟล์/สื่อและไม่เปลี่ยนสิทธิ์แชร์ Drive อัตโนมัติ
 
 ## ฟีเจอร์ใน MVP
 
-- สมัครนักเรียนด้วยรหัส 5 หลักและชื่อบัญชีเฉพาะ, เข้าสู่ระบบ และ session หมดอายุใน 7 วัน
+- Bootstrap Admin ด้วย code ใช้ครั้งเดียวหมดอายุใน 30 นาที; hash รหัสและรหัสผ่านอยู่ฝั่ง Apps Script
+- Admin ตั้งค่า Sheet/Drive ID หลัง login, สร้าง schema และตั้งนโยบายสมัคร/อนุมัติ
+- เชิญครู/นักเรียนพร้อมรหัสผ่านชั่วคราว; เปลี่ยน role ได้โดยป้องกัน Admin คนสุดท้ายและบัญชี bootstrap หลัก
+- สมัครนักเรียนด้วยรหัส 5 หลักและ join code ห้องเรียน, เข้าสู่ระบบ และ session หมดอายุใน 7 วัน
 - ครูสร้างห้องและแชร์ join code; นักเรียนต้องใช้รหัสห้องเพื่อลงทะเบียนเข้าห้องนั้น
 - ครูดูผู้เรียนในห้องของตนและอนุมัติ/ระงับบัญชีได้; ผู้ใช้เปลี่ยนชื่อ/อีเมลและรหัสผ่านได้
-- บัญชีครูเริ่มต้นแบบสุ่มครั้งเดียวผ่าน editor; bootstrap ปิดเมื่อมีครู
 - Dashboard, ห้องเรียนและรหัสเข้าห้อง, อนุมัติ/ระงับผู้เรียน, วิชา, บทเรียน/ลิงก์สื่อ, ประกาศ, งาน, ส่ง/แก้คำตอบก่อนกำหนด, ตรวจและให้คะแนน, แก้ไขโปรไฟล์/เปลี่ยนรหัสผ่าน
 - UI responsive ภาษาไทย, audit log สำหรับสมัคร, CRUD เนื้อหา, bootstrap และให้คะแนน
 - Idempotent `setup()`, backend validation, session token hash, per-user salted password hash, authorization ใน server, script lock ตอนเขียนแถว
 
 ## Schema
 
-`Config(key,value,updatedAt)`, `Users(id,role,username,studentCode,passwordSalt,passwordHash,displayName,email,classId,status,createdAt,updatedAt,deletedAt)`, `Sessions(id,userId,tokenHash,expiresAt,createdAt)`, `Classes(id,name,grade,joinCode,ownerId,createdAt,updatedAt,deletedAt)`, `Courses(id,classId,name,description,ownerId,createdAt,updatedAt,deletedAt)`, `Lessons(id,courseId,title,content,mediaUrl,ownerId,createdAt,updatedAt,deletedAt)`, `Announcements(id,classId,title,body,ownerId,createdAt,updatedAt,deletedAt)`, `Assignments(id,courseId,title,description,dueAt,maxPoints,ownerId,createdAt,updatedAt,deletedAt)`, `Submissions(id,assignmentId,studentId,text,fileUrl,submittedAt,updatedAt,deletedAt)`, `Grades(id,submissionId,studentId,points,feedback,gradedBy,gradedAt)`, `AuditLog(id,actorId,action,entityType,entityId,details,createdAt)`. ใช้ UUID เป็นรหัส ไม่ใช้เลขแถวเป็น key; ความสัมพันธ์อ้าง ID. รายการเนื้อหามี deletedAt เผื่อ soft delete; UI ลบรายการยังไม่รวมใน MVP. ควรกำหนดระยะเก็บ/ลบข้อมูลตามนโยบายโรงเรียนก่อนใช้ข้อมูลจริง
+`Config(key,value,updatedAt)`, `Users(id,role,username,studentCode,passwordSalt,passwordHash,displayName,email,classId,status,mustChangePassword,createdAt,updatedAt,deletedAt)`, `Sessions(id,userId,tokenHash,expiresAt,createdAt)`, `Classes(id,name,grade,joinCode,ownerId,createdAt,updatedAt,deletedAt)`, `Courses(id,classId,name,description,ownerId,createdAt,updatedAt,deletedAt)`, `Lessons(id,courseId,title,content,mediaUrl,ownerId,createdAt,updatedAt,deletedAt)`, `Announcements(id,classId,title,body,ownerId,createdAt,updatedAt,deletedAt)`, `Assignments(id,courseId,title,description,dueAt,maxPoints,ownerId,createdAt,updatedAt,deletedAt)`, `Submissions(id,assignmentId,studentId,text,fileUrl,submittedAt,updatedAt,deletedAt)`, `Grades(id,submissionId,studentId,points,feedback,gradedBy,gradedAt)`, `AuditLog(id,actorId,action,entityType,entityId,details,createdAt)`. ใช้ UUID เป็นรหัส ไม่ใช้เลขแถวเป็น key; ความสัมพันธ์อ้าง ID. รายการเนื้อหามี deletedAt เผื่อ soft delete; UI ลบรายการยังไม่รวมใน MVP. ควรกำหนดระยะเก็บ/ลบข้อมูลตามนโยบายโรงเรียนก่อนใช้ข้อมูลจริง
 
 ## ข้อจำกัดและสิ่งที่ยังไม่ทำ
 
-- ยังไม่ได้เชื่อมบัญชี Google/SSO, กู้รหัสผ่าน, ย้ายห้อง/จัดการสิทธิ์ครูเพิ่มเติม, upload ไฟล์ผ่าน Drive, รายงาน/ส่งออก, แจ้งเตือน, real-time และ backup
-- บัญชีครู bootstrap ได้ครั้งเดียว; การสร้างบัญชีครูเพิ่มเติมต้องทำผ่าน Apps Script editor/จัดการชีตโดยผู้ดูแลที่เชื่อถือได้
+- ยังไม่ได้เชื่อมบัญชี Google/SSO, กู้รหัสผ่าน, ย้ายผู้เรียน, อัปโหลดไฟล์ผ่าน Drive, รายงาน/ส่งออก, แจ้งเตือน, real-time และ backup
+- ยังไม่ได้ทดสอบการ authorize, bridge และการทำงานกับ Sheet/Drive จริงในบัญชีโรงเรียน เปลี่ยนค่า Execute as/Who has access ได้ตามนโยบาย Workspace แต่ต้องทดสอบสิทธิ์ใหม่
 - มีการตรวจสิทธิ์พื้นฐานฝั่ง server; ระบบยังไม่ผ่าน security review หรือทดสอบใน deployment จริง ห้ามใช้เป็น production จนตรวจ role boundaries, access scope, session expiry, XSS, file-sharing policy และ concurrency ในบัญชี Google เป้าหมาย
 - Apps Script/Sheets มี quota และเวลารันจำกัด ไม่เหมาะกับโหลดสูงหรือไฟล์ใหญ่; รุ่นนี้ไม่อัปโหลดไฟล์และลิงก์ Drive ยังคงตามสิทธิ์ของ Drive ต้นทาง
 - Password KDF เป็น SHA-256 ซ้ำพร้อม salt เนื่องจาก GAS ไม่มี password KDF แบบมาตรฐานให้ใช้ใน runtime นี้; สำหรับระบบข้อมูลอ่อนไหวควรย้าย auth ไปบริการที่รองรับ Argon2id/scrypt และ session cookie ที่ปลอดภัยกว่า
