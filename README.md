@@ -2,6 +2,12 @@
 
 เว็บแอปเพื่อการเรียนรู้สำหรับครูและนักเรียน ใช้ Google Apps Script V8, HTML Service และ Google Sheets เป็นฐานข้อมูล
 
+## GitHub Pages
+
+GitHub Pages ใน repository นี้เผยแพร่หน้าแนะนำใน `site/` เท่านั้น; ตัวแอปที่ทำงานกับ Google Sheets ยังต้อง deploy เป็น Apps Script Web App ตามขั้นตอนติดตั้งด้านล่างแยกต่างหาก หน้า static ไม่สามารถรัน `google.script.run` ได้
+
+เปิด **Repository Settings → Pages → Build and deployment → Source: GitHub Actions** หนึ่งครั้ง แล้ว workflow `Deploy GitHub Pages` จะเผยแพร่หน้า `site/` เมื่อมี push. การตั้งค่าอัตโนมัติจาก workflow ไม่ได้เปิดใช้ได้ด้วย `GITHUB_TOKEN` มาตรฐานใน repository ปัจจุบัน. URL Pages ที่คาดไว้คือ `https://krupondcompute.github.io/Classroom-Plus/`; ใช้งานได้หลังตั้งค่า Pages และ workflow สำเร็จ
+
 ## ติดตั้ง
 
 1. สร้าง Google Spreadsheet เปล่า และคัดลอก ID จาก URL
