@@ -9,6 +9,7 @@
 ## เทคโนโลยี
 - Backend Google Apps Script V8 Web App, Frontend HTML Service, Vanilla JS/CSS mobile-first, Bootstrap 5.3, Font Awesome 6 Free, Sarabun CDN เท่าที่จำเป็น
 - Google Sheets เป็นฐานข้อมูล; Spreadsheet ID และ Google Drive folder ID ให้ผู้ดูแลกำหนดภายหลังใน Script Properties. ห้ามฝัง secret ใน browser
+- หากเผยแพร่ UI บน GitHub Pages ให้แยก static frontend จาก Apps Script backend ชัดเจน; ใช้ bridge ที่ตรวจ `event.origin`, `event.source` และ allowlist ที่เจาะจงก่อนส่งคำขอไป `google.script.run`; ห้ามอ้างว่า Pages รัน Apps Script ได้เอง
 - แยกไฟล์ตามหน้าที่, setup() ต้องเรียกซ้ำได้โดยไม่ทำข้อมูลเดิมหาย, ใช้ UUID ไม่ใช้เลขแถวเป็นรหัส, รวมงานอ่าน/เขียนชีตและใช้ LockService เมื่อต้องป้องกันการชน
 - เรียก google.script.run ผ่าน Promise wrapper, allowlist ชื่อ backend, รับส่งเฉพาะ plain data, แสดง loading/error/success และป้องกันการส่งซ้ำ
 

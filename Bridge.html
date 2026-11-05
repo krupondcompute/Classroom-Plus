@@ -1,0 +1,17 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body><script>
+(()=>{
+  'use strict';
+  const PAGES_ORIGIN='https://krupondcompute.github.io';
+  const send=(data)=>window.parent.postMessage(data,PAGES_ORIGIN);
+  window.addEventListener('message',event=>{
+    if(event.source!==window.parent||event.origin!==PAGES_ORIGIN)return;
+    const m=event.data||{};
+    if(m.type==='cp-hello'){send({type:'cp-ready',nonce:m.nonce});return;}
+    if(m.type!=='cp-request'||typeof m.id!=='string'||typeof m.action!=='string')return;
+    google.script.run.withSuccessHandler(result=>send({type:'cp-response',id:m.id,ok:true,result}))
+      .withFailureHandler(error=>send({type:'cp-response',id:m.id,ok:false,error:String(error&&error.message||'เกิดข้อผิดพลาด')}))
+      .api(m.action,m.payload&&typeof m.payload==='object'?m.payload:{});
+  });
+  send({type:'cp-bridge-loaded'});
+})();
+</script></body></html>
