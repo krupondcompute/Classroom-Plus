@@ -11,7 +11,7 @@ GitHub Pages ให้บริการหน้า Landing Page และต�
 ## ติดตั้ง
 
 1. สร้าง standalone Apps Script project แล้วคัดลอก `Code.gs`, `Index.html`, `Styles.html`, `Client.html`, `Bridge.html` และ `appsscript.json` เข้าไป (เปิดการแสดง manifest ใน Project Settings)
-2. ผู้สร้างโปรเจกต์รัน `prepareAdminBootstrap_()` จาก Apps Script editor หนึ่งครั้ง แล้วคัดลอกรหัส bootstrap ที่แสดงไว้ รหัสนี้ใช้ได้ 30 นาทีและใช้ได้ครั้งเดียว ยังไม่ต้องตั้ง Spreadsheet ID หรือรัน `setup()`
+2. เจ้าของโปรเจกต์เปิด Apps Script editor, เลือก `prepareAdminBootstrap` (ไม่มี `_` ต่อท้าย) จากรายการฟังก์ชันข้างปุ่ม Run แล้วกด Run. อนุญาตสิทธิ์เมื่อ Google ถาม จากนั้นเปิด **Execution log** เพื่อคัดลอกรหัส bootstrap. รหัสใช้ได้ 30 นาทีและใช้ได้ครั้งเดียว ยังไม่ต้องตั้ง Spreadsheet ID หรือรัน `setup()`. ฟังก์ชันนี้ตรวจว่าเป็นเจ้าของโปรเจกต์และไม่เปิดผ่าน API ให้ผู้ใช้ทั่วไป
 3. Deploy → New deployment → Web app. เลือก **Execute as: Me** และตั้งผู้เข้าถึงเป็น **Anyone, including anonymous** เพื่อให้หน้า GitHub Pages เรียก bridge ได้. ผู้ deploy อนุญาต scopes ของ Sheets/Drive ตามที่ระบบร้องขอ เก็บรหัส bootstrap เป็นความลับและห้ามใส่ใน repo
 4. เปิด [หน้า GitHub Pages](https://krupondcompute.github.io/Classroom-Plus/), เลือกเปิดแอป, Admin วาง Apps Script `/exec` URL เพียงครั้งแรก แล้วกรอกรหัส bootstrap เพื่อสร้างบัญชี Admin ด้วย username/password ของตนเอง. ยังไม่ต้องกรอก Sheet/Drive ID
 5. Admin ลงชื่อเข้าใช้ แล้วกรอก Spreadsheet ID และ Drive folder ID ในหน้าตั้งค่าครั้งแรก Backend ตรวจว่าเปิดทั้งสองรายการได้ สร้างแท็บ/หัวคอลัมน์ที่ขาดโดยไม่ลบข้อมูล และบันทึก ID ใน Script Properties เท่านั้น

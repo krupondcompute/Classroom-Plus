@@ -57,6 +57,16 @@ function prepareAdminBootstrap_() {
   return {code,expiresInMinutes:30,message:'คัดลอกรหัสนี้ครั้งเดียวไปกรอกในหน้า bootstrap ของ GitHub Pages'};
 }
 
+/** Visible in the editor Run menu; only the project owner may issue a bootstrap code. */
+function prepareAdminBootstrap() {
+  const activeEmail=String(Session.getActiveUser().getEmail()||'').toLowerCase();
+  const ownerEmail=String(Session.getEffectiveUser().getEmail()||'').toLowerCase();
+  if(!activeEmail||!ownerEmail||activeEmail!==ownerEmail)throw new Error('ให้เจ้าของ Apps Script รันฟังก์ชันนี้จาก editor โดยตรง');
+  const result=prepareAdminBootstrap_();
+  Logger.log('รหัส bootstrap (ใช้ครั้งเดียว หมดอายุใน 30 นาที): %s',result.code);
+  return result;
+}
+
 function api(action, payload) {
   payload = payload || {};
   const allowed = { bootstrapStatus, completeBootstrap, register, login, logout, me, dashboard, listCourses, saveCourse, listLessons, saveLesson, listAnnouncements, saveAnnouncement, listAssignments, saveAssignment, submitAssignment, listSubmissions, gradeSubmission, listClasses, saveClass, listStudents, setStudentStatus, changePassword, updateProfile, configureSystem, setRegistrationPolicy, inviteUser, listUsersAdmin, setUserRole, assignClassTeacher };
