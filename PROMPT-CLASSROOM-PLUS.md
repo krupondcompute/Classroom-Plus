@@ -7,16 +7,17 @@
 เริ่ม MVP ที่ติดตั้งได้: การตั้งค่า, บัญชี/บทบาท, ห้องเรียนและวิชา, บทเรียนและสื่อ, ประกาศ, งาน/ส่งงาน, คะแนน/ความคืบหน้า, responsive UI และคู่มือติดตั้ง ต่อด้วยรายงาน/ส่งออก/แจ้งเตือน/บันทึกกิจกรรม/สำรองข้อมูลตามเวลาและข้อจำกัดจริง ระบุชัดเจนว่าอะไรยังไม่ทำ
 
 ## เทคโนโลยี
-- Backend Google Apps Script V8 Web App, Frontend HTML Service, Vanilla JS/CSS mobile-first, Bootstrap 5.3, Font Awesome 6 Free, Sarabun CDN เท่าที่จำเป็น
+- Frontend เป็น HTML/CSS/Vanilla JavaScript static mobile-first เผยแพร่ผ่าน GitHub Pages landing page; ใช้ Bootstrap 5.3, Font Awesome 6 Free, Sarabun CDN เท่าที่จำเป็น. Backend ใช้ Google Apps Script V8 Web App
 - Google Sheets เป็นฐานข้อมูล; Spreadsheet ID และ Google Drive folder ID ให้ผู้ดูแลกำหนดภายหลังใน Script Properties. ห้ามฝัง secret ใน browser
-- หากเผยแพร่ UI บน GitHub Pages ให้แยก static frontend จาก Apps Script backend ชัดเจน; ใช้ bridge ที่ตรวจ `event.origin`, `event.source` และ allowlist ที่เจาะจงก่อนส่งคำขอไป `google.script.run`; ห้ามอ้างว่า Pages รัน Apps Script ได้เอง
+- GitHub Pages ให้บริการหน้าเว็บและ JavaScript เท่านั้น; แยก Apps Script เป็น backend ใช้ bridge ที่ตรวจ `event.origin`, `event.source` และ allowlist ที่เจาะจงก่อนส่งคำขอไป `google.script.run`; ห้ามอ้างว่า Pages รัน Apps Script ได้เอง
 - แยกไฟล์ตามหน้าที่, setup() ต้องเรียกซ้ำได้โดยไม่ทำข้อมูลเดิมหาย, ใช้ UUID ไม่ใช้เลขแถวเป็นรหัส, รวมงานอ่าน/เขียนชีตและใช้ LockService เมื่อต้องป้องกันการชน
-- เรียก google.script.run ผ่าน Promise wrapper, allowlist ชื่อ backend, รับส่งเฉพาะ plain data, แสดง loading/error/success และป้องกันการส่งซ้ำ
+- เรียก backend ผ่าน bridge และ Promise wrapper, allowlist ชื่อ backend, รับส่งเฉพาะ plain data, แสดง loading/error/success และป้องกันการส่งซ้ำ
 
 ## ความสามารถ
 - นักเรียนสมัครด้วยข้อมูลขั้นต่ำและรหัสนักเรียน 5 หลักที่ตรวจซ้ำบน server, ดูวิชา/บทเรียน/ประกาศ, ส่งและแก้คำตอบก่อนกำหนด, ดูผลคะแนน/ข้อเสนอแนะ/ความคืบหน้าของตัวเอง
 - ครูจัดการห้อง/วิชา/บทเรียน/ประกาศ/งาน, ตรวจงานและให้คะแนน, ดูภาพรวมผู้เรียนและงานค้าง
-- รองรับ first-run โดยยังไม่มี Sheet ID: owner ออกรหัส bootstrap แบบสุ่มใช้ครั้งเดียวใน editor, Admin ตั้ง password ผ่าน Pages, login, ตั้ง Spreadsheet/Drive IDs ให้ backend ตรวจและบันทึกใน Script Properties, แล้วจึงสร้าง schema
+- รองรับ first-run โดยยังไม่มี Sheet ID: owner ออกรหัส bootstrap แบบสุ่มใช้ครั้งเดียวใน Apps Script editor, Admin สร้างรหัสผ่านและลงชื่อเข้าใช้ผ่านหน้า GitHub Pages, ตั้ง Spreadsheet/Drive IDs ให้ backend ตรวจและบันทึกใน Script Properties แล้วจึงสร้าง schema
+- หลังตั้งค่าระบบ Admin คัดลอกลิงก์แชร์ที่บรรจุเฉพาะ URL backend ให้ผู้ใช้เชื่อมต่อได้โดยไม่ต้องตั้งค่า endpoint เอง; ยังต้องเชิญผู้ใช้หรือเปิดสมัครอย่างชัดเจน
 - Admin เปิด/ปิดสมัครนักเรียนและอนุมัติบัญชี, เชิญผู้ใช้ด้วยรหัสชั่วคราวและกำหนด role. บังคับเปลี่ยนรหัสชั่วคราว; ป้องกันการลดสิทธิ์หรือลบบัญชี Admin หลัก/คนสุดท้าย
 - รองรับการอนุมัติบัญชีเป็น option ปิดไว้โดยค่าเริ่มต้น; หากเปิดต้องมีสถานะ pending ชัดเจน
 - ใช้เวลาแบบมาตรฐานเดียวกัน เก็บ ISO timestamp และแสดงวัน พ.ศ. เมื่อเหมาะกับ UI ไทย

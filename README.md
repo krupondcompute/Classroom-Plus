@@ -1,10 +1,10 @@
 # Classroom Plus
 
-เว็บแอปเพื่อการเรียนรู้สำหรับครูและนักเรียน ใช้ Google Apps Script V8, HTML Service และ Google Sheets เป็นฐานข้อมูล
+เว็บแอปเพื่อการเรียนรู้สำหรับครูและนักเรียน หน้าเว็บเป็น HTML/CSS/JavaScript แบบ static ที่ GitHub Pages ให้บริการ ส่วน Google Apps Script เป็น backend สำหรับบัญชีและข้อมูล Google Sheets/Drive
 
 ## GitHub Pages
 
-GitHub Pages ให้บริการหน้าแอป static ใน `site/` ส่วนข้อมูลและ authorization ยังทำงานใน Google Apps Script และ Google Sheets. หน้า Pages เรียก Apps Script ผ่าน `Bridge.html` ใน iframe แบบจำกัด origin; ต้องเพิ่มไฟล์ Bridge ใน Apps Script, deploy Web App และวาง URL ในแอป Pages ครั้งแรกต่อ browser. ห้ามเปลี่ยน origin ของ bridge เว้นแต่แก้ allowlist ให้ตรงกัน
+GitHub Pages ให้บริการหน้า Landing Page และตัวแอป static จาก HTML/CSS/JavaScript ใน `site/`; ไม่ต้องเปิดหน้า HTML Service ของ Apps Script เพื่อใช้งาน. ข้อมูลและ authorization ทำงานใน Apps Script/Sheets. Admin ตั้ง URL backend ครั้งแรกและแชร์ลิงก์จากหน้าตั้งค่าให้ผู้ใช้รายอื่น ลิงก์จะเชื่อม backend ให้โดยอัตโนมัติ. การเรียก backend ใช้ `Bridge.html` ใน iframe และตรวจ origin ของ Pages; ห้ามเปลี่ยน origin ของ bridge เว้นแต่ปรับ allowlist ให้ตรงกัน
 
 เปิด **Repository Settings → Pages → Build and deployment → Source: GitHub Actions** หนึ่งครั้ง แล้ว workflow `Deploy GitHub Pages` จะเผยแพร่หน้า `site/` เมื่อมี push. การตั้งค่าอัตโนมัติจาก workflow ไม่ได้เปิดใช้ได้ด้วย `GITHUB_TOKEN` มาตรฐานใน repository ปัจจุบัน. URL Pages ที่คาดไว้คือ `https://krupondcompute.github.io/Classroom-Plus/`; ใช้งานได้หลังตั้งค่า Pages และ workflow สำเร็จ
 
@@ -13,10 +13,10 @@ GitHub Pages ให้บริการหน้าแอป static ใน `sit
 1. สร้าง standalone Apps Script project แล้วคัดลอก `Code.gs`, `Index.html`, `Styles.html`, `Client.html`, `Bridge.html` และ `appsscript.json` เข้าไป (เปิดการแสดง manifest ใน Project Settings)
 2. ผู้สร้างโปรเจกต์รัน `prepareAdminBootstrap_()` จาก Apps Script editor หนึ่งครั้ง แล้วคัดลอกรหัส bootstrap ที่แสดงไว้ รหัสนี้ใช้ได้ 30 นาทีและใช้ได้ครั้งเดียว ยังไม่ต้องตั้ง Spreadsheet ID หรือรัน `setup()`
 3. Deploy → New deployment → Web app. เลือก **Execute as: Me** และตั้งผู้เข้าถึงเป็น **Anyone, including anonymous** เพื่อให้หน้า GitHub Pages เรียก bridge ได้. ผู้ deploy อนุญาต scopes ของ Sheets/Drive ตามที่ระบบร้องขอ เก็บรหัส bootstrap เป็นความลับและห้ามใส่ใน repo
-4. เปิด [หน้า GitHub Pages](https://krupondcompute.github.io/Classroom-Plus/), เลือกเปิดแอป, วาง Apps Script `/exec` URL แล้วกรอกรหัส bootstrap เพื่อสร้างบัญชี Admin ด้วย username/password ของตนเอง
+4. เปิด [หน้า GitHub Pages](https://krupondcompute.github.io/Classroom-Plus/), เลือกเปิดแอป, Admin วาง Apps Script `/exec` URL เพียงครั้งแรก แล้วกรอกรหัส bootstrap เพื่อสร้างบัญชี Admin ด้วย username/password ของตนเอง. ยังไม่ต้องกรอก Sheet/Drive ID
 5. Admin ลงชื่อเข้าใช้ แล้วกรอก Spreadsheet ID และ Drive folder ID ในหน้าตั้งค่าครั้งแรก Backend ตรวจว่าเปิดทั้งสองรายการได้ สร้างแท็บ/หัวคอลัมน์ที่ขาดโดยไม่ลบข้อมูล และบันทึก ID ใน Script Properties เท่านั้น
 6. Admin สร้างห้องเรียนก่อน จากนั้นตั้งนโยบายว่าจะเปิดสมัครนักเรียน/ต้องอนุมัติหรือไม่ หรือสร้างคำเชิญครู/นักเรียน ระบบแสดงรหัสผ่านชั่วคราวครั้งเดียวและบังคับผู้รับเปลี่ยนหลัง login
-7. ส่ง URL Pages ให้ผู้ใช้ตั้งค่า Apps Script `/exec` ใน browser ของตนเอง การเชื่อมต่อถูกเก็บใน localStorage แยกตาม browser
+7. เมื่อพร้อม ให้ Admin สร้างคำเชิญผู้ใช้หรือเปิดรับสมัครนักเรียน แล้วคัดลอก **ลิงก์สำหรับแชร์** ในหน้าตั้งค่าเพื่อส่งให้ผู้ใช้ ลิงก์นี้บรรจุ URL backend สาธารณะของ Apps Script แต่ไม่มี Spreadsheet/Drive ID หรือรหัสผ่าน; แต่ละผู้ใช้ยังต้องใช้บัญชีที่ได้รับเชิญหรือสมัครตามนโยบาย
 
 การตั้ง **Anyone, including anonymous** ทำให้ URL Apps Script เรียกได้จากอินเทอร์เน็ต; endpoint ที่เข้าถึงข้อมูลจะตรวจ session และ role ฝั่ง server ทุกครั้ง และหน้า Pages ส่งคำขอผ่าน bridge ที่จำกัด origin. ถ้านโยบาย Workspace ไม่อนุญาต anonymous access ให้ใช้โฮสติ้ง/backend ที่โรงเรียนอนุญาต หรือเปิดหน้า Apps Script โดยตรง
 
