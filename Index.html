@@ -375,7 +375,7 @@ window.addEventListener('unhandledrejection', e => { if (e.reason && e.reason.me
 /* ---------------- API: ห่อ google.script.run เป็น Promise ---------------- */
 /* ทำงานได้ 2 แบบ: (1) เปิดผ่าน Apps Script /exec ใช้ google.script.run  (2) เปิดผ่าน GitHub Pages ใช้ fetch ไปที่ CP_API_URL */
 const HAS_GAS = !!(window.google && google.script && google.script.run);
-const API_URL = () => window.CP_API_URL || store.get('cp_api') || '';
+const API_URL = () => window.CP_API_URL = 'https://script.google.com/macros/s/AKfycbwjB2AOQW6ce2B67x2XoygwxBiZkyJlJRXzdERDCjXPKCmx8cecvcjK6QFfFY5Sb2SXHA/exec'; || store.get('cp_api') || '';
 function call(fn, args, o = {}) {
   const run = () => new Promise((res, rej) => {
     if (!HAS_GAS) { // โหมด GitHub Pages: เรียก Apps Script /exec ผ่าน fetch (text/plain ไม่มี CORS preflight)
