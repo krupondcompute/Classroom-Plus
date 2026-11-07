@@ -16,7 +16,7 @@ const CONFIG_DEFAULTS = {
   schoolName: 'Classroom PLus', logo: '', welcome: 'ยินดีต้อนรับ สู่ห้องเรียนออนไลน์แห่งอนาคต',
   studentLogin: 'code+birth',  // 'code' = รหัสนักเรียนอย่างเดียว, 'code+birth' = รหัส + วันเกิด (แนะนำ)
   allowAdminSignup: 'true', requireApproval: 'false', sessionHours: '8', rememberDays: '30',
-  emailNotify: 'false', lineToken: '', autoBackup: 'true', webNotify: 'true'
+  emailNotify: 'false', lineToken: '', autoBackup: 'true', webNotify: 'true', siteUrl: ''
 };
 const PRIVATE_CONFIG = ['lineToken'];
 const SCHEMA = {
@@ -54,8 +54,17 @@ function doGet() {
   let title = 'Classroom PLus';
   try { title = cfg_().schoolName || title; } catch (e) {}
   return HtmlService.createHtmlOutputFromFile('Index')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
     .setTitle(title)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
+}
+
+/** API สำหรับหน้าเว็บบน GitHub Pages: POST (text/plain) {fn, token, args} → JSON */
+function doPost(e) {
+  let req = {};
+  try { req = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (x) {}
+  const out = rpc(String(req.fn || ''), req.token || null, Array.isArray(req.args) ? req.args : []);
+  return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
 }
 
 /** จุดเข้าเดียวจากหน้าเว็บ: google.script.run.rpc(fn, token, args) */
@@ -615,7 +624,7 @@ function broadcast_(students, title, body, link) {
   const c = cfg_();
   if (c.emailNotify === 'true') {
     students.filter(s => s.email).slice(0, Math.max(0, MailApp.getRemainingDailyQuota() - 5)).forEach(s => {
-      try { MailApp.sendEmail(s.email, '[' + c.schoolName + '] ' + title, body + '\n\n' + ScriptApp.getService().getUrl()); } catch (e) {}
+      try { MailApp.sendEmail(s.email, '[' + c.schoolName + '] ' + title, body + '\n\n' + (c.siteUrl || ScriptApp.getService().getUrl())); } catch (e) {}
     });
   }
   if (c.lineToken) { // LINE Messaging API (LINE Notify ปิดบริการแล้วตั้งแต่ 31 มี.ค. 2025)

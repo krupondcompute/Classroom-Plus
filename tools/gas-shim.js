@@ -85,5 +85,6 @@
   const triggers = [];
   G.ScriptApp = { getService: () => ({ getUrl: () => 'https://script.google.com/macros/s/DEMO/exec' }), getProjectTriggers: () => triggers, deleteTrigger: t => triggers.splice(triggers.indexOf(t), 1),
     newTrigger: fn => { const t = { getHandlerFunction: () => fn }; const ch = { timeBased: () => ch, everyDays: () => ch, atHour: () => ch, inTimezone: () => ch, create: () => { triggers.push(t); return t; } }; return ch; } };
+  G.ContentService = { MimeType: { JSON: 'json' }, createTextOutput: s => ({ content: s, setMimeType() { return this; }, getContent() { return s; } }) };
   G.HtmlService = { createHtmlOutputFromFile: () => ({ setTitle() { return this; }, addMetaTag() { return this; } }) };
 })(typeof window !== 'undefined' ? window : globalThis);

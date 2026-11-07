@@ -7,6 +7,7 @@
 | `Code.gs` | Backend ทั้งหมด (API, สิทธิ์, ฐานข้อมูล, Drive, แจ้งเตือน, สำรองข้อมูล) |
 | `Index.html` | หน้าเว็บทั้งหมด (SPA: HTML + CSS + JS ในไฟล์เดียว) |
 | `appsscript.json` | Manifest (เขตเวลา, สิทธิ์ OAuth, การตั้งค่า Web App) |
+| `docs/index.html` | หน้าเว็บสำหรับ GitHub Pages (สร้างจาก Index.html ด้วย tools/build-pages.js) |
 | `tools/` | สำหรับนักพัฒนาเท่านั้น — ไม่ต้องคัดลอกไปที่ Apps Script |
 
 ค่าเริ่มต้น
@@ -40,6 +41,19 @@ npm i -g @google/clasp && clasp login
 clasp clone <SCRIPT_ID>      # หรือ clasp create --type webapp --title "Classroom PLus"
 clasp push                   # .claspignore ตัด tools/ และ README ออกให้แล้ว
 ```
+
+## เปิดใช้งานผ่าน GitHub Pages (ลิงก์ github.io)
+
+หน้าเว็บอยู่บน GitHub Pages (`docs/index.html`) ส่วนข้อมูลยังเก็บใน Google Sheet ผ่าน Apps Script (`doPost`) เหมือนเดิม
+
+1. ทำขั้นตอนติดตั้งข้างบนให้ครบก่อน (ต้องมี URL `/exec` ที่ Deploy แบบ **ทุกคน**)
+2. บน GitHub เปิดไฟล์ `docs/index.html` → ไอคอนดินสอ ✏️ → หาบรรทัด `window.CP_API_URL = '';` → วาง URL `/exec` ระหว่าง `' '` → **Commit changes**
+3. **Settings → Pages** → Source: **Deploy from a branch** → Branch: **main** โฟลเดอร์ **/docs** → **Save**
+4. รอ 1–2 นาที ลิงก์คือ `https://krupondcompute.github.io/Classroom-Plus/`
+5. (แนะนำ) ในระบบ: ตั้งค่าระบบ → ทั่วไป → ใส่ลิงก์นี้ในช่อง "ลิงก์หน้าเว็บที่แจกนักเรียน" เพื่อใช้ในอีเมลแจ้งเตือน
+
+แก้ `Index.html` ภายหลัง: รัน `node tools/build-pages.js` เพื่อสร้าง `docs/index.html` ใหม่ (URL เดิมจะถูกคงไว้) แล้ว push
+แก้ `Code.gs` ภายหลัง: Deploy **เวอร์ชันใหม่** ใน Apps Script (URL `/exec` เดิมใช้ต่อได้)
 
 ## ฟีเจอร์
 

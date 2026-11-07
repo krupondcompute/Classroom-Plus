@@ -373,9 +373,18 @@ async function confirmBox({ title, html, danger = false, confirmText = 'ยื�
 window.addEventListener('unhandledrejection', e => { if (e.reason && e.reason.message) { toast(e.reason.message, 'error'); e.preventDefault(); } });
 
 /* ---------------- API: ห่อ google.script.run เป็น Promise ---------------- */
+/* ทำงานได้ 2 แบบ: (1) เปิดผ่าน Apps Script /exec ใช้ google.script.run  (2) เปิดผ่าน GitHub Pages ใช้ fetch ไปที่ CP_API_URL */
+const HAS_GAS = !!(window.google && google.script && google.script.run);
+const API_URL = () => window.CP_API_URL || store.get('cp_api') || '';
 function call(fn, args, o = {}) {
   const run = () => new Promise((res, rej) => {
-    if (!(window.google && google.script && google.script.run)) return rej(Object.assign(new Error('ไม่พบการเชื่อมต่อ Google Apps Script'), { code: 'NET' }));
+    if (!HAS_GAS) { // โหมด GitHub Pages: เรียก Apps Script /exec ผ่าน fetch (text/plain ไม่มี CORS preflight)
+      if (!API_URL()) return rej(Object.assign(new Error('ยังไม่ได้ตั้งค่า URL ของ Apps Script'), { code: 'NOAPI' }));
+      return fetch(API_URL(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, token: S.token, args }), redirect: 'follow', credentials: 'omit' })
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(r => r && r.ok ? res(r.data) : rej(Object.assign(new Error(r ? r.error : 'ไม่ได้รับการตอบกลับจากเซิร์ฟเวอร์'), { code: r && r.code })))
+        .catch(e => rej(e.code ? e : Object.assign(new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบอินเทอร์เน็ตหรือ URL ของ Apps Script'), { code: 'NET' })));
+    }
     google.script.run
       .withSuccessHandler(r => r && r.ok ? res(r.data) : rej(Object.assign(new Error(r ? r.error : 'ไม่ได้รับการตอบกลับจากเซิร์ฟเวอร์'), { code: r && r.code })))
       .withFailureHandler(e => rej(Object.assign(new Error(/network|NetworkError|timed? ?out/i.test(String(e && e.message)) ? 'การเชื่อมต่อขัดข้อง กรุณาตรวจสอบอินเทอร์เน็ต' : 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์: ' + (e && e.message || e)), { code: 'NET' })))
@@ -1442,7 +1451,7 @@ PAGES.settings = { admin: true, async render(el, p) {
   let tab = p.tab || 'general';
   el.innerHTML = `<div class="page-head"><h3>ตั้งค่าระบบ</h3></div><ul class="nav nav-pills gap-2 mb-3 flex-nowrap overflow-auto pb-1">${tabs.map(t => `<li class="nav-item"><button class="nav-link text-nowrap" data-st="${t[0]}"><i class="fa-solid ${t[2]}"></i> ${t[1]}</button></li>`).join('')}</ul><div class="card-x" id="sBody"></div>`;
   const GF = {
-    general: [{ k: 'schoolName', label: 'ชื่อโรงเรียน / ชื่อระบบ', req: true }, { k: 'welcome', label: 'ข้อความต้อนรับหน้าเข้าสู่ระบบ' }, { k: 'logo', label: 'โลโก้ (แนะนำรูปสี่เหลี่ยมจัตุรัส พื้นโปร่งใส)', type: 'image', w: 256, h: 256, png: true, contain: true }],
+    general: [{ k: 'schoolName', label: 'ชื่อโรงเรียน / ชื่อระบบ', req: true }, { k: 'welcome', label: 'ข้อความต้อนรับหน้าเข้าสู่ระบบ' }, { k: 'siteUrl', label: 'ลิงก์หน้าเว็บที่แจกนักเรียน (เช่น GitHub Pages) — ใช้แนบในอีเมลแจ้งเตือน', type: 'url', valid: v => v && !/^https:\/\//.test(v) ? 'ต้องขึ้นต้นด้วย https://' : '' }, { k: 'logo', label: 'โลโก้ (แนะนำรูปสี่เหลี่ยมจัตุรัส พื้นโปร่งใส)', type: 'image', w: 256, h: 256, png: true, contain: true }],
     system: [{ k: 'studentLogin', label: 'วิธีเข้าสู่ระบบของนักเรียน', type: 'select', opts: [['code+birth', 'รหัสนักเรียน + วันเกิด (แนะนำ ปลอดภัยกว่า)'], ['code', 'รหัสนักเรียน 5 หลักอย่างเดียว (เดาได้ง่าย)']] },
       { k: 'allowAdminSignup', label: 'เปิดให้สมัครบัญชีครูผู้สอนเองได้', type: 'check' }, { k: 'requireApproval', label: 'ต้องให้ Admin อนุมัติก่อนใช้งาน (บัญชีครูที่สมัครเอง)', type: 'check', help: 'แนะนำให้เปิด หากเปิดให้สมัครบัญชีครูเอง เพราะ Admin เข้าถึงข้อมูลทั้งหมดได้' },
       { k: 'sessionHours', label: 'อายุเซสชันปกติ (ชั่วโมง)', type: 'number', col: 'col-md-6' }, { k: 'rememberDays', label: 'อายุเซสชัน "จดจำฉัน" (วัน)', type: 'number', col: 'col-md-6' }],
@@ -1508,8 +1517,15 @@ PAGES.settings = { admin: true, async render(el, p) {
 /* =========================================================
  * เริ่มต้นระบบ
  * ========================================================= */
+async function askApiUrl(msg) {
+  const r = await Swal.fire({ title: 'เชื่อมต่อระบบ', icon: 'info', html: (msg ? `<div class="text-danger small mb-2">${esc(msg)}</div>` : '') + 'วาง URL เว็บแอปของ Google Apps Script (ลงท้าย <code>/exec</code>)<br><small class="text-muted">ผู้ดูแลควรใส่ไว้ใน docs/index.html เพื่อให้ทุกคนใช้ได้ทันที</small>',
+    input: 'url', inputPlaceholder: 'https://script.google.com/macros/s/.../exec', confirmButtonText: 'เชื่อมต่อ', allowOutsideClick: false,
+    inputValidator: v => /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(String(v).trim()) ? null : 'URL ต้องอยู่ในรูปแบบ https://script.google.com/macros/s/.../exec' });
+  store.set('cp_api', r.value.trim()); location.reload();
+}
 (async function init() {
   Loader.show('กำลังเตรียมระบบ...');
+  if (!HAS_GAS && !API_URL()) { Loader.hide(); applyBrand(); renderLogin(); return askApiUrl(); }
   try {
     const b = await apiQ('bootstrap');
     S.config = b.config; S.classes = b.classes; S.maxMB = b.maxUploadMB; applyBrand();
@@ -1521,6 +1537,7 @@ PAGES.settings = { admin: true, async render(el, p) {
     renderLogin();
   } catch (e) {
     applyBrand(); renderLogin();
+    if (!HAS_GAS && !window.CP_API_URL) return askApiUrl(e.message);
     Swal.fire({ icon: 'error', title: 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ', html: esc(e.message) + '<br><small>ตรวจสอบว่าบัญชีที่ Deploy มีสิทธิ์แก้ไข Google Sheet และ Drive ที่กำหนดไว้</small>' });
   } finally { Loader.hide(); }
 })();
