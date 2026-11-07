@@ -1,0 +1,84 @@
+// node tools/test-ui.js — ทดสอบหน้าเว็บด้วย Playwright บนหน้าตัวอย่าง
+const { chromium } = require('playwright'), path = require('path'), fs = require('fs');
+const SHOT = process.env.SHOT || '/tmp/shots'; fs.mkdirSync(SHOT, { recursive: true });
+const url = 'file://' + path.join(__dirname, '..', 'preview.html');
+let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; console.log('FAIL:', m); } };
+(async () => {
+  const proxy = process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY } : undefined;
+  const browser = await chromium.launch({ proxy });
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 860 }, ignoreHTTPSErrors: true });
+  const page = await ctx.newPage(); const errs = [];
+  page.on('pageerror', e => errs.push('pageerror: ' + e.stack.slice(0,400)));
+  page.on('console', m => m.type() === 'error' && !/youtube|ERR_|favicon|net::|googlevideo|doubleclick|Failed to load resource/i.test(m.text()) && errs.push(m.text()));
+  const idle = () => page.waitForFunction(() => !document.querySelector('#loader.show'), null, { timeout: 20000 }).then(() => page.waitForTimeout(250));
+  const confirm = async () => { await page.click('.swal2-confirm'); await idle(); };
+  await page.goto(url); await idle();
+  ok(await page.isVisible('text=เข้าสู่ระบบ'), 'login visible');
+  await page.screenshot({ path: SHOT + '/01-login.png' });
+  // register student
+  await page.click('#toReg');
+  await page.selectOption('#wPrefix', 'เด็กชาย'); await page.fill('#wName', 'ทดสอบ ระบบดี');
+  const dob = await page.$$('#wDob select'); await dob[0].selectOption('04'); await dob[1].selectOption('05'); await dob[2].selectOption('2013');
+  await page.selectOption('#wGrade', 'ม.1'); await page.click('#wForm button[type=submit]'); await page.waitForTimeout(200);
+  await page.fill('#wCode', '24680'); await page.waitForTimeout(700); await page.click('#wForm button[type=submit]'); await idle();
+  ok(await page.isVisible('#wOk'), 'step3');
+  await page.screenshot({ path: SHOT + '/02-register-step3.png' });
+  await page.check('#wOk'); await page.click('#wForm button[type=submit]'); await confirm(); await idle();
+  ok(await page.isVisible('#appView'), 'entered app');
+  await page.waitForSelector('#chCourse'); await page.waitForTimeout(500);
+  await page.screenshot({ path: SHOT + '/03-student-home.png' });
+  // course -> lesson
+  await page.click('.dock [data-go=courses]'); await idle();
+  await page.click('.card-x.hover'); await idle();
+  await page.click('.lesson-item[data-go=lesson]'); await idle();
+  ok(await page.isVisible('#lDone'), 'lesson page');
+  await page.click('#lDone'); await idle();
+  ok((await page.textContent('#lDone')).includes('เรียนจบแล้ว'), 'mark complete');
+  await page.screenshot({ path: SHOT + '/04-lesson.png' });
+  // assignment submit
+  await page.click('.dock [data-go=assignments]'); await idle();
+  await page.click('[data-sub]'); await page.waitForSelector('#modal.show');
+  await page.fill('[name=text]', 'คำตอบของฉัน'); await page.waitForTimeout(1500);
+  ok((await page.textContent('#dSaved')).includes('อัตโนมัติ'), 'autosave draft');
+  await page.click('#doSub'); await confirm(); await idle();
+  ok(await page.isVisible('text=ส่งตรงเวลา'), 'submitted');
+  await page.click('.dock [data-go=announcements]'); await idle();
+  await page.click('[data-go=search]'); await idle(); await page.fill('#sq', 'แยกส่วน'); await page.waitForTimeout(800); await idle();
+  ok(await page.$$eval('#sres .lesson-item', x => x.length) >= 1, 'search results');
+  await page.click('.dock [data-go=profile]'); await idle();
+  ok(await page.inputValue('[name=studentCode]') === '24680', 'profile');
+  // logout -> admin
+  await page.click('[aria-label="เมนูโปรไฟล์"]'); await page.click('#logoutBtn'); await confirm(); await idle();
+  await page.click('[data-tab=admin]'); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle();
+  ok(await page.isVisible('.banner'), 'default pw banner');
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: SHOT + '/05-admin-dash.png' });
+  await page.click('.dock [data-go=users]'); await idle(); ok(await page.isVisible('text=24680'), 'users list');
+  await page.screenshot({ path: SHOT + '/06-users.png' });
+  await page.click('.dock [data-go=acourses]'); await idle(); await page.click('#cl [data-go=acourse] >> nth=0'); await idle();
+  await page.click('#aL'); await page.waitForSelector('#modal.show'); await page.fill('[name=title]', 'บทเรียนใหม่ทดสอบ'); await page.click('#crudSave'); await confirm(); await idle();
+  ok(await page.isVisible('text=บทเรียนใหม่ทดสอบ'), 'add lesson');
+  await page.click('[data-down="0"]'); await idle(); ok(true, 'reorder');
+  await page.click('[data-go=grade] >> nth=0'); await idle();
+  await page.fill('[data-score]', '9'); await page.click('[data-grade]'); await confirm(); await idle();
+  await page.screenshot({ path: SHOT + '/07-grade.png' });
+  await page.click('[data-go=reports]'); await idle(); ok(await page.$$eval('#rBody tr', x => x.length) > 1, 'report');
+  await page.click('.dock [data-go=settings]'); await idle(); await page.click('[data-st=backup]'); await idle(); await page.click('#bkNow'); await confirm(); await idle();
+  ok(await page.$$eval('[data-restore]', x => x.length) === 1, 'backup list');
+  await page.click('#modeSwitch'); await idle(); ok(await page.isVisible('.dock [data-go=home]'), 'mode switch');
+  await page.click('#sideToggle'); await page.waitForTimeout(300); await page.screenshot({ path: SHOT + '/08-collapsed-student-mode.png' });
+  // mobile
+  const m = await browser.newContext({ ...require('playwright').devices['iPhone 13'], ignoreHTTPSErrors: true });
+  const mp = await m.newPage(); mp.on('pageerror', e => errs.push('m: ' + e.message));
+  await mp.goto(url); await mp.waitForFunction(() => !document.querySelector('#loader.show')); await mp.waitForTimeout(400);
+  await mp.screenshot({ path: SHOT + '/09-mobile-login.png', fullPage: true });
+  await mp.click('[data-tab=admin]'); await mp.fill('#lgUser', 'admin'); await mp.fill('#lgPass', 'admin123'); await mp.click('#loginForm button[type=submit]');
+  await mp.waitForSelector('#appView:not(.hidden)'); await mp.waitForFunction(() => !document.querySelector('#loader.show')); await mp.waitForTimeout(600);
+  await mp.evaluate(() => { localStorage.setItem('cp_theme', 'dark'); document.documentElement.dataset.theme = 'dark'; document.documentElement.setAttribute('data-bs-theme', 'dark'); });
+  await mp.click('.dock [data-go=users]'); await mp.waitForFunction(() => !document.querySelector('#loader.show')); await mp.waitForTimeout(400);
+  await mp.screenshot({ path: SHOT + '/10-mobile-users-dark.png' });
+  const ov = await mp.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1); ok(!ov, 'no horizontal overflow on mobile');
+  ok(!errs.length, 'console errors: ' + errs.join(' | '));
+  console.log(`ui tests: ${pass} passed, ${fail} failed`);
+  await browser.close(); process.exit(fail ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(1); });
