@@ -101,15 +101,30 @@ a{color:var(--blue)}
 .strength{height:6px;border-radius:6px;background:var(--surface-2);overflow:hidden}.strength i{display:block;height:100%;width:0;transition:width var(--t),background var(--t)}
 
 /* ---------- Footer ---------- */
-footer{background:#e0f2fe;color:#000;text-align:center;padding:14px 16px calc(14px + var(--sab));font-size:.92rem}
-body.app footer{padding-bottom:calc(var(--dock-h) + 30px + var(--sab))}
+footer{background:#e0f2fe;color:#000;text-align:right;padding:14px calc(20px + var(--sar)) calc(14px + var(--sab)) 16px;font-size:.9rem}
+body.app footer{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;font-size:.84rem;line-height:1.45;
+  min-height:calc(var(--dock-h) + 24px + var(--sab));padding:8px calc(22px + var(--sar)) calc(8px + var(--sab)) 16px}
+body.app footer .fsep{display:none}
+@media (max-width:1199.98px){body.app footer{padding-bottom:calc(var(--dock-h) + 30px + var(--sab));padding-right:calc(92px + var(--sar))}}
 @media (min-width:992px){body.app footer{margin-left:var(--side-w);transition:margin var(--t)} body.app.collapsed footer{margin-left:84px}}
 
 /* ---------- App shell ---------- */
 .sidebar{position:fixed;z-index:1040;top:0;bottom:0;left:0;width:var(--side-w);background:var(--surface);border-right:1px solid var(--border);
   padding:calc(14px + var(--sat)) 12px 16px calc(12px + var(--sal));display:flex;flex-direction:column;transition:transform var(--t),width var(--t);overflow:hidden}
-.side-brand{display:flex;align-items:center;gap:12px;height:44px;margin-bottom:18px;padding-left:4px;white-space:nowrap}
-.side-brand .logo-circle{width:44px;height:44px;flex:none;border:2px solid var(--blue-light)}
+.side-brand{display:flex;align-items:center;gap:12px;min-height:60px;margin-bottom:12px;padding-left:0;white-space:nowrap}
+.side-brand .logo-circle{width:60px;height:60px;flex:none;border:3px solid var(--blue-light);box-shadow:0 6px 16px rgba(37,99,235,.18)}
+.side-brand .logo-circle img,.side-brand .logo-circle svg{width:84%;height:84%}
+.side-user{display:flex;gap:10px;align-items:center;padding:12px;border-radius:18px;background:var(--surface-2);margin-bottom:12px;white-space:nowrap;overflow:hidden}
+.side-user .meta{min-width:0;line-height:1.3}.side-user .meta b{display:block;overflow:hidden;text-overflow:ellipsis}.side-user small{color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis}
+.online{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:#15803d}
+.online i{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:ping 1.8s infinite}
+@keyframes ping{70%{box-shadow:0 0 0 7px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.card-x.hero{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;color:#fff;border:0;background:linear-gradient(120deg,#1e3a8a,#2563eb,#0ea5e9);background-size:200% 200%;animation:flow 16s ease infinite}
+.hero .who{display:flex;gap:16px;align-items:center;min-width:0}
+.hero .clock{text-align:right;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:18px;padding:10px 16px;backdrop-filter:blur(8px)}
+.hero .clock b{font-size:1.7rem;font-variant-numeric:tabular-nums;letter-spacing:.5px;display:block;line-height:1.1}
+.hero .online{color:#bbf7d0;background:rgba(0,0,0,.15);padding:3px 10px;border-radius:999px}
+@media (max-width:575.98px){.hero .clock{text-align:left;width:100%}}
 .side-brand b{font-size:1.05rem;color:var(--blue-dark);overflow:hidden;text-overflow:ellipsis}
 [data-theme=dark] .side-brand b{color:#bfdbfe}
 .nav-side{display:flex;flex-direction:column;gap:4px;overflow-y:auto;flex:1}
@@ -138,6 +153,8 @@ body.app footer{padding-bottom:calc(var(--dock-h) + 30px + var(--sab))}
   body.collapsed .app-main{margin-left:84px}
   body.collapsed .side-toggle{left:64px;transform:rotate(180deg)}
   body.collapsed .nav-side span,body.collapsed .side-brand b,body.collapsed .nav-label{opacity:0}
+  body.collapsed .side-brand .logo-circle{width:56px;height:56px}
+  body.collapsed .side-user{padding:6px;background:none}body.collapsed .side-user .meta{display:none}
 }
 @media (max-width:991.98px){
   .sidebar{transform:translateX(-100%);box-shadow:var(--shadow-lg)}
@@ -259,12 +276,14 @@ body.app footer{padding-bottom:calc(var(--dock-h) + 30px + var(--sab))}
 <div id="appView" class="hidden">
   <aside class="sidebar" id="sidebar" aria-label="เมนูด้านข้าง">
     <div class="side-brand"><div class="logo-circle" data-logo></div><b data-school>Classroom PLus</b></div>
+    <div class="side-user" id="sideUser"></div>
     <nav class="nav-side" id="sideNav"></nav>
   </aside>
   <button class="side-toggle" id="sideToggle" aria-label="พับ/ขยายเมนู"><i class="fa-solid fa-chevron-left"></i></button>
   <div class="scrim" id="scrim"></div>
   <div class="app-main">
     <header class="topbar">
+      <div class="logo-circle d-lg-none flex-none" data-logo style="width:44px;height:44px;border:2px solid var(--blue-light)"></div>
       <div class="title" id="pageTitle">หน้าหลัก</div>
       <button class="mode-switch hidden" id="modeSwitch" aria-label="สลับโหมด"><span class="knob"><i class="fa-solid fa-chalkboard-user"></i></span><span class="d-none d-sm-inline" id="modeText">โหมดครู</span></button>
       <div class="dropdown">
@@ -291,7 +310,7 @@ body.app footer{padding-bottom:calc(var(--dock-h) + 30px + var(--sab))}
   <button class="fab hidden" id="fab" aria-label="เพิ่มรายการ"><i class="fa-solid fa-plus"></i></button>
 </div>
 
-<footer>© 2026 Classroom PLus | KruPond (Mr.Nattawut Nukong)</footer>
+<footer><span>© 2026 Classroom PLus</span><span class="fsep">&nbsp;|&nbsp;</span><span>KruPond (Mr.Nattawut Nukong)</span></footer>
 
 <div class="modal fade" id="modal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
@@ -394,12 +413,29 @@ function call(fn, args, o = {}) {
       .rpc(fn, S.token, args);
   });
   const attempt = n => run().catch(e => e.code === 'NET' && n > 0 ? new Promise(r => setTimeout(r, 800)).then(() => attempt(n - 1)) : Promise.reject(e));
+  if (MUTATING.has(fn)) CACHE.clear();
   if (o.loader !== false) Loader.show(o.msg);
   return attempt(o.retry ?? 1)
     .catch(e => { if (e.code === 'AUTH' && S.token) { localLogout(); toast(e.message, 'warning'); } throw e; })
     .finally(() => { if (o.loader !== false) Loader.hide(); });
 }
 const api = (fn, ...a) => call(fn, a);
+/* แคชข้อมูลฝั่งเว็บ: แสดงข้อมูลเดิมทันที แล้วอัปเดตเบื้องหลัง (เปิดหน้าเดิมซ้ำแทบไม่ต้องรอ) */
+const CACHE = new Map();
+const MUTATING = new Set(['save', 'remove', 'submitWork', 'deleteSubmission', 'saveUser', 'deleteUser', 'importStudents', 'setRole', 'gradeSubmission', 'saveSettings', 'updateProfile', 'saveProgress', 'restoreBackup', 'changeCredentials', 'markRead', 'login', 'logout', 'registerStudent', 'registerAdmin']);
+let rerenderT = 0;
+function rerender() { clearTimeout(rerenderT); rerenderT = setTimeout(() => { if (S.user && !document.querySelector('.modal.show') && !document.querySelector('.swal2-container')) go(S.page, S.params, { quiet: true }); }, 250); }
+function apiC(fn, ...a) {
+  const k = fn + JSON.stringify(a), c = CACHE.get(k), page = S.page;
+  const fresh = () => call(fn, a, { loader: false }).then(d => { const old = CACHE.get(k); CACHE.set(k, { t: Date.now(), d, j: JSON.stringify(d) }); return { d, changed: !old || old.j !== JSON.stringify(d) }; });
+  if (c) {
+    if (Date.now() - c.t > 4000 && !c.busy) { c.busy = true; fresh().then(r => { if (r.changed && S.page === page) rerender(); }).catch(() => {}).finally(() => { c.busy = false; }); }
+    return Promise.resolve(c.d);
+  }
+  return fresh().then(r => r.d);
+}
+/** รวมหลายคำสั่งเป็นการเรียกเดียว: apiB([['list',['Courses']], ['listUsers',[]]]) */
+const apiB = calls => apiC('batch', calls).then(rs => rs.map(r => { if (!r.ok) throw Object.assign(new Error(r.error), { code: r.code }); return r.data; }));
 const apiQ = (fn, ...a) => call(fn, a, { loader: false });
 const apiMsg = (msg, fn, ...a) => call(fn, a, { msg });
 
@@ -412,14 +448,16 @@ function thDate(s, time = false) {
   return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) + (time ? ' ' + d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '');
 }
 const nowStr = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; };
-const fmtSize = b => b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.ceil(b / 1024) + ' KB';
+const fmtSize = b => b >= 1073741824 ? (b / 1073741824).toFixed(2) + ' GB' : b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.ceil(b / 1024) + ' KB';
 const initials = n => esc(String(n || '?').trim().charAt(0));
 const avatarHtml = (u, size = 40) => u && u.avatar ? `<img class="avatar" style="width:${size}px;height:${size}px" src="${safeUrl(u.avatar)}" alt="">` : `<span class="avatar" style="width:${size}px;height:${size}px">${initials(u && u.fullName)}</span>`;
 const linkify = s => esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\n/g, '<br>');
 const skeleton = (n = 6) => `<div class="grid g3">${'<div class="skel"></div>'.repeat(n)}</div>`;
 const empty = (icon, text, btn = '', act = '') => `<div class="empty"><i class="fa-solid ${icon}"></i><div class="mb-3">${esc(text)}</div>${btn ? `<button class="btn btn-primary" data-act="${act}">${esc(btn)}</button>` : ''}</div>`;
-const grades = () => [...new Set(S.classes.map(c => c.grade))];
-const rooms = g => S.classes.filter(c => !g || c.grade === g).map(c => c.room).filter((v, i, a) => v && a.indexOf(v) === i);
+const GRADES = ['ม.1', 'ม.2', 'ม.3', 'ม.4', 'ม.5', 'ม.6'];
+const natural = (a, b) => String(a).localeCompare(String(b), 'th', { numeric: true });
+const grades = () => [...new Set(GRADES.concat(S.classes.map(c => c.grade)))].filter(Boolean).sort(natural);
+const rooms = g => { const r = S.classes.filter(c => !g || c.grade === g).map(c => c.room).filter((v, i, a) => v && a.indexOf(v) === i).sort(natural); return r.length || !g ? r : Array.from({ length: 12 }, (_, i) => String(i + 1)); };
 const STATUS = { pending: ['ยังไม่ส่ง', 'warn'], overdue: ['เลยกำหนด', 'danger'], ontime: ['ส่งตรงเวลา', 'ok'], late: ['ส่งช้า', 'warn'], submitted: ['ส่งแล้ว', 'ok'], graded: ['ตรวจแล้ว', 'info'] };
 const statusChip = s => `<span class="chip ${STATUS[s] ? STATUS[s][1] : ''}">${STATUS[s] ? STATUS[s][0] : esc(s)}</span>`;
 const fileIcon = n => { const e = String(n).split('.').pop().toLowerCase(); return { pdf: 'fa-file-pdf text-danger', doc: 'fa-file-word text-primary', docx: 'fa-file-word text-primary', ppt: 'fa-file-powerpoint text-warning', pptx: 'fa-file-powerpoint text-warning', xls: 'fa-file-excel text-success', xlsx: 'fa-file-excel text-success', zip: 'fa-file-zipper', rar: 'fa-file-zipper', jpg: 'fa-file-image text-info', jpeg: 'fa-file-image text-info', png: 'fa-file-image text-info', mp4: 'fa-file-video', mp3: 'fa-file-audio' }[e] || 'fa-file'; };
@@ -435,6 +473,7 @@ function modal(title, body, foot = '', size = 'modal-lg') {
   m.show();
   return { el: $('#modal'), body: $('#modalBody'), foot: $('#modalFoot'), hide: () => m.hide() };
 }
+$('#modal').addEventListener('hide.bs.modal', () => { const b = $('#modalBody'); if (!b.__keep) finalizeUploads(b, null); });
 $('#modal').addEventListener('hidden.bs.modal', () => { $('#modalBody').innerHTML = ''; });
 
 /* ---------------- ฟอร์มกลาง ---------------- */
@@ -444,13 +483,14 @@ function fieldHtml(f, v) {
   let input;
   switch (f.type) {
     case 'textarea': input = `<textarea class="form-control" id="${id}" name="${f.k}" rows="${f.rows || 4}">${esc(v)}</textarea>`; break;
-    case 'select': input = `<select class="form-select" id="${id}" name="${f.k}">${opt(typeof f.opts === 'function' ? f.opts() : f.opts, v)}</select>`; break;
+    case 'select': input = `<select class="form-select" id="${id}" name="${f.k}">${opt(typeof f.opts === 'function' ? f.opts() : f.opts, v)}</select>`;
+      if (f.addable) input = `<div class="input-group">${input}<button type="button" class="btn btn-soft" data-addopt="${f.k}" title="เพิ่ม${esc(f.label)}" aria-label="เพิ่ม${esc(f.label)}"><i class="fa-solid fa-plus"></i></button></div>`; break;
     case 'check': return `<div class="mb-3 ${f.col || ''}"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="${id}" name="${f.k}" ${String(v) === 'true' ? 'checked' : ''}><label class="form-check-label" for="${id}">${f.label}</label></div>${f.help ? `<div class="form-text">${f.help}</div>` : ''}</div>`;
     case 'image': input = `<div class="d-flex gap-3 align-items-center"><img data-preview="${f.k}" src="${v ? safeUrl(v) : ''}" class="${v ? '' : 'hidden'}" alt="" style="width:96px;height:64px;object-fit:${f.contain ? 'contain' : 'cover'};border-radius:12px;background:var(--surface-2)">
-      <input type="file" accept="image/*" class="form-control" id="${id}" data-image="${f.k}" data-w="${f.w || 480}" data-h="${f.h || 270}" data-png="${f.png ? 1 : ''}"><button type="button" class="btn btn-soft btn-icon flex-none" data-clear-img="${f.k}" aria-label="ลบรูป"><i class="fa-solid fa-xmark"></i></button></div><input type="hidden" name="${f.k}" value="${esc(v)}">`; break;
-    case 'files': input = `<div class="drop" data-drop="${f.k}" tabindex="0" role="button" aria-label="อัปโหลดไฟล์"><i class="fa-solid fa-cloud-arrow-up fa-xl mb-2 d-block"></i>ลากไฟล์มาวาง หรือแตะเพื่อเลือก<br><small>ไม่เกิน ${S.maxMB} MB ต่อไฟล์ (ไฟล์ใหญ่กว่านี้ให้แนบเป็นลิงก์ Google Drive)</small><input type="file" multiple class="hidden"></div><div data-files="${f.k}"></div><input type="hidden" name="${f.k}" value="${esc(JSON.stringify(J(v)))}">`; break;
+      <input type="file" accept="image/*" class="form-control" id="${id}" data-image="${f.k}" data-w="${f.w || 1280}" data-h="${f.h || 720}" data-png="${f.png ? 1 : ''}" data-folder="${esc(f.folder || 'รูปภาพ')}"><button type="button" class="btn btn-soft btn-icon flex-none" data-clear-img="${f.k}" aria-label="ลบรูป"><i class="fa-solid fa-xmark"></i></button></div><input type="hidden" name="${f.k}" value="${esc(v)}">`; break;
+    case 'files': input = `<div class="drop" data-drop="${f.k}" data-folder="${esc(f.folder || '')}" tabindex="0" role="button" aria-label="อัปโหลดไฟล์"><i class="fa-solid fa-cloud-arrow-up fa-xl mb-2 d-block"></i>ลากไฟล์มาวาง หรือแตะเพื่อเลือก<br><small>ไฟล์ละไม่เกิน ${fmtSize(S.maxMB * 1048576)} · บันทึกลง Google Drive อัตโนมัติ</small><input type="file" multiple class="hidden"></div><div data-files="${f.k}"></div><input type="hidden" name="${f.k}" value="${esc(JSON.stringify(J(v)))}">`; break;
     case 'links': input = `<textarea class="form-control" id="${id}" name="${f.k}" rows="3" placeholder="ชื่อลิงก์ | https://...">${esc(J(v).map(l => l.name + ' | ' + l.url).join('\n'))}</textarea><div class="form-text">บรรทัดละ 1 ลิงก์ รูปแบบ: ชื่อ | URL</div>`; break;
-    case 'video': input = `<div class="input-group"><input class="form-control" id="${id}" name="${f.k}" value="${esc(v)}" placeholder="ลิงก์ YouTube / Vimeo / Google Drive / ไฟล์ .mp4"><button type="button" class="btn btn-soft" data-upvideo="${f.k}"><i class="fa-solid fa-upload"></i> อัปโหลด</button><input type="file" accept="video/*" class="hidden"></div>`; break;
+    case 'video': input = `<div class="input-group"><input class="form-control" id="${id}" name="${f.k}" value="${esc(v)}" placeholder="ลิงก์ YouTube / Vimeo / Google Drive / ไฟล์ .mp4"><button type="button" class="btn btn-soft" data-upvideo="${f.k}" data-folder="${esc(f.folder || 'วิดีโอ')}"><i class="fa-solid fa-upload"></i> อัปโหลด</button><input type="file" accept="video/*" class="hidden"></div>`; break;
     case 'datetime': case 'date': input = `<input class="form-control" data-fp="${f.type}" id="${id}" name="${f.k}" value="${esc(v)}" placeholder="แตะเพื่อเลือก${f.type === 'date' ? 'วันที่' : 'วันและเวลา'}">`; break;
     case 'dob': input = dobHtml(id, v) + `<input type="hidden" name="${f.k}" value="${esc(v)}">`; break;
     default: input = `<input class="form-control" type="${f.type || 'text'}" id="${id}" name="${f.k}" value="${esc(v)}" ${f.attrs || ''}>`;
@@ -484,7 +524,22 @@ function validate(root, fields, only) {
   });
   return ok ? o : null;
 }
+/* โฟลเดอร์ปลายทางใน Drive: แทนค่า {type} / {course} จากช่องในฟอร์ม */
+function folderOf(root, tpl) {
+  return String(tpl || '').replace('{type}', () => root.querySelector('[name=type]')?.value || 'งาน')
+    .replace('{course}', () => { const s = root.querySelector('[name=courseId]'); return s && s.selectedIndex >= 0 ? s.options[s.selectedIndex].text : 'ทั่วไป'; });
+}
+const dataUrlB64 = u => String(u).split(',')[1];
+/** id ไฟล์ Drive ทั้งหมดในข้อมูลฟอร์ม */
+function idsIn(o) { const ids = []; JSON.stringify(o || {}).replace(/(?:\/d\/|"id":")([-\w]{20,})/g, (m, i) => ids.push(i)); return ids; }
+/** หลังบันทึก/ยกเลิก: ลบไฟล์ที่อัปโหลดในฟอร์มนี้แต่ไม่ได้ใช้ (ประหยัดพื้นที่ Drive) */
+function finalizeUploads(root, saved) {
+  const up = root.__up || [], keep = saved ? idsIn(saved) : [], drop = up.filter(i => !keep.includes(i));
+  root.__up = [];
+  if (drop.length) apiQ('discardUploads', drop).catch(() => {});
+}
 function bindForm(root, fields = []) {
+  root.__up = []; root.__keep = false;
   fields.forEach(f => {
     const el = root.querySelector(`[name="${f.k}"]`);
     if (el && !['files', 'image'].includes(f.type)) el.addEventListener(f.type === 'select' || f.type === 'check' ? 'change' : 'input', debounce(() => validate(root, fields, f.k), 250));
@@ -495,15 +550,24 @@ function bindForm(root, fields = []) {
   $$('[data-image]', root).forEach(inp => inp.addEventListener('change', async () => {
     const f = inp.files[0]; if (!f) return;
     if (!/^image\//.test(f.type)) return toast('กรุณาเลือกไฟล์รูปภาพ', 'error');
-    const url = await resizeImage(f, +inp.dataset.w, +inp.dataset.h, !!inp.dataset.png);
-    root.querySelector(`[name="${inp.dataset.image}"]`).value = url;
-    const pv = root.querySelector(`[data-preview="${inp.dataset.image}"]`); pv.src = url; pv.classList.remove('hidden');
+    const dataUrl = await resizeImage(f, +inp.dataset.w, +inp.dataset.h, !!inp.dataset.png);
+    let val = dataUrl;
+    Loader.show('กำลังบันทึกรูปลง Google Drive...');
+    try {
+      const up = await apiQ('uploadFile', { name: f.name.replace(/\.[^.]+$/, '') + (inp.dataset.png ? '.png' : '.jpg'), mime: inp.dataset.png ? 'image/png' : 'image/jpeg', data: dataUrlB64(dataUrl), folder: folderOf(root, inp.dataset.folder) });
+      root.__up.push(up.id);
+      if (up.shared) val = up.displayUrl;                       // แชร์ได้ → ใช้รูปจาก Drive
+      else if (dataUrl.length > 46000) { val = await resizeImage(f, 480, 480, !!inp.dataset.png); } // แชร์ไม่ได้ → เก็บรูปย่อในชีต
+    } catch (e) { if (dataUrl.length > 46000) val = await resizeImage(f, 480, 480, !!inp.dataset.png); }
+    finally { Loader.hide(); }
+    root.querySelector(`[name="${inp.dataset.image}"]`).value = val;
+    const pv = root.querySelector(`[data-preview="${inp.dataset.image}"]`); pv.src = dataUrl; pv.classList.remove('hidden');
   }));
   $$('[data-clear-img]', root).forEach(b => b.onclick = () => { root.querySelector(`[name="${b.dataset.clearImg}"]`).value = ''; root.querySelector(`[data-preview="${b.dataset.clearImg}"]`).classList.add('hidden'); });
   $$('[data-drop]', root).forEach(z => {
     const key = z.dataset.drop, hidden = root.querySelector(`[name="${key}"]`), list = root.querySelector(`[data-files="${key}"]`), inp = $('input', z);
     const draw = () => { list.innerHTML = filesHtml(J(hidden.value), true); $$('[data-rm]', list).forEach(b => b.onclick = () => { const a = J(hidden.value); a.splice(+b.dataset.rm, 1); hidden.value = JSON.stringify(a); draw(); }); };
-    const add = async files => { const up = await uploadFiles(files, z.dataset.kind || ''); hidden.value = JSON.stringify(J(hidden.value).concat(up)); draw(); hidden.dispatchEvent(new Event('change')); };
+    const add = async files => { const up = await uploadFiles(files, folderOf(root, z.dataset.folder)); up.forEach(u => root.__up.push(u.id)); hidden.value = JSON.stringify(J(hidden.value).concat(up)); draw(); hidden.dispatchEvent(new Event('change')); };
     z.onclick = () => inp.click(); z.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inp.click(); } };
     inp.onchange = () => { add([...inp.files]); inp.value = ''; };
     ['dragenter', 'dragover'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.add('over'); }));
@@ -514,8 +578,9 @@ function bindForm(root, fields = []) {
   $$('[data-upvideo]', root).forEach(b => {
     const inp = b.nextElementSibling;
     b.onclick = () => inp.click();
-    inp.onchange = async () => { const up = await uploadFiles([...inp.files]); if (up[0]) root.querySelector(`[name="${b.dataset.upvideo}"]`).value = up[0].url; inp.value = ''; };
+    inp.onchange = async () => { const up = await uploadFiles([...inp.files], folderOf(root, b.dataset.folder)); if (up[0]) { root.__up.push(up[0].id); root.querySelector(`[name="${b.dataset.upvideo}"]`).value = up[0].url; } inp.value = ''; };
   });
+  $$('[data-addopt]', root).forEach(b => b.onclick = () => addAssignmentType(root.querySelector(`[name="${b.dataset.addopt}"]`)));
 }
 function filesHtml(files, removable = false) {
   return (files || []).map((f, i) => `<div class="file-row"><i class="fa-solid ${fileIcon(f.name)} fa-lg"></i><a href="${safeUrl(f.url)}" target="_blank" rel="noopener" data-preview-file='${esc(JSON.stringify(f))}'>${esc(f.name)}</a><small class="text-muted">${f.size ? fmtSize(f.size) : ''}</small>
@@ -531,17 +596,34 @@ document.addEventListener('click', e => {
     `<a class="btn btn-soft" target="_blank" rel="noopener" href="${safeUrl(f.url)}"><i class="fa-solid fa-up-right-from-square"></i> เปิดในแท็บใหม่</a><a class="btn btn-primary" target="_blank" rel="noopener" href="https://drive.google.com/uc?export=download&id=${esc(id)}"><i class="fa-solid fa-download"></i> ดาวน์โหลด</a>`, 'modal-xl');
 });
 const ALLOWED = ['pdf','doc','docx','ppt','pptx','xls','xlsx','csv','txt','jpg','jpeg','png','gif','webp','zip','rar','7z','mp4','mov','webm','mp3','m4a'];
-async function uploadFiles(files, kind = '') {
+const readB64 = (blob, onp) => new Promise((res, rej) => { const r = new FileReader(); if (onp) r.onprogress = e => e.lengthComputable && onp(e.loaded / e.total); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = () => rej(new Error('อ่านไฟล์ไม่ได้')); r.readAsDataURL(blob); });
+/** อัปโหลดลง Google Drive: ไฟล์เล็กส่งครั้งเดียว, ไฟล์ใหญ่ (สูงสุด 2 GB) แบ่งส่งชิ้นละ 8 MB พร้อมแสดง % จริง */
+async function uploadFiles(files, folder = '') {
   const out = [];
   for (const file of files) {
     const ext = file.name.toLowerCase().split('.').pop();
     if (!ALLOWED.includes(ext)) { toast(`ไม่รองรับไฟล์ .${ext} (${file.name})`, 'error'); continue; }
-    if (file.size > S.maxMB * 1048576) { toast(`${file.name} ใหญ่เกิน ${S.maxMB} MB — อัปโหลดไว้ใน Google Drive แล้วแนบเป็นลิงก์แทน`, 'error'); continue; }
-    Loader.show('กำลังอ่านไฟล์ ' + file.name);
+    if (file.size > S.maxMB * 1048576) { toast(`${file.name} ใหญ่เกิน ${fmtSize(S.maxMB * 1048576)}`, 'error'); continue; }
+    if (!file.size) { toast(`${file.name} เป็นไฟล์ว่าง`, 'error'); continue; }
+    Loader.show('กำลังอัปโหลด ' + file.name);
     try {
-      const data = await new Promise((res, rej) => { const r = new FileReader(); r.onprogress = e => e.lengthComputable && Loader.set(e.loaded / e.total * 40); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(file); });
-      Loader.set(45, 'กำลังอัปโหลด ' + file.name); Loader.real = false;
-      out.push(await apiQ('uploadFile', { name: file.name, mime: file.type, data, kind }));
+      if (file.size <= 5 * 1048576) {
+        const data = await readB64(file, p => Loader.set(p * 30));
+        Loader.set(35); Loader.real = false;
+        out.push(await call('uploadFile', [{ name: file.name, mime: file.type, data, folder }], { loader: false, retry: 2 }));
+      } else {
+        const st = await apiQ('uploadStart', { name: file.name, mime: file.type || 'application/octet-stream', size: file.size, folder });
+        let pos = 0, r = null; const t0 = Date.now();
+        while (pos < file.size) {
+          const data = await readB64(file.slice(pos, pos + st.chunk));
+          r = await call('uploadChunk', [st.uploadId, pos, data], { loader: false, retry: 3 });
+          const sent = r.done ? file.size : r.next, sec = (Date.now() - t0) / 1000, left = sent ? Math.round(sec / sent * (file.size - sent)) : 0;
+          Loader.set(sent / file.size * 100, `${file.name} · ${fmtSize(sent)} / ${fmtSize(file.size)}${left > 5 ? ` · เหลือประมาณ ${left > 90 ? Math.round(left / 60) + ' นาที' : left + ' วินาที'}` : ''}`);
+          if (r.done) break;
+          pos = r.next;
+        }
+        out.push(r.file);
+      }
       toast('อัปโหลด ' + file.name + ' แล้ว');
     } finally { Loader.hide(); }
   }
@@ -555,8 +637,8 @@ function resizeImage(file, w, h, png) {
       c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
       let q = .85, out = png ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', q);
-      while (out.length > 44000 && q > .3) { q -= .1; out = c.toDataURL(png ? 'image/webp' : 'image/jpeg', q); }
-      out.length > 46000 ? rej(new Error('รูปใหญ่เกินไป กรุณาใช้รูปที่เล็กลง')) : res(out);
+      if (w <= 480) while (out.length > 44000 && q > .3) { q -= .1; out = c.toDataURL(png ? 'image/webp' : 'image/jpeg', q); }
+      res(out);
     };
     img.onerror = () => rej(new Error('อ่านรูปไม่ได้'));
     img.src = url;
@@ -602,6 +684,26 @@ function listView(root, { items, headers, row, search, filters = '', size = 15, 
   return draw;
 }
 
+/* ---------------- นาฬิกา / คำทักทาย ---------------- */
+const greet = () => { const h = new Date().getHours(); return h < 12 ? 'สวัสดีตอนเช้า' : h < 17 ? 'สวัสดีตอนบ่าย' : 'สวัสดีตอนเย็น'; };
+function tickClock() {
+  const d = new Date();
+  const t = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const ds = d.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  $$('[data-clock-time]').forEach(e => e.textContent = t + ' น.');
+  $$('[data-clock-date]').forEach(e => e.textContent = ds);
+  $$('[data-clock]').forEach(e => e.textContent = d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) + ' · ' + d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.');
+}
+setInterval(tickClock, 1000);
+function heroHtml(sub) {
+  const u = S.user, stu = u.role === 'student';
+  return `<div class="card-x hero mb-3"><div class="who">${avatarHtml(u, 64)}<div style="min-width:0"><div class="opacity-75">${greet()} · ยินดีต้อนรับ</div>
+    <h4 class="m-0 fw-bold text-truncate">${esc(u.prefix + u.fullName)}</h4>
+    <small class="opacity-75">${stu ? `นักเรียน · รหัส ${esc(u.studentCode)} · ${esc(u.grade || '-')}${u.room ? '/' + esc(u.room) : ''}` : `Admin(ครูผู้สอน) · ${esc(u.username)}`}${sub ? ' · ' + sub : ''}</small>
+    <div class="mt-2"><span class="online"><i></i> กำลังใช้งาน</span></div></div></div>
+    <div class="clock"><b data-clock-time></b><small data-clock-date class="opacity-75"></small></div></div>`;
+}
+
 /* ---------------- Theme ---------------- */
 function applyTheme(t) {
   t = t || store.get('cp_theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -631,7 +733,7 @@ function bindPw(root) {
   $$('[data-eye]', root).forEach(b => b.onclick = () => { const i = $('#' + b.dataset.eye); i.type = i.type === 'password' ? 'text' : 'password'; b.innerHTML = `<i class="fa-solid fa-eye${i.type === 'text' ? '-slash' : ''}"></i>`; });
   $$('.pw input', root).forEach(i => ['keyup', 'keydown'].forEach(ev => i.addEventListener(ev, e => { const c = $(`[data-caps="${i.id}"]`); c && c.classList.toggle('hidden', !(e.getModifierState && e.getModifierState('CapsLock'))); })));
 }
-function renderLogin(tab = AUTH_TAB) {
+function renderLogin(tab = 'student') {
   AUTH_TAB = tab;
   const c = S.config, R = $('#authRight'), stu = tab === 'student';
   R.innerHTML = `<h2>เข้าสู่ระบบ</h2>
@@ -640,7 +742,6 @@ function renderLogin(tab = AUTH_TAB) {
     <button type="button" role="tab" class="${stu ? 'active' : ''}" data-tab="student" aria-selected="${stu}">User(นักเรียน)</button></div>
   <form id="loginForm" novalidate>
     ${stu ? pwInput('lgCode', 'รหัสนักเรียน (5 หลัก)', 'inputmode="numeric" maxlength="5" autocomplete="username" pattern="\\d{5}" required')
-      + (c.studentLogin === 'code+birth' ? `<div class="mb-3"><label class="form-label">วันเกิด</label>${dobHtml('lgDob', '')}<div class="invalid-msg" data-err="lgDob"></div></div>` : '')
       : `<div class="mb-3"><label class="form-label" for="lgUser">Username</label><input class="form-control" id="lgUser" autocomplete="username" required><div class="invalid-msg" data-err="lgUser"></div></div>` + pwInput('lgPass', 'Password', 'autocomplete="current-password" required')}
     <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="lgRemember"><label class="form-check-label" for="lgRemember">จดจำฉัน (30 วัน)</label></div>
     <button class="btn btn-primary w-100 btn-lg" type="submit"><i class="fa-solid fa-right-to-bracket me-2"></i>เข้าสู่ระบบ</button>
@@ -659,10 +760,9 @@ function renderLogin(tab = AUTH_TAB) {
     const remember = $('#lgRemember').checked, err = (k, m) => { $(`[data-err="${k}"]`).textContent = m; return !m; };
     let payload;
     if (stu) {
-      const code = $('#lgCode').value.trim(), dob = $('#lgDob') ? readDob('lgDob') : '';
-      const ok = err('lgCode', /^\d{5}$/.test(code) ? '' : 'กรุณากรอกตัวเลข 5 หลัก') & ($('#lgDob') ? err('lgDob', dob && dob !== 'invalid' ? '' : 'กรุณาเลือกวันเกิด') : true);
-      if (!ok) return;
-      payload = { mode: 'student', studentCode: code, birthDate: dob, remember };
+      const code = $('#lgCode').value.trim();
+      if (!err('lgCode', /^\d{5}$/.test(code) ? '' : 'กรุณากรอกตัวเลข 5 หลัก')) return;
+      payload = { mode: 'student', studentCode: code, remember };
     } else {
       const u = $('#lgUser').value.trim(), p = $('#lgPass').value;
       if (!(err('lgUser', u ? '' : 'กรุณากรอก Username') & err('lgPass', p ? '' : 'กรุณากรอกรหัสผ่าน'))) return;
@@ -693,8 +793,8 @@ function wizard(role) {
         <input class="form-control mt-2 ${d.prefix && !PREFIX.includes(d.prefix) ? '' : 'hidden'}" id="wPrefixOther" placeholder="ระบุคำนำหน้า" value="${esc(PREFIX.includes(d.prefix) ? '' : d.prefix || '')}"><div class="invalid-msg" data-err="prefix"></div></div>
       <div class="mb-3"><label class="form-label" for="wName">ชื่อ-สกุล</label><input class="form-control" id="wName" value="${esc(d.fullName || '')}" placeholder="เช่น สมชาย ใจดี"><div class="invalid-msg" data-err="fullName"></div></div>
       <div class="mb-3"><label class="form-label">วัน/เดือน/ปีเกิด</label>${dobHtml('wDob', d.birthDate)}<div class="invalid-msg" data-err="birthDate"></div></div>
-      ${stu && S.classes.length ? `<div class="row g-2"><div class="col-6 mb-3"><label class="form-label" for="wGrade">ระดับชั้น</label><select class="form-select" id="wGrade"><option value="">เลือก</option>${opt(grades(), d.grade)}</select><div class="invalid-msg" data-err="grade"></div></div>
-        <div class="col-6 mb-3"><label class="form-label" for="wRoom">ห้อง</label><select class="form-select" id="wRoom">${opt(rooms(d.grade), d.room)}</select></div></div>` : ''}`
+      ${stu ? `<div class="row g-2"><div class="col-6 mb-3"><label class="form-label" for="wGrade">ระดับชั้น</label><select class="form-select" id="wGrade"><option value="">เลือก</option>${opt(grades(), d.grade)}</select><div class="invalid-msg" data-err="grade"></div></div>
+        <div class="col-6 mb-3"><label class="form-label" for="wRoom">ห้อง</label><select class="form-select" id="wRoom">${opt(d.grade ? rooms(d.grade) : [['', 'เลือกชั้นก่อน']], d.room)}</select></div></div>` : ''}`
       : W.step === 2 ? (stu ? `
       <div class="mb-3"><label class="form-label" for="wCode">รหัสนักเรียน (ตัวเลข 5 หลัก)</label><input class="form-control" id="wCode" inputmode="numeric" maxlength="5" value="${esc(d.studentCode || '')}"><div class="form-text" id="wCodeMsg"></div><div class="invalid-msg" data-err="studentCode"></div></div>`
       : `<div class="mb-3"><label class="form-label" for="wUser">Username</label><input class="form-control" id="wUser" autocomplete="username" value="${esc(d.username || '')}" placeholder="a-z 0-9 . _ (4–20 ตัว)"><div class="form-text" id="wUserMsg"></div><div class="invalid-msg" data-err="username"></div></div>
@@ -789,7 +889,7 @@ function forgotCode() {
  * ========================================================= */
 const NAV = {
   student: [['home', 'หน้าหลัก', 'fa-house', 1], ['courses', 'รายวิชา', 'fa-book-open', 1], ['assignments', 'งานของฉัน', 'fa-list-check', 1], ['announcements', 'ประกาศ', 'fa-bullhorn', 1], ['search', 'ค้นหา', 'fa-magnifying-glass'], ['profile', 'โปรไฟล์', 'fa-user', 1]],
-  admin: [['dash', 'แดชบอร์ด', 'fa-chart-pie', 1], ['users', 'ผู้ใช้งาน', 'fa-users', 1], ['classes', 'ระดับชั้น/หมวดหมู่', 'fa-layer-group'], ['acourses', 'รายวิชา/บทเรียน', 'fa-book', 1],
+  admin: [['dash', 'แดชบอร์ด', 'fa-chart-pie', 1], ['users', 'ผู้ใช้งาน', 'fa-users', 1], ['classes', 'ชั้นเรียน/ประเภทงาน', 'fa-layer-group'], ['acourses', 'รายวิชา/บทเรียน', 'fa-book', 1],
     ['aassign', 'งานที่มอบหมาย', 'fa-clipboard-check', 1], ['aann', 'ประกาศ', 'fa-bullhorn'], ['reports', 'รายงาน', 'fa-file-export'], ['settings', 'ตั้งค่าระบบ', 'fa-gear', 1]]
 };
 const PAGES = {};
@@ -807,6 +907,9 @@ function enterApp() {
 }
 function renderMe() {
   const u = S.user;
+  $('#sideUser').innerHTML = `${avatarHtml(u, 44)}<div class="meta"><small>สวัสดี</small><b>${esc(u.prefix + u.fullName)}</b><small>${u.role === 'student' ? 'รหัส ' + esc(u.studentCode) + ' · ' + esc(u.grade || '-') + (u.room ? '/' + esc(u.room) : '') : 'Admin(ครูผู้สอน)'}</small>
+    <span class="online"><i></i> กำลังใช้งาน</span><small data-clock></small></div>`;
+  tickClock();
   $('#meAvatar').innerHTML = avatarHtml(u); $('#meName').textContent = u.fullName;
   $('#bannerBox').innerHTML = u.role === 'admin' && u.mustChangePassword === 'true'
     ? `<div class="banner"><i class="fa-solid fa-shield-halved"></i><div class="flex-fill">คุณยังใช้รหัสผ่านเริ่มต้นอยู่ กรุณาเปลี่ยน Username/รหัสผ่านเพื่อความปลอดภัย</div><button class="btn btn-sm btn-dark" data-go="settings" data-tab="account">เปลี่ยนเลย</button></div>` : '';
@@ -844,10 +947,11 @@ function localLogout() {
   document.body.className = 'auth';
   $('#appView').classList.add('hidden'); $('#authView').classList.remove('hidden');
   bootstrap.Modal.getInstance('#modal')?.hide();
-  renderLogin();
+  CACHE.clear();
+  renderLogin('student');
 }
 function stopTimers() { S.timers.forEach(t => clearInterval(t)); S.timers = []; (S.onLeave || []).forEach(f => { try { f(); } catch (e) {} }); S.onLeave = []; Object.values(S.charts || {}).forEach(c => c.destroy()); S.charts = {}; }
-function go(page, params = {}) {
+function go(page, params = {}, opt2 = {}) {
   if (!PAGES[page]) page = S.mode === 'admin' ? 'dash' : 'home';
   if (PAGES[page].admin && S.mode !== 'admin') page = 'home';
   stopTimers();
@@ -858,13 +962,14 @@ function go(page, params = {}) {
   $('#fab').classList.add('hidden'); $('#fab').onclick = null;
   document.body.classList.remove('side-open'); fixToggleIcon();
   const el = $('#page');
-  el.style.animation = 'none'; el.offsetHeight; el.style.animation = '';
-  el.innerHTML = skeleton();
-  window.scrollTo({ top: 0 });
-  Loader.show('กำลังโหลดหน้า...');
+  el.onclick = null; // ล้าง handler ของหน้าก่อน (สาเหตุ error "reading 'id'")
+  const y = window.scrollY;
+  if (!opt2.quiet) { el.style.animation = 'none'; el.offsetHeight; el.style.animation = ''; el.innerHTML = skeleton(); window.scrollTo({ top: 0 }); }
+  let shown = false; const lt = opt2.quiet ? 0 : setTimeout(() => { shown = true; Loader.show('กำลังโหลดหน้า...'); }, 180);
   Promise.resolve().then(() => PAGES[page].render(el, S.params))
+    .then(() => { if (opt2.quiet) window.scrollTo({ top: y }); })
     .catch(e => { el.innerHTML = `<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><div class="mb-3">${esc(e.message)}</div><button class="btn btn-primary" id="retryBtn"><i class="fa-solid fa-rotate-right"></i> ลองใหม่</button></div>`; $('#retryBtn').onclick = () => go(page, params); })
-    .finally(() => Loader.hide());
+    .finally(() => { clearTimeout(lt); if (shown) Loader.hide(); });
 }
 function fab(label, fn) { const f = $('#fab'); f.classList.remove('hidden'); f.setAttribute('aria-label', label); f.title = label; f.onclick = fn; }
 function chart(id, cfg) {
@@ -909,11 +1014,8 @@ const coverHtml = (c, icon = 'fa-book-open') => {
 const statCard = (icon, val, label, color = '') => `<div class="card-x stat"><div class="ic" style="${color}"><i class="fa-solid ${icon}"></i></div><div><b>${val}</b><small>${label}</small></div></div>`;
 
 PAGES.home = { async render(el) {
-  const d = await apiQ('studentHome'), s = d.stats, u = S.user;
-  el.innerHTML = `
-  <div class="card-x mb-3 text-white" style="background:linear-gradient(120deg,#1e3a8a,#2563eb,#0ea5e9);border:0">
-    <div class="d-flex align-items-center gap-3">${avatarHtml(u, 56)}<div><div class="opacity-75">สวัสดี</div><h4 class="m-0 fw-bold">${esc(u.prefix + u.fullName)}</h4>
-    <small class="opacity-75">${u.role === 'student' ? `รหัส ${esc(u.studentCode)} · ${esc(u.grade || '')}${u.room ? '/' + esc(u.room) : ''}` : 'กำลังดูในโหมดนักเรียน'}</small></div></div></div>
+  const d = await apiC('studentHome'), s = d.stats, u = S.user;
+  el.innerHTML = heroHtml(u.role === 'admin' ? 'กำลังดูในโหมดนักเรียน' : '') + `
   <div class="grid g4 mb-3">
     ${statCard('fa-chart-line', s.percent + '%', 'ความคืบหน้าการเรียน')}
     ${statCard('fa-book-open-reader', `${s.lessonsDone}/${s.lessonsTotal}`, 'บทเรียนที่เรียนแล้ว')}
@@ -937,7 +1039,7 @@ PAGES.home = { async render(el) {
 } };
 
 PAGES.courses = { async render(el) {
-  const list = await apiQ('listCourses');
+  const list = await apiC('listCourses');
   el.innerHTML = `<div class="page-head"><h3>รายวิชาของฉัน</h3><input class="form-control" style="max-width:320px" type="search" placeholder="ค้นหารายวิชา..." id="cq" aria-label="ค้นหารายวิชา"></div><div id="cl"></div>`;
   const draw = () => {
     const q = $('#cq').value.trim().toLowerCase(), f = list.filter(c => !q || (c.name + c.code + c.category + c.teacher).toLowerCase().includes(q));
@@ -950,7 +1052,7 @@ PAGES.courses = { async render(el) {
   $('#cq').addEventListener('input', debounce(draw, 300)); draw();
 } };
 PAGES.course = { parent: 'courses', async render(el, p) {
-  const d = await apiQ('getCourse', p.id), c = d.course;
+  const d = await apiC('getCourse', p.id), c = d.course;
   $('#pageTitle').textContent = c.name;
   const units = {}; d.lessons.forEach(l => (units[l.unit || 'บทเรียน'] = units[l.unit || 'บทเรียน'] || []).push(l));
   let n = 0;
@@ -1030,7 +1132,7 @@ PAGES.lesson = { parent: 'courses', async render(el, p) {
 
 /* ---------------- งานของฉัน ---------------- */
 PAGES.assignments = { async render(el) {
-  const list = await apiQ('listAssignments');
+  const list = await apiC('listAssignments');
   let tab = 'all';
   el.innerHTML = `<div class="page-head"><h3>งานของฉัน</h3></div><ul class="nav nav-pills gap-2 mb-3 flex-nowrap overflow-auto">${[['all', 'ทั้งหมด'], ['todo', 'ค้างส่ง'], ['sent', 'ส่งแล้ว'], ['graded', 'ตรวจแล้ว']].map(t => `<li class="nav-item"><button class="nav-link ${t[0] === tab ? 'active' : ''}" data-t="${t[0]}">${t[1]} <span class="badge bg-light text-dark">${list.filter(a => flt(t[0], a)).length}</span></button></li>`).join('')}</ul><div id="al"></div>`;
   function flt(t, a) { return t === 'all' || (t === 'todo' && !a.sub) || (t === 'sent' && a.sub && a.status !== 'graded') || (t === 'graded' && a.status === 'graded'); }
@@ -1055,13 +1157,12 @@ PAGES.assignments = { async render(el) {
 function submitModal(a) {
   const key = 'cp_draft_' + S.user.id + '_' + a.id, draft = J(store.get(key), null);
   const s = a.sub || {}, init = draft || { text: s.text || '', files: J(s.files), driveLink: s.driveLink || '' };
-  const F = [{ k: 'text', label: 'ข้อความ / คำตอบ', type: 'textarea', rows: 5 }, { k: 'files', label: 'แนบไฟล์', type: 'files' },
+  const F = [{ k: 'text', label: 'ข้อความ / คำตอบ', type: 'textarea', rows: 5 }, { k: 'files', label: 'แนบไฟล์', type: 'files', folder: (a.type || 'งาน') + '/งานที่นักเรียนส่ง' },
     { k: 'driveLink', label: 'ลิงก์ Google Drive (ไฟล์ใหญ่ให้แนบเป็นลิงก์)', valid: v => v && !/^https:\/\/(drive|docs)\.google\.com\//.test(v) ? 'ต้องเป็นลิงก์ Google Drive/Docs' : '' }];
   const m = modal((a.sub ? 'แก้ไขงาน: ' : 'ส่งงาน: ') + a.title, `<div class="summary mb-3"><div><span>กำหนดส่ง</span><b>${thDate(a.dueAt, true)}</b></div><div><span>คะแนนเต็ม</span><b>${esc(a.maxScore)}</b></div></div>
     <div class="mb-3">${linkify(a.description)}</div>${filesHtml(J(a.attachments))}<hr>${formHtml(F, init)}<div class="small text-muted" id="dSaved"></div>`,
     `<button class="btn btn-soft" data-bs-dismiss="modal">ยกเลิก</button>${a.sub ? '<button class="btn btn-outline-danger" id="unsub"><i class="fa-solid fa-trash"></i> ยกเลิกการส่ง</button>' : ''}<button class="btn btn-primary" id="doSub"><i class="fa-solid fa-paper-plane"></i> ${a.sub ? 'บันทึกการแก้ไข' : 'ส่งงาน'}</button>`);
-  $('[data-drop]', m.body).dataset.kind = 'submission';
-  bindForm(m.body, F);
+  bindForm(m.body, F); m.body.__keep = true; // ไฟล์ในฉบับร่างเก็บไว้ใช้ต่อ
   const autosave = debounce(() => { if (!$('#dSaved')) return; store.set(key, JSON.stringify(readForm(m.body, F))); $('#dSaved').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกฉบับร่างอัตโนมัติแล้ว ' + new Date().toLocaleTimeString('th-TH'); }, 800);
   const ac = new AbortController();
   m.body.addEventListener('input', autosave, { signal: ac.signal }); m.body.addEventListener('change', autosave, { signal: ac.signal });
@@ -1081,7 +1182,7 @@ function submitModal(a) {
 
 /* ---------------- ประกาศ (Infinite Scroll) ---------------- */
 PAGES.announcements = { async render(el) {
-  const list = await apiQ('listAnnouncements');
+  const list = await apiC('listAnnouncements');
   let shown = 0;
   el.innerHTML = `<div class="page-head"><h3>ประกาศ</h3></div><div id="annList" class="d-flex flex-column gap-3"></div><div id="annMore" class="py-3 text-center text-muted"></div>`;
   if (!list.length) { $('#annList').innerHTML = empty('fa-bullhorn', 'ยังไม่มีประกาศ'); return; }
@@ -1098,7 +1199,7 @@ const annCard = a => `<div class="card-x"><div class="d-flex gap-2 mb-2 flex-wra
 
 /* ---------------- ค้นหา ---------------- */
 PAGES.search = { async render(el) {
-  const courses = await apiQ('listCourses');
+  const courses = await apiC('listCourses');
   el.innerHTML = `<div class="page-head"><h3>ค้นหา</h3></div>
   <div class="card-x mb-3"><input class="form-control form-control-lg mb-2" type="search" id="sq" placeholder="ค้นหาบทเรียน วิชา ครูผู้สอน คำสำคัญ หมวดหมู่..." aria-label="คำค้นหา">
   <div class="row g-2"><div class="col-6 col-md-3"><select class="form-select" id="sc" aria-label="รายวิชา"><option value="">ทุกรายวิชา</option>${opt(courses.map(c => [c.id, c.name]))}</select></div>
@@ -1122,28 +1223,28 @@ PAGES.search = { async render(el) {
 /* ---------------- โปรไฟล์ ---------------- */
 PAGES.profile = { async render(el) {
   const u = S.user, stu = u.role === 'student';
-  const F = [{ k: 'avatar', label: 'รูปโปรไฟล์', type: 'image', w: 200, h: 200 }, { k: 'prefix', label: 'คำนำหน้าชื่อ', req: true, col: 'col-md-4' }, { k: 'fullName', label: 'ชื่อ-สกุล', req: true, col: 'col-md-8' },
+  const F = [{ k: 'avatar', label: 'รูปโปรไฟล์', type: 'image', w: 400, h: 400, folder: 'รูปภาพ/โปรไฟล์' }, { k: 'prefix', label: 'คำนำหน้าชื่อ', req: true, col: 'col-md-4' }, { k: 'fullName', label: 'ชื่อ-สกุล', req: true, col: 'col-md-8' },
     { k: 'email', label: 'อีเมล (สำหรับรับการแจ้งเตือน)', type: 'email', valid: v => v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v) ? 'อีเมลไม่ถูกต้อง' : '' }]
     .concat(stu ? [{ k: 'studentCode', label: 'รหัสนักเรียน (ใช้เข้าสู่ระบบ)', req: true, attrs: 'inputmode="numeric" maxlength="5"', valid: v => /^\d{5}$/.test(v) ? '' : 'ต้องเป็นตัวเลข 5 หลัก' }] : []);
   el.innerHTML = `<div class="page-head"><h3>โปรไฟล์ของฉัน</h3></div><div class="row g-3"><div class="col-lg-4"><div class="card-x text-center">${avatarHtml(u, 96)}<h5 class="fw-bold mt-2 mb-0">${esc(u.prefix + u.fullName)}</h5>
     <div class="text-muted">${stu ? 'นักเรียน · รหัส ' + esc(u.studentCode) : 'Admin(ครูผู้สอน) · ' + esc(u.username)}</div><div class="small text-muted mt-2">วันเกิด ${thDate(u.birthDate)}<br>ชั้น ${esc(u.grade || '-')}${u.room ? '/' + esc(u.room) : ''}<br>เข้าระบบล่าสุด ${thDate(u.lastLoginAt, true)}</div>
     ${!stu ? '<button class="btn btn-soft mt-3" data-go="settings" data-tab="account"><i class="fa-solid fa-key"></i> เปลี่ยน Username/รหัสผ่าน</button>' : ''}</div></div>
     <div class="col-lg-8"><div class="card-x"><form id="pf">${formHtml(F, u)}<button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button></form></div></div></div>`;
-  bindForm(el, F);
+  bindForm(el, F); S.onLeave.push(() => finalizeUploads(el, null));
   $('#pf').onsubmit = async e => {
     e.preventDefault();
     const d = validate($('#pf'), F); if (!d) return;
     if (!await confirmBox({ title: 'ยืนยันการแก้ไขโปรไฟล์', html: `บันทึกข้อมูลของ <b>${esc(d.prefix + d.fullName)}</b>${stu && d.studentCode !== u.studentCode ? `<br><span class="text-danger">รหัสนักเรียนจะเปลี่ยนเป็น ${esc(d.studentCode)} — ใช้รหัสใหม่ในการเข้าสู่ระบบครั้งต่อไป</span>` : ''}` })) return;
-    S.user = await api('updateProfile', d); renderMe(); toast('บันทึกโปรไฟล์แล้ว'); go('profile');
+    S.user = await api('updateProfile', d); finalizeUploads(el, d); renderMe(); toast('บันทึกโปรไฟล์แล้ว'); go('profile');
   };
 } };
 
 /* =========================================================
  * หน้าสำหรับ Admin(ครูผู้สอน)
  * ========================================================= */
-async function lists(force) {
-  if (force || !S.cache.at || Date.now() - S.cache.at > 30000) {
-    const [courses, categories, users] = await Promise.all([apiQ('list', 'Courses'), apiQ('list', 'Categories'), apiQ('listUsers')]);
+async function lists() {
+  {
+    const [courses, categories, users] = await apiB([['list', ['Courses']], ['list', ['Categories']], ['listUsers', []]]);
     Object.assign(S.cache, { courses, categories, users, admins: users.filter(u => u.role === 'admin'), at: Date.now() });
   }
   return S.cache;
@@ -1158,26 +1259,37 @@ const FIELDS = {
     { k: 'category', label: 'หมวดหมู่', type: 'select', opts: () => [['', '- ไม่ระบุ -']].concat(S.cache.categories.map(c => c.name)), col: 'col-md-4' },
     { k: 'grade', label: 'ระดับชั้น', type: 'select', opts: gradeOpts, col: 'col-md-4' }, { k: 'room', label: 'ห้องเรียน', type: 'select', opts: roomOpts, col: 'col-md-4' },
     { k: 'teacher', label: 'ครูผู้สอน', col: 'col-md-8', def: S.user.prefix + S.user.fullName }, { k: 'order', label: 'ลำดับ', type: 'number', col: 'col-md-4' },
-    { k: 'description', label: 'คำอธิบายรายวิชา', type: 'textarea' }, { k: 'cover', label: 'รูปปก', type: 'image' }],
+    { k: 'description', label: 'คำอธิบายรายวิชา', type: 'textarea' }, { k: 'cover', label: 'รูปปก', type: 'image', folder: 'รูปภาพ/ปกรายวิชา' }],
   Lessons: () => [{ k: 'courseId', label: 'รายวิชา', type: 'select', req: true, opts: () => S.cache.courses.map(c => [c.id, c.name]) },
     { k: 'unit', label: 'หน่วยการเรียน', col: 'col-md-8', help: 'เช่น หน่วยที่ 1 แนวคิดเชิงคำนวณ (บทเรียนในหน่วยเดียวกันจะถูกจัดกลุ่ม)' }, { k: 'order', label: 'ลำดับบทเรียน', type: 'number', col: 'col-md-4' },
     { k: 'title', label: 'ชื่อบทเรียน (หัวข้อย่อย)', req: true }, { k: 'description', label: 'คำอธิบาย / เนื้อหา', type: 'textarea', rows: 6 },
-    { k: 'cover', label: 'รูปปก', type: 'image' }, { k: 'videoUrl', label: 'วิดีโอ', type: 'video', help: 'รองรับ YouTube, Vimeo, Google Drive หรืออัปโหลดไฟล์วิดีโอ (ไม่เกิน 20 MB)' },
+    { k: 'cover', label: 'รูปปก', type: 'image', folder: 'รูปภาพ/ปกบทเรียน' }, { k: 'videoUrl', label: 'วิดีโอ', type: 'video', folder: 'วิดีโอ/{course}', help: 'รองรับ YouTube, Vimeo, Google Drive หรืออัปโหลดไฟล์วิดีโอ (สูงสุด 2 GB)' },
     { k: 'videoDuration', label: 'ความยาววิดีโอ', col: 'col-md-6', attrs: 'placeholder="เช่น 12:30"' }, { k: 'duration', label: 'ระยะเวลาเรียน (นาที)', type: 'number', col: 'col-md-6' },
-    { k: 'attachments', label: 'เอกสารประกอบ / ไฟล์ดาวน์โหลด (PDF, Word, PowerPoint, รูป, ZIP)', type: 'files' }, { k: 'links', label: 'ลิงก์ภายนอก (เว็บไซต์ / Google Drive / YouTube)', type: 'links' },
+    { k: 'attachments', label: 'เอกสารประกอบ / ไฟล์ดาวน์โหลด (PDF, Word, PowerPoint, รูป, ZIP)', type: 'files', folder: 'บทเรียน/{course}' }, { k: 'links', label: 'ลิงก์ภายนอก (เว็บไซต์ / Google Drive / YouTube)', type: 'links' },
     { k: 'publishAt', label: 'วันที่เผยแพร่ (เว้นว่าง = ทันที)', type: 'datetime', col: 'col-md-6' }, { k: 'closeAt', label: 'วันที่ปิดการเข้าถึง (เว้นว่าง = ไม่ปิด)', type: 'datetime', col: 'col-md-6', valid: (v, o) => v && o.publishAt && v <= o.publishAt ? 'ต้องหลังวันเผยแพร่' : '' }],
   Assignments: () => [{ k: 'courseId', label: 'รายวิชา', type: 'select', req: true, opts: () => S.cache.courses.map(c => [c.id, c.name]) },
-    { k: 'type', label: 'ประเภท', type: 'select', opts: ['การบ้าน', 'ใบงาน', 'แบบฝึกหัด'], col: 'col-md-4' }, { k: 'title', label: 'ชื่องาน', req: true, col: 'col-md-8' },
-    { k: 'description', label: 'รายละเอียด / คำสั่ง', type: 'textarea', rows: 5 }, { k: 'attachments', label: 'ไฟล์แนบ', type: 'files' },
+    { k: 'type', label: 'ประเภท', type: 'select', opts: aTypes, addable: true, col: 'col-md-4' }, { k: 'title', label: 'ชื่องาน', req: true, col: 'col-md-8' },
+    { k: 'description', label: 'รายละเอียด / คำสั่ง', type: 'textarea', rows: 5 }, { k: 'attachments', label: 'ไฟล์แนบ', type: 'files', folder: '{type}/ไฟล์จากครู' },
     { k: 'dueAt', label: 'วันและเวลาส่ง', type: 'datetime', req: true, col: 'col-md-6' }, { k: 'maxScore', label: 'คะแนนเต็ม', type: 'number', req: true, def: 10, col: 'col-md-6', valid: v => +v > 0 ? '' : 'ต้องมากกว่า 0' }],
   Announcements: () => [{ k: 'type', label: 'ประเภท', type: 'select', opts: ['ข่าวสาร', 'แจ้งกำหนดส่ง', 'แจ้งเปลี่ยนแปลง', 'แจ้งสอบ'], col: 'col-md-4' }, { k: 'title', label: 'หัวข้อ', req: true, col: 'col-md-8' },
-    { k: 'body', label: 'รายละเอียด', type: 'textarea', rows: 5 }, { k: 'image', label: 'รูปภาพ', type: 'image', w: 900, h: 600 }, { k: 'attachments', label: 'ไฟล์แนบ', type: 'files' },
+    { k: 'body', label: 'รายละเอียด', type: 'textarea', rows: 5 }, { k: 'image', label: 'รูปภาพ', type: 'image', w: 1600, h: 1200, folder: 'รูปภาพ/ประกาศ' }, { k: 'attachments', label: 'ไฟล์แนบ', type: 'files', folder: 'ประกาศ' },
     { k: 'courseId', label: 'เฉพาะรายวิชา', type: 'select', opts: () => [['', 'ทุกรายวิชา']].concat(S.cache.courses.map(c => [c.id, c.name])), col: 'col-md-4' },
     { k: 'grade', label: 'ระดับชั้น', type: 'select', opts: gradeOpts, col: 'col-md-4' }, { k: 'room', label: 'ห้อง', type: 'select', opts: roomOpts, col: 'col-md-4' },
     { k: 'pinned', label: 'ปักหมุดประกาศ', type: 'check' }],
   Classes: () => [{ k: 'grade', label: 'ระดับชั้น', req: true, col: 'col-md-5', attrs: 'placeholder="เช่น ม.1"' }, { k: 'room', label: 'ห้อง', col: 'col-md-4', attrs: 'placeholder="เช่น 1"' }, { k: 'order', label: 'ลำดับ', type: 'number', col: 'col-md-3' }],
   Categories: () => [{ k: 'name', label: 'ชื่อหมวดหมู่', req: true }]
 };
+function aTypes() { return String(S.config.assignmentTypes || 'การบ้าน,ใบงาน,แบบฝึกหัด,สรุปเนื้อหา').split(',').filter(Boolean); }
+async function saveTypes(list) { const v = list.join(','); await api('saveSettings', { config: { assignmentTypes: v } }); S.config.assignmentTypes = v; }
+async function addAssignmentType(select) {
+  const r = await Swal.fire({ title: 'เพิ่มประเภทงาน', input: 'text', inputPlaceholder: 'เช่น โครงงาน, รายงาน, สอบย่อย', showCancelButton: true, confirmButtonText: 'เพิ่ม', cancelButtonText: 'ยกเลิก',
+    inputValidator: v => { v = String(v).trim(); return !v ? 'กรุณาพิมพ์ชื่อประเภท' : /[,/\\]/.test(v) ? 'ห้ามใช้เครื่องหมาย , / \\' : aTypes().includes(v) ? 'มีประเภทนี้แล้ว' : null; } });
+  if (!r.isConfirmed) return;
+  const v = r.value.trim();
+  await saveTypes(aTypes().concat(v));
+  if (select) { select.insertAdjacentHTML('beforeend', `<option value="${esc(v)}">${esc(v)}</option>`); select.value = v; }
+  toast('เพิ่มประเภท "' + v + '" แล้ว — สร้างโฟลเดอร์ใน Drive ให้อัตโนมัติเมื่อมีการอัปโหลด');
+}
 const LABEL = { Courses: 'รายวิชา', Lessons: 'บทเรียน', Assignments: 'งาน', Announcements: 'ประกาศ', Classes: 'ระดับชั้น/ห้อง', Categories: 'หมวดหมู่' };
 const nameOf = (e, r) => r.name || r.title || (r.grade ? r.grade + (r.room ? '/' + r.room : '') : '');
 async function crudForm(entity, row = {}, after) {
@@ -1191,7 +1303,7 @@ async function crudForm(entity, row = {}, after) {
     if (!await confirmBox({ title: (isNew ? 'ยืนยันการเพิ่ม' : 'ยืนยันการแก้ไข') + LABEL[entity], html: `<b>${esc(nameOf(entity, d))}</b>` + (isNew && ['Lessons', 'Assignments', 'Announcements'].includes(entity) ? '<br><small class="text-muted">ระบบจะแจ้งเตือนนักเรียนที่เกี่ยวข้อง</small>' : '') })) return;
     if (row.id) d.id = row.id;
     const r = await apiMsg('กำลังบันทึก...', 'save', entity, d);
-    m.hide(); toast((isNew ? 'เพิ่ม' : 'บันทึก') + LABEL[entity] + 'แล้ว'); S.cache.at = 0; after && after(r);
+    finalizeUploads(m.body, d); m.hide(); toast((isNew ? 'เพิ่ม' : 'บันทึก') + LABEL[entity] + 'แล้ว'); S.cache.at = 0; after && after(r);
   };
 }
 async function crudDelete(entity, row, warn, after) {
@@ -1211,8 +1323,8 @@ function bindActs(root, items, entity, warn, reload) {
 /* ---------------- Dashboard ---------------- */
 PAGES.dash = { admin: true, async render(el) {
   const draw = async (quiet) => {
-    const d = await apiQ('adminDashboard'), c = d.cards;
-    const html = `<div class="page-head"><h3>แดชบอร์ดครูผู้สอน</h3><span class="chip ok"><i class="fa-solid fa-circle fa-2xs"></i> อัปเดตอัตโนมัติทุก 60 วินาที</span></div>
+    const d = await (quiet ? apiQ('adminDashboard') : apiC('adminDashboard')), c = d.cards;
+    const html = heroHtml() + `<div class="page-head"><h3>แดชบอร์ดครูผู้สอน</h3><span class="chip ok"><i class="fa-solid fa-circle fa-2xs"></i> อัปเดตอัตโนมัติทุก 60 วินาที</span></div>
     ${c.pendingUsers ? `<div class="banner mx-0 mb-3"><i class="fa-solid fa-user-clock"></i><div class="flex-fill">มีผู้สมัครรออนุมัติ ${c.pendingUsers} คน</div><button class="btn btn-sm btn-dark" data-go="users">ตรวจสอบ</button></div>` : ''}
     <div class="grid g4 mb-3">${statCard('fa-book', c.courses, 'รายวิชา')}${statCard('fa-book-open-reader', c.lessons, 'จำนวนบทเรียน', 'background:#ede9fe;color:#7c3aed')}${statCard('fa-user-graduate', c.students, 'จำนวนผู้เรียน', 'background:#dcfce7;color:#15803d')}${statCard('fa-clipboard-question', c.ungraded, 'งานที่ยังไม่ตรวจ', 'background:#fee2e2;color:#b91c1c')}</div>
     <div class="grid g2"><div class="card-x"><h5 class="fw-bold">สถิติการเข้าเรียน (14 วัน)</h5><canvas id="chLogin" height="200"></canvas></div>
@@ -1232,7 +1344,7 @@ function stopCharts() { Object.values(S.charts || {}).forEach(c => c.destroy());
 
 /* ---------------- ผู้ใช้งาน ---------------- */
 PAGES.users = { admin: true, async render(el) {
-  const users = await apiQ('listUsers'); S.cache.users = users; S.cache.admins = users.filter(u => u.role === 'admin');
+  const users = await apiC('listUsers'); S.cache.users = users; S.cache.admins = users.filter(u => u.role === 'admin');
   el.innerHTML = `<div class="page-head"><h3>จัดการผู้ใช้งาน</h3><button class="btn btn-soft" id="impBtn"><i class="fa-solid fa-file-import"></i> นำเข้า Excel/CSV</button><button class="btn btn-soft" id="expBtn"><i class="fa-solid fa-file-excel"></i> ส่งออก</button><input type="file" id="impFile" accept=".xlsx,.xls,.csv" class="hidden"></div><div id="ul"></div>`;
   const ST = { active: ['ใช้งาน', 'ok'], pending: ['รออนุมัติ', 'warn'], disabled: ['ระงับ', 'danger'] };
   listView($('#ul'), { items: users, size: 15,
@@ -1309,11 +1421,21 @@ async function roleForm(u) {
 
 /* ---------------- ระดับชั้น / หมวดหมู่ ---------------- */
 PAGES.classes = { admin: true, async render(el) {
-  const [cls, cats] = await Promise.all([apiQ('list', 'Classes'), apiQ('list', 'Categories')]);
+  const [cls, cats] = await apiB([['list', ['Classes']], ['list', ['Categories']]]);
   S.classes = cls;
   el.innerHTML = `<div class="page-head"><h3>ระดับชั้น / ห้องเรียน / หมวดหมู่</h3></div><div class="grid g2">
     <div class="card-x"><div class="d-flex mb-2"><h5 class="fw-bold flex-fill">ระดับชั้นและห้อง</h5><button class="btn btn-primary btn-sm" id="addC"><i class="fa-solid fa-plus"></i> เพิ่ม</button></div><div id="tc">${tableHtml(['ระดับชั้น', 'ห้อง', 'นักเรียน', ''], cls.map(c => [esc(c.grade), esc(c.room || '-'), '', actBtns(c.id)]))}</div><small class="text-muted">ใช้กำหนดให้นักเรียนเลือกตอนลงทะเบียน และกำหนดว่ารายวิชา/ประกาศแสดงกับชั้นใด</small></div>
-    <div class="card-x"><div class="d-flex mb-2"><h5 class="fw-bold flex-fill">หมวดหมู่รายวิชา</h5><button class="btn btn-primary btn-sm" id="addK"><i class="fa-solid fa-plus"></i> เพิ่ม</button></div><div id="tk">${tableHtml(['ชื่อหมวดหมู่', ''], cats.map(c => [esc(c.name), actBtns(c.id)]))}</div></div></div>`;
+    <div class="card-x"><div class="d-flex mb-2"><h5 class="fw-bold flex-fill">หมวดหมู่รายวิชา</h5><button class="btn btn-primary btn-sm" id="addK"><i class="fa-solid fa-plus"></i> เพิ่ม</button></div><div id="tk">${tableHtml(['ชื่อหมวดหมู่', ''], cats.map(c => [esc(c.name), actBtns(c.id)]))}</div></div>
+    <div class="card-x"><div class="d-flex mb-2"><h5 class="fw-bold flex-fill">ประเภทงานที่มอบหมาย</h5><button class="btn btn-primary btn-sm" id="addT"><i class="fa-solid fa-plus"></i> เพิ่ม</button></div>
+      <div class="d-flex flex-wrap gap-2" id="tt">${aTypes().map((t, i) => `<span class="chip info" style="font-size:.9rem;padding:6px 6px 6px 12px">${esc(t)}<button class="btn btn-sm btn-icon" style="width:28px;height:28px;min-height:28px" data-deltype="${i}" aria-label="ลบประเภท ${esc(t)}"><i class="fa-solid fa-xmark"></i></button></span>`).join('')}</div>
+      <small class="text-muted d-block mt-2">ไฟล์ที่ครูแนบและงานที่นักเรียนส่ง จะถูกเก็บแยกโฟลเดอร์ตามประเภทใน Google Drive อัตโนมัติ</small></div></div>`;
+  $('#addT').onclick = async () => { await addAssignmentType(null); go('classes'); };
+  $$('[data-deltype]').forEach(b => b.onclick = async () => {
+    const list = aTypes(), t = list[+b.dataset.deltype];
+    if (list.length <= 1) return toast('ต้องมีประเภทงานอย่างน้อย 1 ประเภท', 'warning');
+    if (!await confirmBox({ title: 'ยืนยันการลบประเภทงาน', html: `ลบประเภท <b>${esc(t)}</b> ?<br><small>งานเดิมที่ใช้ประเภทนี้ยังอยู่ และไฟล์เดิมใน Drive ไม่ถูกลบ</small>`, danger: true, confirmText: 'ลบ' })) return;
+    await saveTypes(list.filter(x => x !== t)); toast('ลบประเภทแล้ว'); go('classes');
+  });
   const users = (await lists()).users;
   $$('#tc tbody tr').forEach((tr, i) => tr.children[2].textContent = users.filter(u => u.role === 'student' && u.grade === cls[i].grade && (!cls[i].room || u.room === cls[i].room)).length + ' คน');
   const re = () => go('classes');
@@ -1325,7 +1447,7 @@ PAGES.classes = { admin: true, async render(el) {
 PAGES.acourses = { admin: true, async render(el) {
   const c = await lists(true);
   el.innerHTML = `<div class="page-head"><h3>รายวิชาและบทเรียน</h3></div><div id="cl"></div>`;
-  const lessons = await apiQ('list', 'Lessons');
+  const lessons = await apiC('list', 'Lessons');
   listView($('#cl'), { items: c.courses, filters: ownerFilter() + `<select class="form-select w-auto" data-f="grade" aria-label="ระดับชั้น"><option value="">ทุกชั้น</option>${opt(grades())}</select>`,
     onFilter: (it, r) => byOwner(it, r) && (!$('[data-f=grade]', r).value || it.grade === $('[data-f=grade]', r).value),
     headers: ['รายวิชา', 'หมวดหมู่', 'ระดับชั้น', 'บทเรียน', 'เจ้าของข้อมูล', ''], search: x => x.name + x.code + x.category + x.teacher,
@@ -1338,7 +1460,7 @@ PAGES.acourse = { admin: true, parent: 'acourses', async render(el, p) {
   const c = await lists(true), course = c.courses.find(x => x.id === p.id);
   if (!course) throw new Error('ไม่พบรายวิชา');
   $('#pageTitle').textContent = course.name;
-  const [lessons, asg] = await Promise.all([apiQ('list', 'Lessons'), apiQ('list', 'Assignments')]);
+  const [lessons, asg] = await apiB([['list', ['Lessons']], ['list', ['Assignments']]]);
   const ls = lessons.filter(l => l.courseId === course.id), as = asg.filter(a => a.courseId === course.id), n = nowStr();
   const state = l => l.publishAt && l.publishAt > n ? '<span class="chip warn">รอเผยแพร่</span>' : l.closeAt && l.closeAt <= n ? '<span class="chip danger">ปิดแล้ว</span>' : '<span class="chip ok">เผยแพร่</span>';
   el.innerHTML = `<button class="btn btn-soft mb-3" data-go="acourses"><i class="fa-solid fa-arrow-left"></i> รายวิชาทั้งหมด</button>
@@ -1367,7 +1489,7 @@ PAGES.acourse = { admin: true, parent: 'acourses', async render(el, p) {
 
 /* ---------------- งานที่มอบหมาย / ตรวจงาน ---------------- */
 PAGES.aassign = { admin: true, async render(el) {
-  const c = await lists(true), asg = await apiQ('list', 'Assignments');
+  const c = await lists(true), asg = await apiC('list', 'Assignments');
   const cn = id => (c.courses.find(x => x.id === id) || {}).name || '-';
   el.innerHTML = `<div class="page-head"><h3>งานที่มอบหมาย</h3></div><div id="al"></div>`;
   listView($('#al'), { items: asg.sort((a, b) => b.dueAt.localeCompare(a.dueAt)), filters: ownerFilter() + `<select class="form-select w-auto" data-f="course" aria-label="รายวิชา"><option value="">ทุกรายวิชา</option>${opt(c.courses.map(x => [x.id, x.name]))}</select>`,
@@ -1379,7 +1501,7 @@ PAGES.aassign = { admin: true, async render(el) {
   fab('สร้างงาน', () => crudForm('Assignments', {}, () => go('aassign')));
 } };
 PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
-  const d = await apiQ('listSubmissions', p.id), a = d.assignment;
+  const d = await apiC('listSubmissions', p.id), a = d.assignment;
   $('#pageTitle').textContent = 'ตรวจงาน: ' + a.title;
   const sent = d.rows.filter(r => r.sub).length, graded = d.rows.filter(r => r.status === 'graded').length;
   el.innerHTML = `<button class="btn btn-soft mb-3" data-go="aassign"><i class="fa-solid fa-arrow-left"></i> งานทั้งหมด</button>
@@ -1410,7 +1532,7 @@ PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
 /* ---------------- ประกาศ (Admin) ---------------- */
 PAGES.aann = { admin: true, async render(el) {
   await lists(true);
-  const list = await apiQ('list', 'Announcements');
+  const list = await apiC('list', 'Announcements');
   el.innerHTML = `<div class="page-head"><h3>จัดการประกาศ</h3></div><div id="nl"></div>`;
   listView($('#nl'), { items: list.sort((a, b) => (b.pinned === 'true') - (a.pinned === 'true') || b.createdAt.localeCompare(a.createdAt)), filters: ownerFilter(), onFilter: byOwner,
     headers: ['ประกาศ', 'ประเภท', 'กลุ่มเป้าหมาย', 'วันที่', 'เจ้าของข้อมูล', ''], search: a => a.title + a.body + a.type,
@@ -1454,9 +1576,8 @@ PAGES.settings = { admin: true, async render(el, p) {
   let tab = p.tab || 'general';
   el.innerHTML = `<div class="page-head"><h3>ตั้งค่าระบบ</h3></div><ul class="nav nav-pills gap-2 mb-3 flex-nowrap overflow-auto pb-1">${tabs.map(t => `<li class="nav-item"><button class="nav-link text-nowrap" data-st="${t[0]}"><i class="fa-solid ${t[2]}"></i> ${t[1]}</button></li>`).join('')}</ul><div class="card-x" id="sBody"></div>`;
   const GF = {
-    general: [{ k: 'schoolName', label: 'ชื่อโรงเรียน / ชื่อระบบ', req: true }, { k: 'welcome', label: 'ข้อความต้อนรับหน้าเข้าสู่ระบบ' }, { k: 'siteUrl', label: 'ลิงก์หน้าเว็บที่แจกนักเรียน (เช่น GitHub Pages) — ใช้แนบในอีเมลแจ้งเตือน', type: 'url', valid: v => v && !/^https:\/\//.test(v) ? 'ต้องขึ้นต้นด้วย https://' : '' }, { k: 'logo', label: 'โลโก้ (แนะนำรูปสี่เหลี่ยมจัตุรัส พื้นโปร่งใส)', type: 'image', w: 256, h: 256, png: true, contain: true }],
-    system: [{ k: 'studentLogin', label: 'วิธีเข้าสู่ระบบของนักเรียน', type: 'select', opts: [['code+birth', 'รหัสนักเรียน + วันเกิด (แนะนำ ปลอดภัยกว่า)'], ['code', 'รหัสนักเรียน 5 หลักอย่างเดียว (เดาได้ง่าย)']] },
-      { k: 'allowAdminSignup', label: 'เปิดให้สมัครบัญชีครูผู้สอนเองได้', type: 'check' }, { k: 'requireApproval', label: 'ต้องให้ Admin อนุมัติก่อนใช้งาน (บัญชีครูที่สมัครเอง)', type: 'check', help: 'แนะนำให้เปิด หากเปิดให้สมัครบัญชีครูเอง เพราะ Admin เข้าถึงข้อมูลทั้งหมดได้' },
+    general: [{ k: 'schoolName', label: 'ชื่อโรงเรียน / ชื่อระบบ', req: true }, { k: 'welcome', label: 'ข้อความต้อนรับหน้าเข้าสู่ระบบ' }, { k: 'siteUrl', label: 'ลิงก์หน้าเว็บที่แจกนักเรียน (เช่น GitHub Pages) — ใช้แนบในอีเมลแจ้งเตือน', type: 'url', valid: v => v && !/^https:\/\//.test(v) ? 'ต้องขึ้นต้นด้วย https://' : '' }, { k: 'logo', label: 'โลโก้ (แนะนำรูปสี่เหลี่ยมจัตุรัส พื้นโปร่งใส)', type: 'image', w: 512, h: 512, png: true, contain: true, folder: 'รูปภาพ/โลโก้' }],
+    system: [{ k: 'allowAdminSignup', label: 'เปิดให้สมัครบัญชีครูผู้สอนเองได้', type: 'check' }, { k: 'requireApproval', label: 'ต้องให้ Admin อนุมัติก่อนใช้งาน (บัญชีครูที่สมัครเอง)', type: 'check', help: 'แนะนำให้เปิด หากเปิดให้สมัครบัญชีครูเอง เพราะ Admin เข้าถึงข้อมูลทั้งหมดได้' },
       { k: 'sessionHours', label: 'อายุเซสชันปกติ (ชั่วโมง)', type: 'number', col: 'col-md-6' }, { k: 'rememberDays', label: 'อายุเซสชัน "จดจำฉัน" (วัน)', type: 'number', col: 'col-md-6' }],
     notify: [{ k: 'webNotify', label: 'แจ้งเตือนบนเว็บ (Web Notification + กระดิ่ง)', type: 'check' }, { k: 'emailNotify', label: 'ส่งอีเมลแจ้งเตือน (ถึงผู้ใช้ที่กรอกอีเมลไว้, โควตา Gmail ~100 ฉบับ/วัน)', type: 'check' },
       { k: 'lineToken', label: 'LINE Messaging API — Channel access token (เว้นว่าง = ไม่ใช้)', type: 'password', help: 'LINE Notify ปิดบริการแล้วตั้งแต่ 31 มี.ค. 2568 จึงใช้ LINE Official Account + Messaging API แทน (ส่งแบบ broadcast ถึงผู้ติดตาม OA)' }]
@@ -1467,11 +1588,11 @@ PAGES.settings = { admin: true, async render(el, p) {
     if (GF[tab]) {
       const F = GF[tab];
       B.innerHTML = `<form id="sf">${formHtml(F, c)}<button class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่า</button></form>`;
-      bindForm(B, F);
+      bindForm(B, F); S.onLeave.push(() => finalizeUploads(B, null));
       $('#sf').onsubmit = async e => {
         e.preventDefault(); const d = validate($('#sf'), F); if (!d) return;
         if (!await confirmBox({ title: 'ยืนยันการแก้ไขการตั้งค่า', html: 'บันทึกการตั้งค่า <b>' + esc(tabs.find(t => t[0] === tab)[1]) + '</b>' })) return;
-        await api('saveSettings', { config: d }); Object.assign(c, d); Object.assign(S.config, d); delete S.config.lineToken; applyBrand(); toast('บันทึกการตั้งค่าแล้ว');
+        await api('saveSettings', { config: d }); finalizeUploads(B, d); Object.assign(c, d); Object.assign(S.config, d); delete S.config.lineToken; applyBrand(); toast('บันทึกการตั้งค่าแล้ว');
       };
     } else if (tab === 'db') {
       B.innerHTML = `<div class="alert alert-warning rounded-4"><i class="fa-solid fa-triangle-exclamation"></i> การเปลี่ยน Google Sheet จะย้ายไปใช้ฐานข้อมูลใหม่ทันที (ข้อมูลเดิมยังอยู่ในชีตเดิม) ระบบจะสร้างชีตและหัวคอลัมน์ให้อัตโนมัติ และถ้าชีตใหม่ยังไม่มี Admin จะสร้างบัญชี admin / admin123 ให้ — ทุกคนต้องเข้าสู่ระบบใหม่</div>
@@ -1528,14 +1649,14 @@ async function askApiUrl(msg) {
 }
 (async function init() {
   Loader.show('กำลังเตรียมระบบ...');
-  if (!HAS_GAS && !API_URL()) { Loader.hide(); applyBrand(); renderLogin(); return askApiUrl(); }
+  if (!HAS_GAS && !API_URL()) { Loader.hide(); applyBrand(); renderLogin('student'); return askApiUrl(); }
   try {
     const b = await apiQ('bootstrap');
     S.config = b.config; S.classes = b.classes; S.maxMB = b.maxUploadMB; applyBrand();
     const token = store.get('cp_token'), exp = +store.get('cp_exp');
     if (token && (!exp || exp > Date.now())) {
       S.token = token; S.expiresAt = exp;
-      try { const me = await apiQ('me'); S.user = me.user; S.config = me.config; S.classes = me.classes; enterApp(); return; } catch (e) { store.del('cp_token'); S.token = null; }
+      try { const me = await apiQ('me'); S.user = me.user; S.config = me.config; S.classes = me.classes; S.maxMB = me.maxUploadMB || S.maxMB; enterApp(); return; } catch (e) { store.del('cp_token'); S.token = null; }
     }
     renderLogin();
   } catch (e) {

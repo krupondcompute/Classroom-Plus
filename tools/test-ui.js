@@ -19,6 +19,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('#toReg');
   await page.selectOption('#wPrefix', 'เด็กชาย'); await page.fill('#wName', 'ทดสอบ ระบบดี');
   const dob = await page.$$('#wDob select'); await dob[0].selectOption('04'); await dob[1].selectOption('05'); await dob[2].selectOption('2013');
+  ok((await page.$$eval('#wGrade option', o => o.map(x => x.value))).join() === ',ม.1,ม.2,ม.3,ม.4,ม.5,ม.6', 'grades ม.1-6');
   await page.selectOption('#wGrade', 'ม.1'); await page.click('#wForm button[type=submit]'); await page.waitForTimeout(200);
   await page.fill('#wCode', '24680'); await page.waitForTimeout(700); await page.click('#wForm button[type=submit]'); await idle();
   ok(await page.isVisible('#wOk'), 'step3');
@@ -49,12 +50,21 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   ok(await page.inputValue('[name=studentCode]') === '24680', 'profile');
   // logout -> admin
   await page.click('[aria-label="เมนูโปรไฟล์"]'); await page.click('#logoutBtn'); await confirm(); await idle();
+  ok(await page.isVisible('#lgCode') && !(await page.$('#lgDob')), 'student tab default, no birthdate');
   await page.click('[data-tab=admin]'); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle();
   ok(await page.isVisible('.banner'), 'default pw banner');
   await page.waitForTimeout(600);
   await page.screenshot({ path: SHOT + '/05-admin-dash.png' });
   await page.click('.dock [data-go=users]'); await idle(); ok(await page.isVisible('text=24680'), 'users list');
   await page.screenshot({ path: SHOT + '/06-users.png' });
+  await page.click('#sideNav [data-go=aann]'); await idle(); await page.click('#nl [data-edit]'); await page.waitForSelector('#modal.show'); await page.waitForTimeout(400);
+  ok(!(await page.$('.toast-x.error')), 'no error when editing announcement after users page');
+  await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  await page.click('.dock [data-go=aassign]'); await idle(); await page.click('#fab'); await page.waitForSelector('#modal.show');
+  await page.click('[data-addopt=type]'); await page.fill('.swal2-input', 'โครงงาน'); await page.click('.swal2-confirm'); await idle();
+  ok(await page.inputValue('[name=type]') === 'โครงงาน', 'add assignment type inline');
+  await page.screenshot({ path: SHOT + '/06b-assign-type.png' });
+  await page.click('#modal .btn-close'); await page.waitForTimeout(400);
   await page.click('.dock [data-go=acourses]'); await idle(); await page.click('#cl [data-go=acourse] >> nth=0'); await idle();
   await page.click('#aL'); await page.waitForSelector('#modal.show'); await page.fill('[name=title]', 'บทเรียนใหม่ทดสอบ'); await page.click('#crudSave'); await confirm(); await idle();
   ok(await page.isVisible('text=บทเรียนใหม่ทดสอบ'), 'add lesson');

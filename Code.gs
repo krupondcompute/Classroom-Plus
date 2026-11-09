@@ -3,20 +3,22 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '4.0.0';
+const APP_VERSION = '4.1.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
   DRIVE_ID: '1GqxqZyDJPb7C27kBjyeyimD9VKqiKJ2Y'
 };
-const MAX_UPLOAD_MB = 20; // google.script.run รับข้อมูลได้จำกัด ไฟล์ใหญ่กว่านี้ให้แนบลิงก์ Google Drive
+const MAX_UPLOAD_MB = 2048;            // ไฟล์ใหญ่สุด 2 GB (อัปโหลดเป็นชิ้น ๆ ผ่าน Drive resumable upload)
+const CHUNK_BYTES = 8 * 1024 * 1024;   // ขนาดชิ้นละ 8 MB (ต้องเป็นทวีคูณของ 256 KB)
+const GRADES = ['ม.1', 'ม.2', 'ม.3', 'ม.4', 'ม.5', 'ม.6'];
 const ALLOWED_EXT = ['pdf','doc','docx','ppt','pptx','xls','xlsx','csv','txt','jpg','jpeg','png','gif','webp',
   'zip','rar','7z','mp4','mov','webm','mp3','m4a'];
 const CONFIG_DEFAULTS = {
   schoolName: 'Classroom PLus', logo: '', welcome: 'ยินดีต้อนรับ สู่ห้องเรียนออนไลน์แห่งอนาคต',
-  studentLogin: 'code+birth',  // 'code' = รหัสนักเรียนอย่างเดียว, 'code+birth' = รหัส + วันเกิด (แนะนำ)
   allowAdminSignup: 'true', requireApproval: 'false', sessionHours: '8', rememberDays: '30',
-  emailNotify: 'false', lineToken: '', autoBackup: 'true', webNotify: 'true', siteUrl: ''
+  emailNotify: 'false', lineToken: '', autoBackup: 'true', webNotify: 'true', siteUrl: '',
+  assignmentTypes: 'การบ้าน,ใบงาน,แบบฝึกหัด,สรุปเนื้อหา'
 };
 const PRIVATE_CONFIG = ['lineToken'];
 const SCHEMA = {
@@ -96,7 +98,8 @@ const ROUTES = {
   studentHome: ['user', studentHome_], listCourses: ['user', listCourses_], getCourse: ['user', getCourse_],
   getLesson: ['user', getLesson_], saveProgress: ['user', saveProgress_], listAssignments: ['user', listAssignments_],
   submitWork: ['user', submitWork_], deleteSubmission: ['user', deleteSubmission_],
-  listAnnouncements: ['user', listAnnouncements_], search: ['user', search_], uploadFile: ['user', uploadFile_],
+  listAnnouncements: ['user', listAnnouncements_], search: ['user', search_], uploadFile: ['user', uploadFile_], uploadStart: ['user', uploadStart_], uploadChunk: ['user', uploadChunk_],
+  discardUploads: ['user', discardUploads_], batch: ['user', batch_],
   notifications: ['user', notifications_], markRead: ['user', markRead_],
   // admin
   adminDashboard: ['admin', adminDashboard_], list: ['admin', list_], save: ['admin', save_], remove: ['admin', remove_],
@@ -107,6 +110,18 @@ const ROUTES = {
   auditLog: ['admin', auditLog_], backupNow: ['admin', function () { return backup_(); }],
   listBackups: ['admin', listBackups_], restoreBackup: ['admin', restoreBackup_], installTriggers: ['admin', installTriggers_]
 };
+
+/** รวมหลายคำสั่งใน 1 รอบการเรียก (ลดเวลาโหลดหน้า) */
+function batch_(ctx, calls) {
+  return (Array.isArray(calls) ? calls : []).slice(0, 12).map(c => {
+    const fn = String(c && c[0]), route = ROUTES[fn];
+    try {
+      if (!route || fn === 'batch' || route[0] === 'public') throw err_('ไม่พบคำสั่ง ' + fn);
+      if (route[0] === 'admin' && ctx.user.role !== 'admin') throw err_('คุณไม่มีสิทธิ์ใช้งานส่วนนี้', 'FORBIDDEN');
+      return { ok: true, data: route[1].apply(null, [ctx].concat(c[1] || [])) };
+    } catch (e) { return { ok: false, error: e.message, code: e.code || 'ERR' }; }
+  });
+}
 
 /* ============================== Data layer ============================== */
 const MEM_ = {};
@@ -132,6 +147,34 @@ function ensureSheet_(ss, name) {
   sh.getRange(1, 1, sh.getMaxRows(), cols).setNumberFormat('@'); // เก็บเป็นข้อความ กันวันที่/เลข 0 นำหน้าเพี้ยน
   sh.getRange(1, 1, 1, cols).setFontWeight('bold').setBackground('#dbeafe');
   sh.setFrozenRows(1);
+  bump_(name);
+}
+/* แคชข้อมูลชีตใน CacheService (เร็วกว่าอ่านชีตทุกครั้งมาก) — เปลี่ยนเวอร์ชันทุกครั้งที่เขียน */
+const NO_CACHE = { Sessions: 1 };
+function cache_() { return CacheService.getScriptCache(); }
+function ver_(name) { let v = cache_().get('v_' + name); if (!v) { v = id_(); cache_().put('v_' + name, v, 21600); } return v; }
+function bump_(name) { try { cache_().put('v_' + name, id_(), 21600); } catch (e) {} }
+function cacheGet_(name) {
+  if (NO_CACHE[name]) return null;
+  try {
+    const c = cache_(), v = ver_(name), n = Number(c.get('n_' + name + v) || 0);
+    if (!n) return null;
+    const keys = []; for (let i = 0; i < n; i++) keys.push('c_' + name + v + '_' + i);
+    const got = c.getAll(keys);
+    if (keys.some(k => got[k] == null)) return null;
+    return JSON.parse(keys.map(k => got[k]).join(''));
+  } catch (e) { return null; }
+}
+function cachePut_(name, list) {
+  if (NO_CACHE[name]) return;
+  try {
+    const s = JSON.stringify(list), size = 30000;
+    if (s.length > 3000000) return;
+    const c = cache_(), v = ver_(name), obj = {}; let n = 0;
+    for (let i = 0; i < s.length; i += size) obj['c_' + name + v + '_' + (n++)] = s.slice(i, i + size);
+    if (!n) obj['c_' + name + v + '_' + (n++)] = '[]';
+    c.putAll(obj, 21600); c.put('n_' + name + v, String(n), 21600);
+  } catch (e) {}
 }
 function headers_(name) {
   const k = '_h_' + name;
@@ -140,6 +183,8 @@ function headers_(name) {
 }
 function rows_(name) {
   if (MEM_[name]) return MEM_[name];
+  const cached = cacheGet_(name);
+  if (cached) return MEM_[name] = cached;
   const values = sheet_(name).getDataRange().getValues();
   const h = values.shift() || [];
   MEM_[name] = values.map((r, i) => {
@@ -147,6 +192,7 @@ function rows_(name) {
     h.forEach((k, j) => { if (k) o[k] = r[j] instanceof Date ? Utilities.formatDate(r[j], TZ, "yyyy-MM-dd'T'HH:mm:ss") : String(r[j]); });
     return o;
   }).filter(o => o[h[0]] !== '');
+  cachePut_(name, MEM_[name]);
   return MEM_[name];
 }
 function cell_(v) {
@@ -157,7 +203,7 @@ function cell_(v) {
 function insert_(name, obj) {
   const h = headers_(name);
   const sh = sheet_(name);
-  sh.appendRow(h.map(k => cell_(obj[k])));
+  sh.appendRow(h.map(k => cell_(obj[k]))); bump_(name);
   const o = { _r: sh.getLastRow() };
   h.forEach(k => o[k] = obj[k] === undefined || obj[k] === null ? '' : (typeof obj[k] === 'object' ? JSON.stringify(obj[k]) : String(obj[k])));
   if (MEM_[name]) MEM_[name].push(o);
@@ -166,13 +212,13 @@ function insert_(name, obj) {
 function insertMany_(name, list) {
   if (!list.length) return;
   const h = headers_(name), sh = sheet_(name);
-  sh.getRange(sh.getLastRow() + 1, 1, list.length, h.length).setValues(list.map(o => h.map(k => cell_(o[k]))));
+  sh.getRange(sh.getLastRow() + 1, 1, list.length, h.length).setValues(list.map(o => h.map(k => cell_(o[k])))); bump_(name);
   delete MEM_[name];
 }
 function updateRow_(name, row, patch) {
   const h = headers_(name);
   Object.keys(patch).forEach(k => { if (h.indexOf(k) >= 0) row[k] = typeof patch[k] === 'object' && patch[k] !== null ? JSON.stringify(patch[k]) : String(patch[k] === null || patch[k] === undefined ? '' : patch[k]); });
-  sheet_(name).getRange(row._r, 1, 1, h.length).setValues([h.map(k => cell_(row[k]))]);
+  sheet_(name).getRange(row._r, 1, 1, h.length).setValues([h.map(k => cell_(row[k]))]); bump_(name);
   return row;
 }
 function find_(name, id) { return rows_(name).find(r => r.id === String(id)); }
@@ -180,7 +226,7 @@ function deleteWhere_(name, pred) {
   const sh = sheet_(name);
   const list = rows_(name).filter(pred).sort((a, b) => b._r - a._r);
   list.forEach(r => sh.deleteRow(r._r));
-  delete MEM_[name];
+  delete MEM_[name]; if (list.length) bump_(name);
   return list.length;
 }
 function lock_(fn) {
@@ -295,7 +341,7 @@ function killSessions_(userId) {
 }
 function bootstrap_() {
   ensureSetup_();
-  return { config: publicCfg_(), classes: rows_('Classes').map(pub_).sort((a, b) => a.order - b.order), version: APP_VERSION, maxUploadMB: MAX_UPLOAD_MB };
+  return { config: publicCfg_(), classes: rows_('Classes').map(pub_).sort((a, b) => a.order - b.order), grades: GRADES, version: APP_VERSION, maxUploadMB: MAX_UPLOAD_MB };
 }
 function login_(ctx, f) {
   f = f || {};
@@ -312,8 +358,7 @@ function login_(ctx, f) {
   const code = str_(f.studentCode, 5);
   const done = throttle_('s_' + code, 5, 10), doneAll = throttle_('s_all', 60, 10);
   const u = rows_('Users').find(x => x.role === 'student' && x.studentCode === code);
-  const birthOk = c.studentLogin !== 'code+birth' || (u && u.birthDate === str_(f.birthDate, 10));
-  if (!/^\d{5}$/.test(code) || !u || !birthOk) { done(); doneAll(); throw err_(c.studentLogin === 'code+birth' ? 'รหัสนักเรียนหรือวันเกิดไม่ถูกต้อง' : 'ไม่พบรหัสนักเรียนนี้'); }
+  if (!/^\d{5}$/.test(code) || !u) { done(); doneAll(); throw err_('ไม่พบรหัสนักเรียนนี้ กรุณาตรวจสอบหรือลงทะเบียนก่อน'); }
   if (u.status !== 'active') throw err_('บัญชีนี้ยังใช้งานไม่ได้ กรุณาติดต่อครูผู้สอน');
   return createSession_(u, !!f.remember);
 }
@@ -345,8 +390,8 @@ function registerStudent_(ctx, d) {
   d = d || {};
   const p = validPerson_(d), code = str_(d.studentCode, 5);
   if (!/^\d{5}$/.test(code)) throw err_('รหัสนักเรียนต้องเป็นตัวเลข 5 หลัก');
-  const classes = rows_('Classes');
-  if (classes.length && !classes.some(c => c.grade === d.grade && (!d.room || c.room === d.room))) throw err_('กรุณาเลือกระดับชั้น/ห้อง');
+  const okGrades = GRADES.concat(rows_('Classes').map(c => c.grade));
+  if (okGrades.indexOf(str_(d.grade, 20)) < 0) throw err_('กรุณาเลือกระดับชั้น');
   return lock_(() => {
     delete MEM_.Users;
     if (codeTaken_(code)) throw err_('รหัสนักเรียนนี้ถูกใช้แล้ว');
@@ -391,7 +436,7 @@ function forgotCode_(ctx, d) {
   });
 }
 function me_(ctx) {
-  return { user: pub_(ctx.user), config: publicCfg_(), classes: rows_('Classes').map(pub_),
+  return { user: pub_(ctx.user), config: publicCfg_(), classes: rows_('Classes').map(pub_), maxUploadMB: MAX_UPLOAD_MB,
     unread: rows_('Notifications').filter(n => n.ownerId === ctx.user.id && n.read !== 'true').length };
 }
 function logout_(ctx) {
@@ -407,7 +452,7 @@ function updateProfile_(ctx, d) {
   if (d.prefix !== undefined) patch.prefix = str_(d.prefix, 30);
   if (d.fullName !== undefined) { const n = str_(d.fullName, 100).replace(/\s+/g, ' '); if (n.length < 3) throw err_('กรุณากรอกชื่อ-สกุล'); patch.fullName = n; }
   if (d.email !== undefined) { const e = str_(d.email, 100); if (e && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) throw err_('อีเมลไม่ถูกต้อง'); patch.email = e; }
-  if (d.avatar !== undefined) { if (d.avatar && (!/^data:image\/(jpeg|png|webp);base64,/.test(d.avatar) || d.avatar.length > 45000)) throw err_('รูปโปรไฟล์ไม่ถูกต้องหรือใหญ่เกินไป'); patch.avatar = d.avatar; }
+  if (d.avatar !== undefined) { if (d.avatar && !imgOk_(d.avatar)) throw err_('รูปโปรไฟล์ไม่ถูกต้องหรือใหญ่เกินไป'); patch.avatar = d.avatar; }
   return lock_(() => {
     if (u.role === 'student' && d.studentCode !== undefined && d.studentCode !== u.studentCode) {
       const code = str_(d.studentCode, 5);
@@ -415,7 +460,9 @@ function updateProfile_(ctx, d) {
       if (codeTaken_(code, u.id)) throw err_('รหัสนักเรียนนี้ถูกใช้แล้ว');
       patch.studentCode = code;
     }
+    const oldAvatar = u.avatar;
     updateRow_('Users', u, patch);
+    if (patch.avatar !== undefined && oldAvatar !== patch.avatar) purge_([driveIdOf_(oldAvatar)]);
     log_(u.id, 'update_profile', Object.keys(patch).join(','));
     return pub_(u);
   });
@@ -530,7 +577,9 @@ function submitWork_(ctx, assignmentId, d) {
       if (s.score !== '') throw err_('งานนี้ครูตรวจแล้ว แก้ไขไม่ได้');
       if (late) throw err_('หมดเวลาแก้ไขงานแล้ว');
       const hist = json_(s.history, []); hist.push({ at: s.updatedAt || s.submittedAt, text: s.text, files: json_(s.files, []).length, link: s.driveLink });
+      const removed = fileIds_({ files: s.files }).filter(id => fileIds_({ files: files }).indexOf(id) < 0);
       updateRow_('Submissions', s, { text: text, files: files, driveLink: link, history: hist.slice(-20), updatedAt: now_() });
+      purge_(removed);
       log_(u.id, 'edit_submission', a.id);
       return pub_(s);
     }
@@ -549,6 +598,7 @@ function deleteSubmission_(ctx, assignmentId) {
     if (!s) throw err_('ไม่พบงานที่ส่ง');
     if (s.score !== '') throw err_('งานนี้ครูตรวจแล้ว ยกเลิกไม่ได้');
     if (a && dt_(a.dueAt) < now_()) throw err_('หมดเวลาแก้ไขงานแล้ว');
+    purge_(fileIds_(s));
     deleteWhere_('Submissions', x => x.id === s.id);
     log_(ctx.user.id, 'unsubmit', assignmentId);
     return true;
@@ -590,26 +640,108 @@ function search_(ctx, f) {
 }
 
 /* ============================== ไฟล์ (Google Drive) ============================== */
-function folder_(sub) {
-  const root = DriveApp.getFolderById(driveId_());
-  if (!sub) return root;
-  const it = root.getFoldersByName(sub);
-  return it.hasNext() ? it.next() : root.createFolder(sub);
+const DRIVE_API = 'https://www.googleapis.com';
+function cleanSeg_(s) { return String(s || '').replace(/[\\:*?"<>|#%]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60); }
+/** โฟลเดอร์ย่อยใน Drive ตามประเภทการอัปโหลด เช่น "การบ้าน/ไฟล์จากครู", "บทเรียน/วิทยาการคำนวณ 1", "รูปภาพ/ปก" */
+function folderFor_(user, path) {
+  let segs = String(path || '').split('/').map(cleanSeg_).filter(String).slice(0, 3);
+  if (user.role !== 'admin') { // นักเรียนอัปโหลดได้เฉพาะโฟลเดอร์งานที่ส่ง / รูปโปรไฟล์
+    const types = cfg_().assignmentTypes.split(',').map(cleanSeg_);
+    segs = segs[0] === 'รูปภาพ' ? ['รูปภาพ', 'โปรไฟล์'] : [types.indexOf(segs[0]) >= 0 ? segs[0] : 'งานอื่น ๆ', 'งานที่นักเรียนส่ง'];
+  }
+  if (!segs.length) segs = ['ไฟล์ทั่วไป'];
+  const key = 'fd_' + driveId_() + '_' + segs.join('/'), cached = cache_().get(key);
+  if (cached) { try { return DriveApp.getFolderById(cached); } catch (e) {} }
+  let f = DriveApp.getFolderById(driveId_());
+  segs.forEach(s => { const it = f.getFoldersByName(s); f = it.hasNext() ? it.next() : f.createFolder(s); });
+  cache_().put(key, f.getId(), 21600);
+  return f;
 }
+function folder_(sub) { return sub ? folderFor_({ role: 'admin' }, sub) : DriveApp.getFolderById(driveId_()); }
+function checkFile_(name, size) {
+  const ext = name.toLowerCase().split('.').pop();
+  if (ALLOWED_EXT.indexOf(ext) < 0) throw err_('ไม่รองรับไฟล์ชนิด .' + ext);
+  if (size > MAX_UPLOAD_MB * 1048576) throw err_('ไฟล์ใหญ่เกิน ' + (MAX_UPLOAD_MB / 1024) + ' GB');
+}
+function share_(file) {
+  try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); return true; } catch (e) { return false; } // Workspace บางแห่งห้ามแชร์สาธารณะ
+}
+function fileOut_(id, name, mime, size, shared) {
+  return { id: id, name: name, url: 'https://drive.google.com/file/d/' + id + '/view', mime: mime, size: size, shared: shared,
+    displayUrl: 'https://lh3.googleusercontent.com/d/' + id };
+}
+/** ไฟล์เล็ก (≤ 8 MB): ส่งครั้งเดียว */
 function uploadFile_(ctx, f) {
   f = f || {};
-  const name = str_(f.name, 200).replace(/[\\/:*?"<>|]/g, '_'), ext = name.toLowerCase().split('.').pop();
-  if (ALLOWED_EXT.indexOf(ext) < 0) throw err_('ไม่รองรับไฟล์ชนิด .' + ext);
-  const data = String(f.data || '');
-  if (data.length * 0.75 > MAX_UPLOAD_MB * 1048576) throw err_('ไฟล์ใหญ่เกิน ' + MAX_UPLOAD_MB + ' MB กรุณาอัปโหลดไว้ใน Google Drive แล้วแนบเป็นลิงก์');
-  const sub = ctx.user.role === 'admin' && f.kind !== 'submission' ? 'Materials' : 'Submissions';
+  const name = str_(f.name, 200).replace(/[\\/:*?"<>|]/g, '_'), data = String(f.data || '');
+  checkFile_(name, data.length * 0.75);
+  if (data.length * 0.75 > CHUNK_BYTES * 1.5) throw err_('ไฟล์ใหญ่ ให้อัปโหลดแบบแบ่งชิ้น');
   const blob = Utilities.newBlob(Utilities.base64Decode(data), str_(f.mime, 100) || 'application/octet-stream', name);
-  const file = folder_(sub).createFile(blob);
-  file.setDescription('owner:' + ctx.user.id);
-  try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) { /* Workspace บางแห่งห้ามแชร์สาธารณะ */ }
+  const file = folderFor_(ctx.user, f.folder).createFile(blob);
+  file.setDescription('cp:' + ctx.user.id);
+  const shared = share_(file);
   log_(ctx.user.id, 'upload', name);
-  return { id: file.getId(), name: name, url: file.getUrl(), mime: blob.getContentType(), size: file.getSize() };
+  return fileOut_(file.getId(), name, blob.getContentType(), file.getSize(), shared);
 }
+/** ไฟล์ใหญ่ (สูงสุด 2 GB): เปิด resumable session ของ Drive ฝั่ง server แล้วรับไฟล์ทีละชิ้น */
+function uploadStart_(ctx, f) {
+  f = f || {};
+  const name = str_(f.name, 200).replace(/[\\/:*?"<>|]/g, '_'), size = Number(f.size) || 0, mime = str_(f.mime, 100) || 'application/octet-stream';
+  checkFile_(name, size);
+  if (!size) throw err_('ไฟล์ว่างเปล่า');
+  const folder = folderFor_(ctx.user, f.folder);
+  const res = UrlFetchApp.fetch(DRIVE_API + '/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&fields=id,name,mimeType,size', {
+    method: 'post', contentType: 'application/json; charset=UTF-8', muteHttpExceptions: true,
+    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), 'X-Upload-Content-Type': mime, 'X-Upload-Content-Length': String(size) },
+    payload: JSON.stringify({ name: name, parents: [folder.getId()], description: 'cp:' + ctx.user.id }) });
+  const h = res.getHeaders(), loc = h.Location || h.location;
+  if (res.getResponseCode() !== 200 || !loc) throw err_('เริ่มอัปโหลดไม่สำเร็จ (' + res.getResponseCode() + ')');
+  const uploadId = id_();
+  cache_().put('up_' + uploadId, JSON.stringify({ u: ctx.user.id, loc: loc, size: size, name: name, mime: mime }), 21600);
+  return { uploadId: uploadId, chunk: CHUNK_BYTES };
+}
+function uploadChunk_(ctx, uploadId, start, data) {
+  const s = json_(cache_().get('up_' + uploadId), null);
+  if (!s || s.u !== ctx.user.id) throw err_('ไม่พบรายการอัปโหลด กรุณาเริ่มใหม่');
+  const bytes = Utilities.base64Decode(String(data || '')), from = Number(start) || 0, to = from + bytes.length - 1;
+  const res = UrlFetchApp.fetch(s.loc, { method: 'put', payload: bytes, contentType: 'application/octet-stream', muteHttpExceptions: true,
+    headers: { 'Content-Range': 'bytes ' + from + '-' + to + '/' + s.size } });
+  const code = res.getResponseCode();
+  if (code === 308) { const r = String(res.getHeaders().Range || res.getHeaders().range || ''); const m = r.match(/-(\d+)$/); return { done: false, next: m ? Number(m[1]) + 1 : to + 1 }; }
+  if (code === 200 || code === 201) {
+    const meta = JSON.parse(res.getContentText());
+    cache_().remove('up_' + uploadId);
+    const shared = share_(DriveApp.getFileById(meta.id));
+    log_(ctx.user.id, 'upload', s.name);
+    return { done: true, file: fileOut_(meta.id, s.name, meta.mimeType || s.mime, Number(meta.size) || s.size, shared) };
+  }
+  throw err_('อัปโหลดไม่สำเร็จ (' + code + ') กรุณาลองใหม่');
+}
+/* ---------- ลบไฟล์ใน Drive อัตโนมัติ (เฉพาะไฟล์ที่ระบบอัปโหลดเอง: description ขึ้นต้น "cp:") ---------- */
+function driveIdOf_(url) { const m = String(url || '').match(/(?:\/d\/|[?&]id=)([-\w]{20,})/); return m ? m[1] : ''; }
+function fileIds_(row) {
+  const ids = [];
+  ['attachments', 'files'].forEach(k => { if (row[k]) json_(row[k], []).forEach(f => { const i = (f && (f.id || driveIdOf_(f.url))) || ''; if (i) ids.push(i); }); });
+  ['cover', 'image', 'avatar', 'videoUrl'].forEach(k => { const i = driveIdOf_(row[k]); if (i) ids.push(i); });
+  return ids;
+}
+function purge_(ids, onlyOwner) {
+  const seen = {};
+  (ids || []).filter(Boolean).forEach(id => {
+    if (seen[id]) return; seen[id] = 1;
+    try {
+      const f = DriveApp.getFileById(id), d = String(f.getDescription() || '');
+      if (d.indexOf('cp:') !== 0 || (onlyOwner && d !== 'cp:' + onlyOwner)) return;
+      const r = UrlFetchApp.fetch(DRIVE_API + '/drive/v3/files/' + id + '?supportsAllDrives=true', { method: 'delete', muteHttpExceptions: true,
+        headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } });
+      if (r.getResponseCode() >= 300) f.setTrashed(true);
+    } catch (e) {}
+  });
+}
+function purgeRows_(name, pred) { const ids = []; rows_(name).filter(pred).forEach(r => fileIds_(r).forEach(i => ids.push(i))); purge_(ids); }
+/** ไฟล์ที่อัปโหลดในฟอร์มแต่ไม่ได้บันทึก (กดยกเลิก/ลบออกก่อนบันทึก) */
+function discardUploads_(ctx, ids) { purge_((Array.isArray(ids) ? ids : []).slice(0, 50).map(String), ctx.user.id); return true; }
+function imgOk_(v) { return /^data:image\/(jpeg|png|webp);base64,/.test(v) ? v.length < 46000 : /^https:\/\/(lh3\.googleusercontent\.com|drive\.google\.com)\//.test(v); }
 
 /* ============================== แจ้งเตือน ============================== */
 function studentsFor_(grade, room, courseId) {
@@ -657,7 +789,10 @@ function save_(ctx, entity, obj) {
       row = find_(entity, obj.id);
       if (!row) throw err_('ไม่พบข้อมูลที่จะแก้ไข');
       data.updatedAt = now_();
+      const before = fileIds_(row);
       updateRow_(entity, row, data);
+      const after = fileIds_(row);
+      purge_(before.filter(i => after.indexOf(i) < 0));
       log_(ctx.user.id, 'update_' + entity, obj.id);
     } else {
       row = insert_(entity, Object.assign({ id: id_(), ownerId: ctx.user.id, createdAt: now_(), updatedAt: now_() }, data));
@@ -677,13 +812,15 @@ function remove_(ctx, entity, id) {
     const counts = {};
     if (entity === 'Courses') {
       const asg = rows_('Assignments').filter(a => a.courseId === id).map(a => a.id);
+      purgeRows_('Submissions', s => asg.indexOf(s.assignmentId) >= 0); purgeRows_('Assignments', a => a.courseId === id); purgeRows_('Lessons', l => l.courseId === id);
       counts.Submissions = deleteWhere_('Submissions', s => asg.indexOf(s.assignmentId) >= 0);
       counts.Assignments = deleteWhere_('Assignments', a => a.courseId === id);
       counts.Progress = deleteWhere_('Progress', p => p.courseId === id);
       counts.Lessons = deleteWhere_('Lessons', l => l.courseId === id);
     }
     if (entity === 'Lessons') counts.Progress = deleteWhere_('Progress', p => p.lessonId === id);
-    if (entity === 'Assignments') counts.Submissions = deleteWhere_('Submissions', s => s.assignmentId === id);
+    if (entity === 'Assignments') { purgeRows_('Submissions', s => s.assignmentId === id); counts.Submissions = deleteWhere_('Submissions', s => s.assignmentId === id); }
+    purge_(fileIds_(row));
     deleteWhere_(entity, r => r.id === id);
     log_(ctx.user.id, 'delete_' + entity, { id: id, name: row.name || row.title || row.grade, cascade: counts });
     return counts;
@@ -758,6 +895,7 @@ function deleteUser_(ctx, id) {
     if (u.id === ctx.user.id) throw err_('ลบบัญชีที่กำลังใช้งานอยู่ไม่ได้');
     if (u.role === 'admin' && !activeAdmins_(u.id)) throw err_('ลบ Admin คนสุดท้ายไม่ได้');
     killSessions_(id);
+    purgeRows_('Submissions', s => s.ownerId === id); purge_(fileIds_(u));
     const counts = { Submissions: deleteWhere_('Submissions', s => s.ownerId === id), Progress: deleteWhere_('Progress', p => p.ownerId === id),
       Notifications: deleteWhere_('Notifications', n => n.ownerId === id) };
     deleteWhere_('Users', x => x.id === id);
@@ -920,8 +1058,11 @@ function saveSettings_(ctx, d) {
     Object.keys(CONFIG_DEFAULTS).forEach(k => {
       if (d.config && d.config[k] !== undefined) {
         let v = typeof d.config[k] === 'boolean' ? String(d.config[k]) : str_(d.config[k], k === 'logo' ? 48000 : 500);
-        if (k === 'logo' && v && !/^data:image\/(png|jpeg|webp|svg\+xml);base64,/.test(v)) throw err_('โลโก้ไม่ถูกต้อง');
+        if (k === 'logo' && v && !(imgOk_(v) || /^data:image\/svg\+xml;base64,/.test(v))) throw err_('โลโก้ไม่ถูกต้อง');
+        if (k === 'assignmentTypes') v = v.split(',').map(cleanSeg_).filter((x, i, a) => x && a.indexOf(x) === i).slice(0, 30).join(',') || CONFIG_DEFAULTS.assignmentTypes;
+        const old = cfg_()[k];
         setCfg_(k, v);
+        if (k === 'logo' && old !== v) purge_([driveIdOf_(old)]);
       }
     });
   });
@@ -960,7 +1101,7 @@ function restoreBackup_(ctx, fileId) {
       const v = s.getDataRange().getValues(), dst = sheet_(n);
       dst.clearContents();
       if (v.length && v[0].length) dst.getRange(1, 1, v.length, v[0].length).setNumberFormat('@').setValues(v);
-      delete MEM_[n]; delete MEM_['_h_' + n];
+      delete MEM_[n]; delete MEM_['_h_' + n]; bump_(n);
     });
     Object.keys(SCHEMA).forEach(n => ensureSheet_(ss_(), n));
     log_(ctx.user.id, 'restore', src.getName());

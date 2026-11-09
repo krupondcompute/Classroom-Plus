@@ -12,7 +12,7 @@ window.google = { script: { get run() {
     : (...a) => setTimeout(() => { try { const r = window.__rpc(...a); h.ok && h.ok(r); } catch (e) { h.fail && h.fail(e); } }, 120) });
   return p; } } };
 </script>
-<script>addEventListener('DOMContentLoaded',()=>document.querySelector('footer').insertAdjacentHTML('afterbegin','<div style="background:#fef3c7;color:#78350f;border-radius:12px;padding:6px 10px;margin:0 auto 8px;max-width:640px;font-size:13px">โหมดตัวอย่าง: ระบบทำงานจริงแต่ข้อมูลเก็บในเบราว์เซอร์นี้เท่านั้น · Admin เริ่มต้น admin / admin123 · <a href=\\"#\\" onclick=\\"__resetShim();localStorage.clear();location.reload();return false\\">รีเซ็ตข้อมูล</a></div>'))</script>
+<script>addEventListener('DOMContentLoaded',()=>document.querySelector('.auth-card').insertAdjacentHTML('afterend','<div style="background:#fef3c7;color:#78350f;border-radius:12px;padding:6px 10px;margin:12px auto 0;max-width:640px;font-size:13px;text-align:center">โหมดตัวอย่าง: ระบบทำงานจริงแต่ข้อมูลเก็บในเบราว์เซอร์นี้เท่านั้น · Admin เริ่มต้น admin / admin123 · <a href=\\"#\\" onclick=\\"__resetShim();localStorage.clear();location.reload();return false\\">รีเซ็ตข้อมูล</a></div>'))</script>
 `;
 let out = html.replace("<script>\n'use strict';", bridge + "<script>\n'use strict';");
 if (out === html) throw new Error('inject point not found');

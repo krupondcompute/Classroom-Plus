@@ -26,8 +26,9 @@ ok(!R('registerStudent', null, { prefix: 'นาย', fullName: 'ซ้ำ ก�
 ok(!R('registerStudent', null, { prefix: 'นาย', fullName: 'เด็ก เล็ก', birthDate: '2024-05-04', grade: 'ม.1', studentCode: '22222', consent: true }).ok, 'age check');
 ok(R('adminDashboard', T).code === 'FORBIDDEN', 'student cannot admin');
 // student login code+birth
-ok(!R('login', null, { mode: 'student', studentCode: '12345', birthDate: '2013-05-05' }).ok, 'wrong dob');
-ok(R('login', null, { mode: 'student', studentCode: '12345', birthDate: '2013-05-04' }).ok, 'student login');
+ok(R('login', null, { mode: 'student', studentCode: '12345' }).ok, 'student login code only');
+ok(!R('login', null, { mode: 'student', studentCode: '99998' }).ok, 'unknown code');
+ok(R('registerStudent', null, { prefix: 'นาย', fullName: 'ม หก', birthDate: '2008-01-01', grade: 'ม.6', room: '3', studentCode: '60001', consent: true }).ok, 'grade ม.6 without class row');
 // home & courses
 r = R('studentHome', T); ok(r.ok && r.data.courses.length === 1 && r.data.stats.pending === 1, 'home ' + JSON.stringify(r).slice(0, 300));
 const cid = r.data.courses[0].id;
@@ -75,7 +76,7 @@ ok(R('login', null, { mode: 'admin', username: 'boss', password: 'newpass123' })
 r = R('importStudents', A, [{ studentCode: '11111', prefix: 'นาย', fullName: 'นำเข้า หนึ่ง', grade: 'ม.1' }, { studentCode: '11111', fullName: 'ซ้ำ' }, { studentCode: 'abc', fullName: 'x' }]);
 ok(r.ok && r.data.added === 1 && r.data.skipped.length === 2, 'import');
 r = R('forgotCode', null, { fullName: 'สมหญิง รักเรียน', birthDate: '2012-01-01', newCode: '67890' }); ok(r.ok, 'forgot code');
-ok(R('login', null, { mode: 'student', studentCode: '67890', birthDate: '2012-01-01' }).ok, 'login new code');
+ok(R('login', null, { mode: 'student', studentCode: '67890' }).ok, 'login new code');
 // admin signup w/ approval
 R('saveSettings', A, { config: { requireApproval: 'true' } });
 r = R('registerAdmin', null, { prefix: 'นาง', fullName: 'ครู ใหม่', birthDate: '1990-01-01', username: 'kru.new', password: 'abcdefgh', confirm: 'abcdefgh', consent: true });
@@ -84,8 +85,34 @@ ok(!R('login', null, { mode: 'admin', username: 'kru.new', password: 'abcdefgh' 
 // cascade delete course
 r = R('remove', A, 'Courses', cid); ok(r.ok && r.data.Lessons === 3 && r.data.Submissions === 1, 'cascade ' + JSON.stringify(r.data));
 // throttle
+const T2v = R('login', null, { mode: 'student', studentCode: '60001' }).data.token, A2v = R('login', null, { mode: 'admin', username: 'boss', password: 'newpass123' }).data.token;
+function T2() { return T2v; } function A2() { return A2v; }
 for (let i = 0; i < 5; i++) R('login', null, { mode: 'admin', username: 'boss', password: 'x' });
 ok(R('login', null, { mode: 'admin', username: 'boss', password: 'newpass123' }).code === 'THROTTLE', 'throttle');
+// chunked upload + folders + purge
+const DB = ctx.__shimDB();
+const st = R('uploadStart', T2(), { name: 'big.mp4', mime: 'video/mp4', size: 20 * 1024 * 1024, folder: 'การบ้าน' });
+ok(st.ok && st.data.chunk === 8 * 1024 * 1024, 'upload start ' + st.error);
+let pos = 0, last; const chunk = Buffer.alloc(8 * 1024 * 1024).toString('base64');
+while (true) { const size = Math.min(8 * 1024 * 1024, 20 * 1024 * 1024 - pos); last = R('uploadChunk', T2(), st.data.uploadId, pos, size === 8 * 1024 * 1024 ? chunk : Buffer.alloc(size).toString('base64')); if (!last.ok || last.data.done) break; pos = last.data.next; }
+ok(last.ok && last.data.done && last.data.file.size === 20 * 1024 * 1024, 'chunks done ' + JSON.stringify(last).slice(0, 200));
+ok(DB.files[last.data.file.id].folder.endsWith('การบ้าน/งานที่นักเรียนส่ง'), 'student folder forced ' + DB.files[last.data.file.id].folder);
+ok(!R('uploadStart', T2(), { name: 'x.mp4', size: 3 * 1024 * 1024 * 1024 }).ok, 'over 2GB rejected');
+const a2 = R('save', A2(), 'Assignments', { courseId: R('save', A2(), 'Courses', { name: 'วิชาลบ' }).data.id, title: 'งานลบ', dueAt: '2099-01-01T10:00', maxScore: 5, type: 'สรุปเนื้อหา' }).data;
+const up1 = R('uploadFile', A2(), { name: 'a.pdf', data: Buffer.from('x').toString('base64'), folder: 'สรุปเนื้อหา/ไฟล์จากครู' }).data;
+const up2 = R('uploadFile', A2(), { name: 'b.pdf', data: Buffer.from('y').toString('base64'), folder: 'สรุปเนื้อหา/ไฟล์จากครู' }).data;
+ok(DB.files[up1.id].folder.endsWith('สรุปเนื้อหา/ไฟล์จากครู'), 'teacher folder');
+R('save', A2(), 'Assignments', { id: a2.id, attachments: [up1, up2] });
+R('save', A2(), 'Assignments', { id: a2.id, attachments: [up2] });
+ok(!DB.files[up1.id] && DB.files[up2.id], 'removed attachment purged');
+R('remove', A2(), 'Assignments', a2.id); ok(!DB.files[up2.id], 'delete purges files');
+const up3 = R('uploadFile', A2(), { name: 'c.pdf', data: 'eA==' }).data; R('discardUploads', T2(), [up3.id]); ok(DB.files[up3.id], 'cannot discard others file');
+R('discardUploads', A2(), [up3.id]); ok(!DB.files[up3.id], 'discard own upload');
+const bt = R('batch', A2(), [['list', ['Courses']], ['listUsers', []], ['nope', []]]); ok(bt.ok && bt.data[0].ok && bt.data[1].ok && !bt.data[2].ok, 'batch');
+ok(R('batch', T2(), [['listUsers', []]]).data[0].code === 'FORBIDDEN', 'batch rbac');
+R('saveSettings', A2(), { config: { assignmentTypes: 'การบ้าน, ใบงาน,โครงงาน,การบ้าน' } }); ok(R('bootstrap', null).data.config.assignmentTypes === 'การบ้าน,ใบงาน,โครงงาน', 'assignment types');
+// cache consistency
+ctx.__clearCache(); const n1 = R('listUsers', A2()).data.length; R('importStudents', A2(), [{ studentCode: '70001', fullName: 'แคช ทดสอบ' }]); ok(R('listUsers', A2()).data.length === n1 + 1, 'cache invalidated on write');
 // backup / triggers / daily
 ok(R('backupNow', A).ok && R('listBackups', A).data.length === 1, 'backup');
 ok(R('installTriggers', A).ok, 'triggers'); ctx.dailyJob(); ok(true, 'daily');

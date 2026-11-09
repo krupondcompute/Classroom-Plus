@@ -54,7 +54,10 @@
   G.SpreadsheetApp = { openById: id => Spreadsheet(id) };
   G.PropertiesService = { getScriptProperties: () => ({ getProperty: k => DB.props[k] ?? null, setProperty: (k, v) => { DB.props[k] = String(v); persist(); }, setProperties: o => { Object.assign(DB.props, o); persist(); } }) };
   const cache = {};
-  G.CacheService = { getScriptCache: () => ({ get: k => cache[k] && cache[k].e > Date.now() ? cache[k].v : null, put: (k, v, s) => { cache[k] = { v: String(v), e: Date.now() + (s || 600) * 1000 }; }, remove: k => { delete cache[k]; } }) };
+  G.CacheService = { getScriptCache: () => ({ get: k => cache[k] && cache[k].e > Date.now() ? cache[k].v : null, put: (k, v, s) => { if (String(v).length > 100000) throw new Error('cache value too large'); cache[k] = { v: String(v), e: Date.now() + (s || 600) * 1000 }; }, remove: k => { delete cache[k]; },
+    getAll: ks => { const o = {}; ks.forEach(k => { if (cache[k] && cache[k].e > Date.now()) o[k] = cache[k].v; }); return o; },
+    putAll: (o, s) => Object.keys(o).forEach(k => { cache[k] = { v: String(o[k]), e: Date.now() + (s || 600) * 1000 }; }) }) };
+  G.__clearCache = () => Object.keys(cache).forEach(k => delete cache[k]);
   G.LockService = { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) };
   const pad = n => String(n).padStart(2, '0');
   G.Utilities = {
@@ -71,19 +74,30 @@
     newBlob: (bytes, mime, name) => ({ bytes, mime, name, getContentType: () => mime })
   };
   const file = (id, name, size) => ({ getId: () => id, getName: () => name, getUrl: () => 'https://drive.google.com/file/d/' + id + '/view', getSize: () => size,
-    setSharing() {}, setDescription() {}, setTrashed() { delete DB.files[id]; persist(); }, getDateCreated: () => new Date(DB.files[id] ? DB.files[id].at : Date.now()),
+    setSharing() {}, setDescription(d) { if (DB.files[id]) { DB.files[id].desc = d; persist(); } }, getDescription: () => (DB.files[id] || {}).desc || '', setTrashed() { delete DB.files[id]; persist(); }, getDateCreated: () => new Date(DB.files[id] ? DB.files[id].at : Date.now()),
     makeCopy(n, folder) { return folder.createFile({ bytes: [], name: n, mime: 'application/vnd.google-apps.spreadsheet' }); } });
   const folder = (path) => ({
-    getName: () => path, getFoldersByName: n => { let done = false; return { hasNext: () => !done, next: () => { done = true; return folder(path + '/' + n); } }; },
+    getName: () => path, getId: () => path, getFoldersByName: n => { let done = false; return { hasNext: () => !done, next: () => { done = true; return folder(path + '/' + n); } }; },
     createFolder: n => folder(path + '/' + n),
     createFile(blob) { const id = 'f' + Math.random().toString(36).slice(2, 14) + 'xxxxxxxxxxxxxxxx'; DB.files[id] = { name: blob.name, folder: path, size: blob.bytes.length, at: Date.now() }; persist(); return file(id, blob.name, blob.bytes.length); },
     getFiles() { const ids = Object.keys(DB.files).filter(k => DB.files[k].folder === path); let i = 0; return { hasNext: () => i < ids.length, next: () => { const k = ids[i++]; return file(k, DB.files[k].name, DB.files[k].size); } }; }
   });
-  G.DriveApp = { getFolderById: id => folder(id), getFileById: id => file(id, 'sheet', 0), Access: { ANYONE_WITH_LINK: 1 }, Permission: { VIEW: 1 } };
+  G.DriveApp = { getFolderById: id => folder(id), getFileById: id => DB.files[id] ? file(id, DB.files[id].name, DB.files[id].size) : (id.length > 30 ? file(id, 'sheet', 0) : (() => { throw new Error('not found'); })()), Access: { ANYONE_WITH_LINK: 1 }, Permission: { VIEW: 1 } };
   G.MailApp = { getRemainingDailyQuota: () => 100, sendEmail: (...a) => { (G.__mails = G.__mails || []).push(a); } };
-  G.UrlFetchApp = { fetch: (...a) => { (G.__fetches = G.__fetches || []).push(a); return { getResponseCode: () => 200 }; } };
+  const sessions = {};
+  const resp = (code, body, headers) => ({ getResponseCode: () => code, getContentText: () => body || '', getHeaders: () => headers || {} });
+  G.UrlFetchApp = { fetch: (url, o = {}) => {
+    (G.__fetches = G.__fetches || []).push([url, o.method]);
+    if (/uploadType=resumable/.test(url)) { const sid = 's' + Math.random().toString(36).slice(2); const meta = JSON.parse(o.payload); sessions[sid] = { meta, size: +o.headers['X-Upload-Content-Length'], got: 0, mime: o.headers['X-Upload-Content-Type'] }; return resp(200, '', { Location: 'https://upload.fake/' + sid }); }
+    if (url.startsWith('https://upload.fake/')) { const s = sessions[url.split('/').pop()]; s.got += o.payload.length;
+      if (s.got < s.size) return resp(308, '', { Range: 'bytes=0-' + (s.got - 1) });
+      const id = 'f' + Math.random().toString(36).slice(2, 14) + 'xxxxxxxxxxxxxxxx'; DB.files[id] = { name: s.meta.name, folder: s.meta.parents[0], size: s.size, at: Date.now(), desc: s.meta.description }; persist();
+      return resp(200, JSON.stringify({ id, name: s.meta.name, mimeType: s.mime, size: String(s.size) })); }
+    const m = url.match(/drive\/v3\/files\/([\w-]+)/); if (m && o.method === 'delete') { delete DB.files[m[1]]; persist(); return resp(204); }
+    return resp(200, '{}');
+  } };
   const triggers = [];
-  G.ScriptApp = { getService: () => ({ getUrl: () => 'https://script.google.com/macros/s/DEMO/exec' }), getProjectTriggers: () => triggers, deleteTrigger: t => triggers.splice(triggers.indexOf(t), 1),
+  G.ScriptApp = { getOAuthToken: () => 'fake-token', getService: () => ({ getUrl: () => 'https://script.google.com/macros/s/DEMO/exec' }), getProjectTriggers: () => triggers, deleteTrigger: t => triggers.splice(triggers.indexOf(t), 1),
     newTrigger: fn => { const t = { getHandlerFunction: () => fn }; const ch = { timeBased: () => ch, everyDays: () => ch, atHour: () => ch, inTimezone: () => ch, create: () => { triggers.push(t); return t; } }; return ch; } };
   G.ContentService = { MimeType: { JSON: 'json' }, createTextOutput: s => ({ content: s, setMimeType() { return this; }, getContent() { return s; } }) };
   G.HtmlService = { createHtmlOutputFromFile: () => ({ setTitle() { return this; }, addMetaTag() { return this; } }) };
