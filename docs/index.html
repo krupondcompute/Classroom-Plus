@@ -28,10 +28,15 @@
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{font-family:'Sarabun',system-ui,sans-serif;background:var(--bg);color:var(--text);margin:0;display:flex;flex-direction:column;min-height:100dvh;font-size:16px;-webkit-tap-highlight-color:transparent}
+h1,h2,h3,h4,h5,h6{line-height:1.45}
+.text-truncate,.title,.side-brand b,.side-user .meta b,.file-row a{line-height:1.65!important;padding-block:.05em}
+.btn{line-height:1.45}.form-control,.form-select{line-height:1.6}
+.chip{line-height:1.6}
+body{line-height:1.6;font-family:'Sarabun',system-ui,sans-serif;background:var(--bg);color:var(--text);margin:0;display:flex;flex-direction:column;min-height:100dvh;font-size:16px;-webkit-tap-highlight-color:transparent}
 body.auth{background:#fff}
 [data-theme=dark] body.auth{background:var(--bg)}
 main{flex:1}
+body>*{flex-shrink:0}footer{flex-shrink:0}
 a{color:var(--blue)}
 .btn,.form-control,.form-select{min-height:44px;border-radius:14px;font-size:16px}
 .form-control,.form-select{background-color:var(--surface);color:var(--text);border-color:var(--border)}
@@ -81,12 +86,9 @@ a{color:var(--blue)}
   transform:perspective(300px) rotateX(64deg);transform-origin:center top;animation:gridMove 2.2s linear infinite;
   -webkit-mask-image:linear-gradient(to top,#000 15%,transparent 92%);mask-image:linear-gradient(to top,#000 15%,transparent 92%)}
 @keyframes gridMove{to{background-position:0 46px}}
-.fx-orb{position:absolute;border-radius:50%;filter:blur(46px);z-index:0;pointer-events:none;animation:orb 10s ease-in-out infinite}
-.fx-orb.o1{width:240px;height:240px;background:var(--c3);top:-80px;left:-70px;opacity:.55}
-.fx-orb.o2{width:280px;height:280px;background:#8b5cf6;top:35%;right:-120px;opacity:.35;animation-delay:-5s}
-@keyframes orb{50%{transform:translate(34px,46px) scale(1.12)}}
-.fx-scan{position:absolute;left:0;right:0;top:0;height:28%;z-index:2;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(125,211,252,.14) 55%,rgba(255,255,255,.22) 50.5%,transparent 51%);animation:scan 7s linear infinite}
-@keyframes scan{from{transform:translateY(-110%)}to{transform:translateY(420%)}}
+.bokeh{position:absolute;border-radius:50%;z-index:1;pointer-events:none;opacity:0;mix-blend-mode:screen;
+  background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.95),var(--bk,#7dd3fc) 38%,transparent 70%);filter:blur(var(--bl,2px));animation:bokeh var(--d,5s) ease-in-out infinite}
+@keyframes bokeh{0%,100%{opacity:0;transform:scale(.55)}45%,55%{opacity:var(--o,.75);transform:scale(1)}}
 .logo-wrap{position:relative;width:124px;height:124px;flex:none;animation:pop .9s cubic-bezier(.2,1.4,.4,1) both}
 .logo-wrap .logo-circle{width:100%;height:100%;box-shadow:0 0 0 6px rgba(255,255,255,.18),0 0 40px color-mix(in srgb,var(--c3) 70%,transparent),0 14px 30px rgba(2,6,23,.45)}
 .orbit{position:absolute;inset:-14px;border-radius:50%;border:2px solid rgba(125,211,252,.35);border-top-color:#fff;border-left-color:var(--c3);animation:spin 5s linear infinite}
@@ -94,12 +96,16 @@ a{color:var(--blue)}
 .orbit::after{content:"";position:absolute;top:-4px;left:50%;width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 12px #7dd3fc,0 0 24px var(--c3)}
 @keyframes pop{from{opacity:0;transform:scale(.4) rotate(-20deg)}to{opacity:1;transform:none}}
 .brand-name{font-weight:900;letter-spacing:.5px;color:#fff;text-shadow:0 1px 0 #cfe3ff,0 2px 0 #9cc2f5,0 3px 0 #6b97d8,0 4px 0 #3f6fb8,0 10px 22px rgba(2,6,23,.55),0 0 28px color-mix(in srgb,var(--c3) 70%,transparent);animation:rise .9s .25s both}
-.plus{display:inline-grid;place-items:center;width:1.05em;height:1.05em;margin-left:.18em;border-radius:.3em;font-size:.82em;line-height:1;vertical-align:.05em;color:#fff;text-shadow:none;
-  background:linear-gradient(135deg,#7dd3fc,var(--c3) 45%,#8b5cf6);box-shadow:0 .12em 0 rgba(2,6,23,.35),0 0 .6em color-mix(in srgb,var(--c3) 80%,transparent),inset 0 .08em 0 rgba(255,255,255,.65);
-  transform:rotate(-8deg);animation:plusGlow 3.2s ease-in-out infinite}
-@keyframes plusGlow{50%{transform:rotate(8deg) scale(1.08);box-shadow:0 .12em 0 rgba(2,6,23,.35),0 0 1.1em #7dd3fc,inset 0 .08em 0 rgba(255,255,255,.65)}}
-.welcome{font-size:clamp(1.65rem,3.3vw,2.45rem);font-weight:800;line-height:1.35;max-width:16ch;text-shadow:0 4px 18px rgba(2,6,23,.5);animation:glowTxt 4s 2s ease-in-out infinite}
-.welcome .w{display:inline-block;opacity:0;animation:wordIn .7s cubic-bezier(.2,.9,.3,1.2) forwards}
+.plus{position:relative;display:inline-block;font-size:.62em;font-weight:900;line-height:1;vertical-align:super;margin-left:.06em;top:-.12em;color:#fff;
+  text-shadow:0 0 .25em #fff,0 0 .6em var(--c3),0 0 1.1em var(--c3)}
+.plus::before,.plus::after{content:"";position:absolute;left:50%;top:50%;pointer-events:none;border-radius:50%;transform:translate(-50%,-50%) scale(0);opacity:0}
+.plus::before{width:2.6em;height:2.6em;background:radial-gradient(circle,rgba(255,255,255,.95) 0%,color-mix(in srgb,var(--c3) 70%,transparent) 30%,transparent 65%);animation:flash 2.8s ease-out infinite}
+.plus::after{width:3.2em;height:3.2em;border-radius:0;background:linear-gradient(90deg,transparent 46%,#fff 50%,transparent 54%),linear-gradient(0deg,transparent 46%,#fff 50%,transparent 54%);animation:flash 2.8s ease-out infinite}
+@keyframes flash{0%,62%,100%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(0)}70%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(45deg)}82%{opacity:0;transform:translate(-50%,-50%) scale(1.25) rotate(60deg)}}
+.welcome{font-size:clamp(1.9rem,3.6vw,2.9rem);font-weight:800;line-height:1.55;max-width:none;text-shadow:0 4px 18px rgba(2,6,23,.5);animation:glowTxt 4s 2s ease-in-out infinite}
+.welcome{width:100%}
+.welcome .ln{display:block;white-space:nowrap}
+.welcome .w{display:inline-block;padding-block:.08em;opacity:0;animation:wordIn .7s cubic-bezier(.2,.9,.3,1.2) forwards}
 .welcome .w.hl{background:linear-gradient(90deg,#fff,#7dd3fc,#c4b5fd,#fff);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:wordIn .7s cubic-bezier(.2,.9,.3,1.2) forwards,shine 4s 1.5s linear infinite}
 @keyframes wordIn{from{opacity:0;transform:translateY(26px) scale(.9);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
 @keyframes shine{to{background-position:-250% 0}}
@@ -110,7 +116,6 @@ a{color:var(--blue)}
 .brand.custom{flex-direction:row;text-align:left;gap:40px}
 .brand{gap:30px}
 .brand h1{font-size:clamp(1.9rem,3.8vw,2.8rem);margin:0;line-height:1.2;overflow-wrap:anywhere}
-.welcome{font-size:clamp(1.2rem,2.4vw,1.6rem);font-weight:700;line-height:1.5;max-width:22ch}
 .auth-right{padding:40px clamp(20px,4vw,48px);display:flex;flex-direction:column;justify-content:center;color:var(--blue-dark)}
 [data-theme=dark] .auth-right{color:#bfdbfe}
 .auth-right h2{font-weight:800;margin-bottom:18px}
@@ -136,7 +141,8 @@ footer{background:#e0f2fe;color:#000;text-align:center;padding:14px calc(16px + 
 body.app footer{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;font-size:.84rem;line-height:1.45;
   min-height:calc(var(--dock-h) + 24px + var(--sab));padding:8px calc(22px + var(--sar)) calc(8px + var(--sab)) 16px}
 body.app footer .fsep{display:none}
-@media (max-width:1199.98px){body.app footer{padding-bottom:calc(var(--dock-h) + 30px + var(--sab));padding-right:calc(92px + var(--sar))}}
+@media (max-width:1199.98px){body.app footer{min-height:0;justify-content:flex-start;padding-top:14px;padding-bottom:calc(var(--dock-h) + 30px + var(--sab));padding-right:calc(92px + var(--sar))}}
+@media (max-width:767.98px){body.app footer{align-items:center;text-align:center;font-size:.76rem;padding-left:16px;padding-right:16px}body.app footer span{max-width:calc(100vw - 150px)}}
 @media (min-width:992px){body.app footer{margin-left:var(--side-w);transition:margin var(--t)} body.app.collapsed footer{margin-left:84px}}
 
 /* ---------- App shell ---------- */
@@ -160,11 +166,11 @@ a.navlink{text-decoration:none}
 .card-x.hero{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;color:#fff;border:0;background:linear-gradient(120deg,var(--c1),var(--c2),var(--c3));background-size:200% 200%;animation:flow 16s ease infinite}
 .hero .who{display:flex;gap:16px;align-items:center;min-width:0}
 .hero .clock{text-align:right;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:18px;padding:10px 16px;backdrop-filter:blur(8px)}
-.hero .clock b{font-size:1.7rem;font-variant-numeric:tabular-nums;letter-spacing:.5px;display:block;line-height:1.1}
+.hero .clock b{font-size:1.7rem;font-variant-numeric:tabular-nums;letter-spacing:.5px;display:block;line-height:1.35}
 .hero .online{color:#bbf7d0;background:rgba(0,0,0,.15);padding:3px 10px;border-radius:999px}
 @media (max-width:575.98px){.hero .clock{text-align:left;width:100%}}
 .side-brand b{font-size:1.15rem;font-weight:900;color:var(--blue-dark);overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 0 color-mix(in srgb,var(--blue) 30%,transparent),0 4px 10px color-mix(in srgb,var(--blue) 22%,transparent)}
-.side-brand .plus{font-size:.85em}
+.side-brand .plus{font-size:.7em;text-shadow:0 0 .3em color-mix(in srgb,var(--c3) 80%,transparent);color:var(--blue)}
 [data-theme=dark] .side-brand b{color:#bfdbfe}
 .nav-side{display:flex;flex-direction:column;gap:4px;overflow-y:auto;flex:1}
 .nav-side button{display:flex;align-items:center;gap:14px;min-height:46px;border:0;background:none;border-radius:14px;padding:0 14px;color:var(--muted);font-weight:600;white-space:nowrap;text-align:left;transition:background var(--t),color var(--t)}
@@ -222,14 +228,20 @@ a.navlink{text-decoration:none}
 .page-head h3{margin:0;font-weight:800;flex:1;min-width:200px}
 .stat{display:flex;gap:14px;align-items:center}
 .stat .ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:1.3rem;flex:none;background:var(--blue-light);color:var(--blue)}
-.stat b{font-size:1.6rem;display:block;line-height:1.1}
+.stat b{font-size:1.6rem;display:block;line-height:1.3}
 .stat small{color:var(--muted)}
 .grid{display:grid;gap:16px}
 .g2{grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr))}
 .g3{grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))}
 .g4{grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr))}
 .cover{aspect-ratio:16/9;border-radius:18px;background:linear-gradient(135deg,#60a5fa,#1e3a8a);display:grid;place-items:center;color:#fff;font-size:2rem;overflow:hidden;margin-bottom:12px}
-.cover img{width:100%;height:100%;object-fit:cover}
+.cover{position:relative}
+.cover img{position:relative;width:100%;height:100%;object-fit:contain;z-index:1}
+.cover img.bg{position:absolute;inset:0;object-fit:cover;filter:blur(14px) saturate(1.2);transform:scale(1.15);opacity:.7;z-index:0}
+.img-del{width:44px;height:44px;border-radius:14px;flex:none;color:#dc2626;background:#fee2e2;border:0;display:grid;place-items:center;transition:all var(--t)}
+.img-del:hover{background:#dc2626;color:#fff}
+.crop-box{position:relative;width:min(300px,78vw);aspect-ratio:1;margin:0 auto;border-radius:50%;overflow:hidden;background:#0f172a;touch-action:none;cursor:grab;box-shadow:0 0 0 4px var(--blue-light)}
+.crop-box canvas{width:100%;height:100%;display:block}
 .progress{height:8px;border-radius:8px;background:var(--surface-2)}
 .progress-bar{background:linear-gradient(90deg,var(--cyan),var(--blue))}
 .chip{white-space:nowrap;display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:.8rem;font-weight:600;background:var(--surface-2);color:var(--muted)}
@@ -348,8 +360,7 @@ a.navlink{text-decoration:none}
   <section class="auth-card">
     <div class="auth-left">
       <canvas class="fx-net" id="fxNet" aria-hidden="true"></canvas>
-      <div class="fx-orb o1" aria-hidden="true"></div><div class="fx-orb o2" aria-hidden="true"></div>
-      <div class="fx-grid" aria-hidden="true"></div><div class="fx-scan" aria-hidden="true"></div>
+      <div class="fx-grid" aria-hidden="true"></div><div id="bokehs" aria-hidden="true"></div>
       <div class="brand" id="brand"><div class="logo-wrap"><span class="orbit"></span><span class="orbit r2"></span><div class="logo-circle" data-logo></div></div><h1 class="brand-name" data-school>Classroom +</h1></div>
       <div class="welcome" id="welcomeText">ยินดีต้อนรับ สู่ห้องเรียนออนไลน์แห่งอนาคต</div>
     </div>
@@ -572,7 +583,7 @@ function fieldHtml(f, v) {
       if (f.addable) input = `<div class="input-group">${input}<button type="button" class="btn btn-soft" data-addopt="${f.k}" title="เพิ่ม${esc(f.label)}" aria-label="เพิ่ม${esc(f.label)}"><i class="fa-solid fa-plus"></i></button></div>`; break;
     case 'check': return `<div class="mb-3 ${f.col || ''}"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="${id}" name="${f.k}" ${String(v) === 'true' ? 'checked' : ''}><label class="form-check-label" for="${id}">${f.label}</label></div>${f.help ? `<div class="form-text">${f.help}</div>` : ''}</div>`;
     case 'image': input = `<div class="d-flex gap-3 align-items-center"><img data-preview="${f.k}" src="${v ? safeUrl(v) : ''}" class="${v ? '' : 'hidden'}" alt="" style="width:96px;height:64px;object-fit:${f.contain ? 'contain' : 'cover'};border-radius:12px;background:var(--surface-2)">
-      <input type="file" accept="image/*" class="form-control" id="${id}" data-image="${f.k}" data-w="${f.w || 1280}" data-h="${f.h || 720}" data-png="${f.png ? 1 : ''}" data-folder="${esc(f.folder || 'รูปภาพ')}"><button type="button" class="btn btn-soft btn-icon flex-none" data-clear-img="${f.k}" aria-label="ลบรูป"><i class="fa-solid fa-xmark"></i></button></div><input type="hidden" name="${f.k}" value="${esc(v)}">`; break;
+      <input type="file" accept="image/*" class="form-control" id="${id}" data-image="${f.k}" data-w="${f.w || 1280}" data-h="${f.h || 720}" data-png="${f.png ? 1 : ''}" data-crop="${f.crop ? 1 : ''}" data-folder="${esc(f.folder || 'รูปภาพ')}">${f.crop ? `<button type="button" class="btn btn-soft flex-none hidden" data-recrop="${f.k}" title="ปรับตำแหน่งรูป"><i class="fa-solid fa-up-down-left-right"></i><span class="d-none d-md-inline"> ปรับตำแหน่ง</span></button>` : ''}<button type="button" class="img-del" data-clear-img="${f.k}" title="ลบรูป" aria-label="ลบรูป"><i class="fa-solid fa-trash-can"></i></button></div><input type="hidden" name="${f.k}" value="${esc(v)}">`; break;
     case 'files': input = `<div class="drop" data-drop="${f.k}" data-folder="${esc(f.folder || '')}" tabindex="0" role="button" aria-label="อัปโหลดไฟล์"><i class="fa-solid fa-cloud-arrow-up fa-xl mb-2 d-block"></i>ลากไฟล์มาวาง หรือแตะเพื่อเลือก<br><small>ไฟล์ละไม่เกิน ${fmtSize(S.maxMB * 1048576)} · บันทึกลง Google Drive อัตโนมัติ</small><input type="file" multiple class="hidden"></div><div data-files="${f.k}"></div><input type="hidden" name="${f.k}" value="${esc(JSON.stringify(J(v)))}">`; break;
     case 'links': input = `<textarea class="form-control" id="${id}" name="${f.k}" rows="3" placeholder="ชื่อลิงก์ | https://...">${esc(J(v).map(l => l.name + ' | ' + l.url).join('\n'))}</textarea><div class="form-text">บรรทัดละ 1 ลิงก์ รูปแบบ: ชื่อ | URL</div>`; break;
     case 'video': input = `<div class="input-group"><input class="form-control" id="${id}" name="${f.k}" value="${esc(v)}" placeholder="ลิงก์ YouTube / Vimeo / Google Drive / ไฟล์ .mp4"><button type="button" class="btn btn-soft" data-upvideo="${f.k}" data-folder="${esc(f.folder || 'วิดีโอ')}"><i class="fa-solid fa-upload"></i> อัปโหลด</button><input type="file" accept="video/*" class="hidden"></div>`; break;
@@ -632,23 +643,28 @@ function bindForm(root, fields = []) {
   $$('[data-fp]', root).forEach(el => flatpickr(el, Object.assign({ locale: 'th', disableMobile: true, altInput: true, altFormat: 'BE',
     formatDate: (d, fmt, l) => fmt === 'BE' ? thDate(d, el.dataset.fp === 'datetime') : flatpickr.formatDate(d, fmt, l) },
     el.dataset.fp === 'datetime' ? { enableTime: true, time_24hr: true, dateFormat: 'Y-m-d\\TH:i' } : { dateFormat: 'Y-m-d' })));
-  $$('[data-image]', root).forEach(inp => inp.addEventListener('change', async () => {
-    const f = inp.files[0]; if (!f) return;
-    if (!/^image\//.test(f.type)) return toast('กรุณาเลือกไฟล์รูปภาพ', 'error');
-    const dataUrl = await resizeImage(f, +inp.dataset.w, +inp.dataset.h, !!inp.dataset.png);
+  const handleImg = async (inp, f) => {
+    let dataUrl;
+    if (inp.dataset.crop) { dataUrl = await cropImage(f, +inp.dataset.w || 400); if (!dataUrl) { inp.value = ''; return; } }
+    else dataUrl = await resizeImage(f, +inp.dataset.w, +inp.dataset.h, !!inp.dataset.png);
     let val = dataUrl;
     Loader.show('กำลังบันทึกรูปลง Google Drive...');
     try {
       const up = await apiQ('uploadFile', { name: f.name.replace(/\.[^.]+$/, '') + (inp.dataset.png ? '.png' : '.jpg'), mime: inp.dataset.png ? 'image/png' : 'image/jpeg', data: dataUrlB64(dataUrl), folder: folderOf(root, inp.dataset.folder) });
-      root.__up.push(up.id);
-      if (up.shared) val = up.displayUrl;                       // แชร์ได้ → ใช้รูปจาก Drive
-      else if (dataUrl.length > 46000) { val = await resizeImage(f, 480, 480, !!inp.dataset.png); } // แชร์ไม่ได้ → เก็บรูปย่อในชีต
-    } catch (e) { if (dataUrl.length > 46000) val = await resizeImage(f, 480, 480, !!inp.dataset.png); }
+      if (up.shared) { val = up.displayUrl; root.__up.push(up.id); }   // แชร์ได้ → แสดงรูปจาก Drive (ลบอัตโนมัติถ้าไม่ได้ใช้)
+      else if (dataUrl.length > 46000) val = await shrinkDataUrl(dataUrl); // แชร์สาธารณะไม่ได้ → ไฟล์ยังเก็บใน Drive + เก็บรูปย่อในชีตไว้แสดงผล
+    } catch (e) { if (dataUrl.length > 46000) val = await shrinkDataUrl(dataUrl); }
     finally { Loader.hide(); }
     root.querySelector(`[name="${inp.dataset.image}"]`).value = val;
     const pv = root.querySelector(`[data-preview="${inp.dataset.image}"]`); pv.src = dataUrl; pv.classList.remove('hidden');
+    const rc = root.querySelector(`[data-recrop="${inp.dataset.image}"]`); if (rc) { rc.classList.remove('hidden'); rc.onclick = () => handleImg(inp, f); }
+  };
+  $$('[data-image]', root).forEach(inp => inp.addEventListener('change', () => {
+    const f = inp.files[0]; if (!f) return;
+    if (!/^image\//.test(f.type)) return toast('กรุณาเลือกไฟล์รูปภาพ', 'error');
+    handleImg(inp, f);
   }));
-  $$('[data-clear-img]', root).forEach(b => b.onclick = () => { root.querySelector(`[name="${b.dataset.clearImg}"]`).value = ''; root.querySelector(`[data-preview="${b.dataset.clearImg}"]`).classList.add('hidden'); });
+  $$('[data-clear-img]', root).forEach(b => b.onclick = () => { root.querySelector(`[name="${b.dataset.clearImg}"]`).value = ''; root.querySelector(`[data-preview="${b.dataset.clearImg}"]`).classList.add('hidden'); const i = root.querySelector(`[data-image="${b.dataset.clearImg}"]`); if (i) i.value = ''; root.querySelector(`[data-recrop="${b.dataset.clearImg}"]`)?.classList.add('hidden'); });
   $$('[data-drop]', root).forEach(z => {
     const key = z.dataset.drop, hidden = root.querySelector(`[name="${key}"]`), list = root.querySelector(`[data-files="${key}"]`), inp = $('input', z);
     const draw = () => { list.innerHTML = filesHtml(J(hidden.value), true); $$('[data-rm]', list).forEach(b => b.onclick = () => { const a = J(hidden.value); a.splice(+b.dataset.rm, 1); hidden.value = JSON.stringify(a); draw(); }); };
@@ -714,6 +730,39 @@ async function uploadFiles(files, folder = '') {
   }
   return out;
 }
+/** ย่อ data URL ให้เล็กพอเก็บในชีต (< 45 KB) */
+function shrinkDataUrl(url) {
+  return new Promise(res => { const img = new Image(); img.onload = () => { const k = Math.min(1, 360 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    let q = .85, out = c.toDataURL('image/jpeg', q); while (out.length > 44000 && q > .3) { q -= .1; out = c.toDataURL('image/jpeg', q); } res(out); }; img.src = url; });
+}
+/** ครอปรูปโปรไฟล์: ลากเพื่อจัดตำแหน่ง + ซูม แล้วได้รูปสี่เหลี่ยมจัตุรัส */
+function cropImage(file, out = 400) {
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      let done = false;
+      const m = modal('ปรับตำแหน่งรูปโปรไฟล์', `<p class="text-muted small text-center mb-3">ลากรูปเพื่อจัดตำแหน่ง และเลื่อนแถบเพื่อซูม</p><div class="crop-box" id="cropBox"><canvas id="cropCv" width="600" height="600"></canvas></div>
+        <div class="d-flex align-items-center gap-2 mt-3 mx-auto" style="max-width:320px"><i class="fa-solid fa-image text-muted"></i><input type="range" class="form-range" id="cropZoom" min="1" max="4" step="0.01" value="1" aria-label="ซูม"><i class="fa-solid fa-image fa-lg text-muted"></i></div>`,
+        `<button class="btn btn-soft" data-bs-dismiss="modal">ยกเลิก</button><button class="btn btn-primary" id="cropOk"><i class="fa-solid fa-check"></i> ใช้รูปนี้</button>`, 'modal-md');
+      m.body.__keep = true;
+      const cvs = $('#cropCv'), ctx = cvs.getContext('2d'), S0 = 600, base = Math.max(S0 / img.width, S0 / img.height);
+      let z = 1, ox = 0, oy = 0, drag = null;
+      const clamp = () => { const w = img.width * base * z, h = img.height * base * z; ox = Math.min(0, Math.max(S0 - w, ox)); oy = Math.min(0, Math.max(S0 - h, oy)); };
+      const draw = () => { clamp(); ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, S0, S0); ctx.drawImage(img, ox, oy, img.width * base * z, img.height * base * z); };
+      ox = (S0 - img.width * base) / 2; oy = (S0 - img.height * base) / 2; draw();
+      const box = $('#cropBox'), k = () => S0 / box.clientWidth;
+      box.onpointerdown = e => { drag = { x: e.clientX, y: e.clientY, ox, oy }; box.setPointerCapture(e.pointerId); box.style.cursor = 'grabbing'; };
+      box.onpointermove = e => { if (!drag) return; ox = drag.ox + (e.clientX - drag.x) * k(); oy = drag.oy + (e.clientY - drag.y) * k(); draw(); };
+      box.onpointerup = () => { drag = null; box.style.cursor = 'grab'; };
+      $('#cropZoom').oninput = e => { const nz = +e.target.value, cx = S0 / 2; ox = cx - (cx - ox) * nz / z; oy = cx - (cx - oy) * nz / z; z = nz; draw(); };
+      $('#cropOk').onclick = () => { const o = document.createElement('canvas'); o.width = o.height = out; o.getContext('2d').drawImage(cvs, 0, 0, out, out); done = true; m.hide(); resolve(o.toDataURL('image/jpeg', .9)); };
+      m.el.addEventListener('hidden.bs.modal', () => { URL.revokeObjectURL(url); if (!done) resolve(null); }, { once: true });
+    };
+    img.onerror = () => { toast('อ่านรูปไม่ได้', 'error'); resolve(null); };
+    img.src = url;
+  });
+}
 function resizeImage(file, w, h, png) {
   return new Promise((res, rej) => {
     const img = new Image(), url = URL.createObjectURL(file);
@@ -751,7 +800,7 @@ function tableHtml(headers, rows) {
   return `<div class="table-responsive-md"><table class="table-x"><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td data-label="${esc(String(headers[i]).replace(/<[^>]+>/g, ''))}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
 /** list view: ค้นหา debounce 300ms + Pagination */
-function listView(root, { items, headers, row, search, filters = '', size = 15, onFilter }) {
+function listView(root, { items, headers, row, search, filters = '', size = 30, onFilter }) {
   root.innerHTML = `<div class="d-flex flex-wrap gap-2 mb-3"><div class="flex-fill" style="min-width:220px"><input class="form-control" type="search" placeholder="ค้นหา..." aria-label="ค้นหา" data-q></div>${filters}</div><div data-t></div><nav class="d-flex justify-content-center gap-2 mt-3 flex-wrap" data-p></nav>`;
   let page = 1;
   const draw = () => {
@@ -760,7 +809,10 @@ function listView(root, { items, headers, row, search, filters = '', size = 15, 
     if (onFilter) list = list.filter(it => onFilter(it, root));
     const pages = Math.max(1, Math.ceil(list.length / size)); page = Math.min(page, pages);
     $('[data-t]', root).innerHTML = tableHtml(headers, list.slice((page - 1) * size, page * size).map(row)) + `<div class="text-muted small mt-2">ทั้งหมด ${list.length} รายการ</div>`;
-    $('[data-p]', root).innerHTML = pages > 1 ? Array.from({ length: pages }, (_, i) => `<button class="btn btn-sm ${i + 1 === page ? 'btn-primary' : 'btn-soft'}" data-pg="${i + 1}" style="min-width:44px">${i + 1}</button>`).join('') : '';
+    const nums = Array.from({ length: pages }, (_, i) => i + 1).filter(n => n === 1 || n === pages || Math.abs(n - page) <= 2);
+    $('[data-p]', root).innerHTML = pages > 1 ? `<button class="btn btn-sm btn-soft" data-pg="${page - 1}" ${page > 1 ? '' : 'disabled'} aria-label="หน้าก่อนหน้า"><i class="fa-solid fa-chevron-left"></i> ก่อนหน้า</button>`
+      + nums.map((n, i) => (i && n - nums[i - 1] > 1 ? '<span class="align-self-center px-1">…</span>' : '') + `<button class="btn btn-sm ${n === page ? 'btn-primary' : 'btn-soft'}" data-pg="${n}" style="min-width:44px" aria-label="หน้า ${n}">${n}</button>`).join('')
+      + `<button class="btn btn-sm btn-primary" data-pg="${page + 1}" ${page < pages ? '' : 'disabled'} aria-label="หน้าถัดไป">ถัดไป <i class="fa-solid fa-chevron-right"></i></button>` : '';
     $$('[data-pg]', root).forEach(b => b.onclick = () => { page = +b.dataset.pg; draw(); root.scrollIntoView({ behavior: 'smooth' }); });
   };
   $('[data-q]', root).addEventListener('input', debounce(() => { page = 1; draw(); }, 300));
@@ -804,14 +856,24 @@ function applyBrand() {
   const c = S.config, logo = c.logo ? `<img src="${safeUrl(c.logo)}" alt="โลโก้">` : DEFAULT_LOGO;
   $$('[data-logo]').forEach(el => el.innerHTML = logo);
   $$('[data-school]').forEach(el => el.innerHTML = brandHtml(c.schoolName));
-  const words = (window.Intl && Intl.Segmenter) ? [...new Intl.Segmenter('th', { granularity: 'word' }).segment(c.welcome || 'ยินดีต้อนรับ สู่ห้องเรียนออนไลน์แห่งอนาคต')].map(x => x.segment)
-    : (c.welcome || 'ยินดีต้อนรับ สู่ห้องเรียนออนไลน์แห่งอนาคต').split(/(\s+)/);
+  const text = String(c.welcome || 'ยินดีต้อนรับ สู่ห้องเรียนออนไลน์แห่งอนาคต').replace(/\s*(แห่งอนาคต)/, '\n$1'); // "แห่งอนาคต" ขึ้นบรรทัดใหม่
+  const seg = t => (window.Intl && Intl.Segmenter) ? [...new Intl.Segmenter('th', { granularity: 'word' }).segment(t)].map(x => x.segment) : t.split(/(\s+)/);
   let i = 0;
-  $('#welcomeText').innerHTML = words.map(w => /^\s+$/.test(w) ? ' ' : `<span class="w${/อนาคต|ออนไลน์/.test(w) ? ' hl' : ''}" style="animation-delay:${(0.45 + (i++) * 0.09).toFixed(2)}s${/อนาคต|ออนไลน์/.test(w) ? `,${(1.6 + i * 0.09).toFixed(2)}s` : ''}">${esc(w)}</span>`).join('');
+  $('#welcomeText').innerHTML = text.split('\n').map(line => `<span class="ln">${seg(line).map(w => /^\s+$/.test(w) ? ' ' : `<span class="w${/อนาคต|ออนไลน์/.test(w) ? ' hl' : ''}" style="animation-delay:${(0.45 + (i++) * 0.09).toFixed(2)}s${/อนาคต|ออนไลน์/.test(w) ? `,${(1.6 + i * 0.09).toFixed(2)}s` : ''}">${esc(w)}</span>`).join('')}</span>`).join('');
   $('#brand').classList.toggle('custom', !!c.logo || (c.schoolName && !/^Classroom\s*(\+|PLus)$/i.test(c.schoolName)));
   document.title = String(c.schoolName || 'Classroom +');
+  fitWelcome();
   applyColor(c.themeColor);
 }
+/** ให้บรรทัดข้อความต้อนรับพอดีกรอบ (ใหญ่ที่สุดเท่าที่ไม่ล้น) */
+function fitWelcome() {
+  const el = $('#welcomeText'); if (!el || !el.offsetWidth) return;
+  let fs = Math.min(48, Math.max(26, el.offsetWidth / 9)); el.style.fontSize = fs + 'px';
+  const over = () => [...el.querySelectorAll('.ln')].some(l => l.scrollWidth > el.clientWidth + 1);
+  while (over() && fs > 16) { fs -= 1; el.style.fontSize = fs + 'px'; }
+}
+addEventListener('resize', () => setTimeout(fitWelcome, 100));
+document.fonts && document.fonts.ready.then(() => fitWelcome());
 /* ---------- สีระบบ ---------- */
 function hexToHsl(hex) {
   const n = parseInt(String(hex || '#2563eb').slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
@@ -836,7 +898,20 @@ function applyColor(hex) {
 const cv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 /* ---------- พื้นหลังโลกอนาคต (เครือข่ายจุดแสง) ---------- */
 let FX = 0;
+function makeBokeh() {
+  const box = $('#bokehs'); if (!box || box.children.length) return;
+  const cols = () => [cv('--c3') || '#7dd3fc', '#7dd3fc', '#c4b5fd', '#ffffff', '#93c5fd', '#f0abfc'][Math.floor(Math.random() * 6)];
+  const place = b => { const sz = 8 + Math.random() * 46; Object.assign(b.style, { left: Math.random() * 100 + '%', top: Math.random() * 100 + '%', width: sz + 'px', height: sz + 'px' });
+    b.style.setProperty('--bk', cols()); b.style.setProperty('--bl', (sz > 34 ? 4 + Math.random() * 4 : 1 + Math.random() * 2).toFixed(1) + 'px'); b.style.setProperty('--o', (.35 + Math.random() * .55).toFixed(2)); };
+  for (let i = 0; i < 26; i++) {
+    const b = document.createElement('span'); b.className = 'bokeh'; place(b);
+    b.style.setProperty('--d', (3 + Math.random() * 5).toFixed(1) + 's'); b.style.animationDelay = (-Math.random() * 8).toFixed(1) + 's';
+    b.addEventListener('animationiteration', () => place(b)); // สุ่มตำแหน่งใหม่ทุกรอบที่กระพริบ
+    box.appendChild(b);
+  }
+}
 function startFx() {
+  makeBokeh();
   const cv2 = $('#fxNet'); if (!cv2 || FX) return;
   const ctx = cv2.getContext('2d'), still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let W = 0, H = 0, pts = [];
@@ -914,6 +989,9 @@ function loginDone(res, remember) {
   store.del('cp_token');
   store.set('cp_token', res.token, remember); store.set('cp_exp', String(res.expiresAt), remember);
   toast('ยินดีต้อนรับ ' + res.user.fullName);
+  const b = res.boot || {};   // ข้อมูลหน้าแรกที่ server ส่งมาพร้อม login → แสดงทันที
+  Object.keys(b).forEach(fn => { if (fn !== 'notifications') CACHE.set(fn + '[]', { t: Date.now(), d: b[fn], j: JSON.stringify(b[fn]) }); });
+  S.bootNotifs = b.notifications;
   enterApp();
 }
 /* Wizard 3 ขั้นตอน (นักเรียน / ครูผู้สอน) */
@@ -1082,8 +1160,8 @@ document.addEventListener('click', e => { if (e.target.closest('[data-logout]'))
 $('#logoutBtn').onclick = () => doLogout();
 async function doLogout() {
   if (!await confirmBox({ title: 'ออกจากระบบ?', html: 'คุณต้องการออกจากระบบใช่หรือไม่', confirmText: 'ออกจากระบบ' })) return;
-  await api('logout').catch(() => {});
-  localLogout(); toast('ออกจากระบบแล้ว', 'info');
+  call('logout', [], { loader: false, retry: 0 }).catch(() => {}); // ส่งคำสั่งเบื้องหลัง (อ่าน token ทันที)
+  localLogout(); toast('ออกจากระบบแล้ว', 'info');              // ออกทันที ไม่ต้องรอ server
 }
 function localLogout() {
   S.token = null; S.user = null; store.del('cp_token'); store.del('cp_exp');
@@ -1127,7 +1205,7 @@ function chart(id, cfg) {
 
 /* ---------------- แจ้งเตือน ---------------- */
 async function refreshNotifs() {
-  const list = await apiQ('notifications').catch(() => null);
+  const list = S.bootNotifs || await apiQ('notifications').catch(() => null); S.bootNotifs = null;
   if (!list) return;
   const unread = list.filter(n => n.read !== 'true');
   $('#bellDot').textContent = unread.length > 9 ? '9+' : unread.length; $('#bellDot').classList.toggle('hidden', !unread.length);
@@ -1154,19 +1232,18 @@ $('#notifList').addEventListener('click', e => {
 const coverHtml = (c, icon = 'fa-book-open') => {
   const v = parseVideo(c.videoUrl);
   const src = c.cover || (v && v.type === 'youtube' ? `https://img.youtube.com/vi/${v.id}/hqdefault.jpg` : '');
-  return `<div class="cover">${src ? `<img src="${safeUrl(src)}" alt="" loading="lazy">` : `<i class="fa-solid ${icon}"></i>`}</div>`;
+  return `<div class="cover">${src ? `<img class="bg" src="${safeUrl(src)}" alt="" aria-hidden="true" loading="lazy"><img src="${safeUrl(src)}" alt="" loading="lazy">` : `<i class="fa-solid ${icon}"></i>`}</div>`;
 };
 const statCard = (icon, val, label, color = '') => `<div class="card-x stat"><div class="ic" style="${color}"><i class="fa-solid ${icon}"></i></div><div><b>${val}</b><small>${label}</small></div></div>`;
 
 PAGES.home = { async render(el) {
   const d = await apiC('studentHome'), s = d.stats, u = S.user;
   const ann = d.announcements;
-  el.innerHTML = `<div class="card-x ann-top mb-3"><div class="d-flex gap-3 align-items-center mb-3"><div class="ann-ic"><i class="fa-solid fa-bullhorn"></i></div>
+  el.innerHTML = heroHtml(u.role === 'admin' ? 'กำลังดูในโหมดนักเรียน' : '') + `<div class="card-x ann-top mb-3"><div class="d-flex gap-3 align-items-center mb-3"><div class="ann-ic"><i class="fa-solid fa-bullhorn"></i></div>
     <div class="flex-fill"><h4 class="fw-bold m-0">ประกาศล่าสุด</h4><small class="text-muted">ข่าวสารและกำหนดการจากครูผู้สอน</small></div><button class="btn btn-soft" data-go="announcements">ดูทั้งหมด <i class="fa-solid fa-chevron-right"></i></button></div>
     ${ann.length ? `<div class="d-flex flex-column gap-2">${ann.map(a => `<div class="ann-item" data-go="announcements" role="button" tabindex="0"><i class="fa-solid ${a.pinned === 'true' ? 'fa-thumbtack text-warning' : 'fa-circle-info text-primary'} mt-1"></i>
       <div class="flex-fill" style="min-width:0"><div class="d-flex gap-2 flex-wrap align-items-center"><b>${esc(a.title)}</b><span class="chip info">${esc(a.type)}</span>${a.pinned === 'true' ? '<span class="chip warn">ปักหมุด</span>' : ''}</div>
-      <div class="small text-muted text-truncate">${esc(String(a.body || '').slice(0, 140))}</div><small class="text-muted">${thDate(a.createdAt, true)}</small></div></div>`).join('')}</div>` : '<div class="text-muted">ยังไม่มีประกาศ</div>'}</div>`
-    + heroHtml(u.role === 'admin' ? 'กำลังดูในโหมดนักเรียน' : '') + `
+      <div class="small text-muted text-truncate">${esc(String(a.body || '').slice(0, 140))}</div><small class="text-muted">${thDate(a.createdAt, true)}</small></div></div>`).join('')}</div>` : '<div class="text-muted">ยังไม่มีประกาศ</div>'}</div>` + `
   <div class="grid g4 mb-3">
     ${statCard('fa-chart-line', s.percent + '%', 'ความคืบหน้าการเรียน')}
     ${statCard('fa-book-open-reader', `${s.lessonsDone}/${s.lessonsTotal}`, 'บทเรียนที่เรียนแล้ว')}
@@ -1374,7 +1451,7 @@ PAGES.search = { async render(el) {
 /* ---------------- โปรไฟล์ ---------------- */
 PAGES.profile = { async render(el) {
   const u = S.user, stu = u.role === 'student';
-  const F = [{ k: 'avatar', label: 'รูปโปรไฟล์', type: 'image', w: 400, h: 400, folder: 'รูปภาพ/โปรไฟล์' }, { k: 'prefix', label: 'คำนำหน้าชื่อ', req: true, col: 'col-md-4' }, { k: 'fullName', label: 'ชื่อ-สกุล', req: true, col: 'col-md-8' },
+  const F = [{ k: 'avatar', label: 'รูปโปรไฟล์', type: 'image', w: 400, h: 400, crop: true, folder: 'รูปภาพ/โปรไฟล์' }, { k: 'prefix', label: 'คำนำหน้าชื่อ', req: true, col: 'col-md-4' }, { k: 'fullName', label: 'ชื่อ-สกุล', req: true, col: 'col-md-8' },
     { k: 'email', label: 'อีเมล (สำหรับรับการแจ้งเตือน)', type: 'email', valid: v => v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v) ? 'อีเมลไม่ถูกต้อง' : '' }]
     .concat(stu ? [{ k: 'classNo', label: 'เลขที่', type: 'number', col: 'col-md-4', valid: v => v && !/^\d{1,3}$/.test(v) ? 'ตัวเลขเท่านั้น' : '' }, { k: 'studentCode', col: 'col-md-8', label: 'รหัสนักเรียน (ใช้เข้าสู่ระบบ)', req: true, attrs: 'inputmode="numeric" maxlength="5"', valid: v => /^\d{5}$/.test(v) ? '' : 'ต้องเป็นตัวเลข 5 หลัก' }] : []);
   el.innerHTML = `<div class="page-head"><h3>โปรไฟล์ของฉัน</h3></div><div class="row g-3"><div class="col-lg-4"><div class="card-x text-center">${avatarHtml(u, 96)}<h5 class="fw-bold mt-2 mb-0">${esc(u.prefix + u.fullName)}</h5>
@@ -1496,17 +1573,23 @@ function stopCharts() { Object.values(S.charts || {}).forEach(c => c.destroy());
 /* ---------------- ผู้ใช้งาน ---------------- */
 PAGES.users = { admin: true, async render(el) {
   const users = await apiC('listUsers'); S.cache.users = users; S.cache.admins = users.filter(u => u.role === 'admin');
-  el.innerHTML = `<div class="page-head"><h3>จัดการผู้ใช้งาน</h3><button class="btn btn-soft" id="impBtn"><i class="fa-solid fa-file-import"></i> นำเข้า Excel/CSV</button><button class="btn btn-soft" id="expBtn"><i class="fa-solid fa-file-excel"></i> ส่งออก</button><input type="file" id="impFile" accept=".xlsx,.xls,.csv" class="hidden"></div><div id="ul"></div>`;
+  el.innerHTML = `<div class="page-head"><h3>จัดการผู้ใช้งาน</h3><button class="btn btn-soft" id="impBtn"><i class="fa-solid fa-file-import"></i> นำเข้า Excel/CSV</button><button class="btn btn-soft" id="expBtn"><i class="fa-solid fa-file-excel"></i> ส่งออก</button><input type="file" id="impFile" accept=".xlsx,.xls,.csv" class="hidden"><button class="btn btn-soft" id="tplBtn"><i class="fa-solid fa-file-arrow-down"></i> ไฟล์ตัวอย่าง</button></div>
+  <div class="card-x mb-4"><h5 class="fw-bold mb-3"><i class="fa-solid fa-chalkboard-user text-primary me-2"></i>ครูผู้สอน / ผู้ดูแลระบบ (Admin) <span class="chip info">${users.filter(u => u.role === 'admin').length} คน</span></h5><div id="ua"></div></div>
+  <div class="card-x"><h5 class="fw-bold mb-3"><i class="fa-solid fa-user-graduate text-success me-2"></i>นักเรียน <span class="chip ok">${users.filter(u => u.role === 'student').length} คน</span></h5><div id="ul"></div></div>`;
   const ST = { active: ['ใช้งาน', 'ok'], pending: ['รออนุมัติ', 'warn'], disabled: ['ระงับ', 'danger'] };
-  listView($('#ul'), { items: users, size: 15,
-    headers: ['ผู้ใช้', 'สิทธิ์', 'รหัส / Username', 'ชั้น/ห้อง', 'สถานะ', ''],
-    filters: `<select class="form-select w-auto" data-f="role" aria-label="สิทธิ์"><option value="">ทุกสิทธิ์</option><option value="admin">Admin</option><option value="student">นักเรียน</option></select><select class="form-select w-auto" data-f="grade" aria-label="ระดับชั้น"><option value="">ทุกชั้น</option>${opt(grades())}</select><select class="form-select w-auto" data-f="status" aria-label="สถานะ"><option value="">ทุกสถานะ</option><option value="active">ใช้งาน</option><option value="pending">รออนุมัติ</option><option value="disabled">ระงับ</option></select>`,
-    onFilter: (u, r) => ['role', 'grade', 'status'].every(k => { const v = $(`[data-f="${k}"]`, r).value; return !v || u[k] === v; }),
-    search: u => u.fullName + u.studentCode + u.username + u.email,
-    row: u => [`<div class="d-flex gap-2 align-items-center">${avatarHtml(u, 36)}<div><b>${esc(u.prefix + u.fullName)}</b>${u.id === S.user.id ? ' <span class="chip info">คุณ</span>' : ''}<div class="small text-muted">${esc(u.email || '')}</div></div></div>`,
-      u.role === 'admin' ? '<span class="chip info">Admin</span>' : '<span class="chip">นักเรียน</span>', esc(u.role === 'admin' ? u.username : u.studentCode),
-      esc((u.grade || '-') + (u.room ? '/' + u.room : '')) + (u.classNo ? ` <small class="text-muted">เลขที่ ${esc(u.classNo)}</small>` : ''), `<span class="chip ${ST[u.status]?.[1]}">${ST[u.status]?.[0] || esc(u.status)}</span>`,
-      actBtns(u.id, (u.status === 'pending' ? `<button class="btn btn-sm btn-success" data-approve="${esc(u.id)}">อนุมัติ</button>` : '') + `<button class="btn btn-sm btn-icon btn-soft" data-role="${esc(u.id)}" aria-label="เปลี่ยนสิทธิ์" title="${u.role === 'admin' ? 'ถอดสิทธิ์ Admin' : 'ตั้งเป็น Admin'}"><i class="fa-solid fa-user-shield"></i></button>`)] });
+  const who = u => `<div class="d-flex gap-2 align-items-center">${avatarHtml(u, 36)}<div style="min-width:0"><b>${esc(u.prefix + u.fullName)}</b>${u.id === S.user.id ? ' <span class="chip info">คุณ</span>' : ''}<div class="small text-muted text-truncate">${esc(u.email || '')}</div></div></div>`;
+  const stChip = u => `<span class="chip ${ST[u.status]?.[1]}">${ST[u.status]?.[0] || esc(u.status)}</span>`;
+  const acts = u => actBtns(u.id, (u.status === 'pending' ? `<button class="btn btn-sm btn-success" data-approve="${esc(u.id)}">อนุมัติ</button>` : '') + `<button class="btn btn-sm btn-icon btn-soft" data-role="${esc(u.id)}" aria-label="เปลี่ยนสิทธิ์" title="${u.role === 'admin' ? 'ถอดสิทธิ์ Admin' : 'ตั้งเป็น Admin'}"><i class="fa-solid fa-user-shield"></i></button>`);
+  const stFilter = `<select class="form-select w-auto" data-f="status" aria-label="สถานะ"><option value="">ทุกสถานะ</option><option value="active">ใช้งาน</option><option value="pending">รออนุมัติ</option><option value="disabled">ระงับ</option></select>`;
+  listView($('#ua'), { items: users.filter(u => u.role === 'admin'), headers: ['ครูผู้สอน', 'Username', 'สถานะ', ''], filters: stFilter,
+    onFilter: (u, r) => !$('[data-f=status]', r).value || u.status === $('[data-f=status]', r).value, search: u => u.fullName + u.username + u.email,
+    row: u => [who(u), esc(u.username), stChip(u), acts(u)] });
+  listView($('#ul'), { items: users.filter(u => u.role === 'student').sort((a, b) => natural(a.grade + '/' + a.room, b.grade + '/' + b.room) || (Number(a.classNo) || 999) - (Number(b.classNo) || 999)),
+    headers: ['ชั้น/ห้อง', 'เลขที่', 'ชื่อ-สกุล', 'รหัสนักเรียน', 'สถานะ', ''],
+    filters: `<select class="form-select w-auto" data-f="grade" aria-label="ระดับชั้น"><option value="">ทุกชั้น</option>${opt(grades())}</select><select class="form-select w-auto" data-f="room" aria-label="ห้อง"><option value="">ทุกห้อง</option>${opt(rooms())}</select>` + stFilter,
+    onFilter: (u, r) => ['grade', 'room', 'status'].every(k => { const v = $(`[data-f="${k}"]`, r).value; return !v || u[k] === v; }),
+    search: u => u.fullName + u.studentCode + u.classNo,
+    row: u => [esc((u.grade || '-') + (u.room ? '/' + u.room : '')), esc(u.classNo || '-'), who(u), esc(u.studentCode), stChip(u), acts(u)] });
   fab('เพิ่มผู้ใช้', () => userForm({}));
   el.onclick = async e => {
     const t = k => e.target.closest(`[data-${k}]`)?.dataset[k], find = id => users.find(u => u.id === id);
@@ -1517,14 +1600,16 @@ PAGES.users = { admin: true, async render(el) {
   };
   $('#expBtn').onclick = () => exportXlsx('ผู้ใช้งาน', ['สิทธิ์', 'รหัสนักเรียน', 'Username', 'คำนำหน้า', 'ชื่อ-สกุล', 'วันเกิด', 'ชั้น', 'ห้อง', 'เลขที่', 'อีเมล', 'สถานะ'], users.map(u => [u.role, u.studentCode, u.username, u.prefix, u.fullName, u.birthDate, u.grade, u.room, u.classNo, u.email, u.status]));
   $('#impBtn').onclick = async () => {
-    await Swal.fire({ title: 'นำเข้านักเรียน', icon: 'info', html: 'ไฟล์ Excel/CSV แถวแรกเป็นหัวคอลัมน์:<br><code>รหัสนักเรียน, คำนำหน้า, ชื่อ-สกุล, วันเกิด (YYYY-MM-DD), ชั้น, ห้อง, อีเมล, เลขที่</code>', confirmText: 'เลือกไฟล์' });
+    await Swal.fire({ title: 'นำเข้านักเรียน', icon: 'info', html: 'ไฟล์ Excel/CSV แถวแรกเป็นหัวคอลัมน์ 6 ช่อง:<br><code>รหัสนักเรียน, คำนำหน้า, ชื่อ-สกุล, ชั้น, ห้อง, เลขที่</code><br><small class="text-muted">ข้อมูลอื่น (วันเกิด อีเมล รูป) นักเรียนหรือครูเพิ่มภายหลังได้</small>', showCancelButton: true, cancelButtonText: 'ยกเลิก', confirmButtonText: 'เลือกไฟล์' }).then(r => { if (r.isConfirmed) $('#impFile').click(); });
+    return;
     $('#impFile').click();
   };
+  $('#tplBtn').onclick = () => exportXlsx('ตัวอย่างนำเข้านักเรียน', ['รหัสนักเรียน', 'คำนำหน้า', 'ชื่อ-สกุล', 'ชั้น', 'ห้อง', 'เลขที่'], [['10001', 'เด็กชาย', 'สมชาย ใจดี', 'ม.1', '1', '1'], ['10002', 'เด็กหญิง', 'สมหญิง รักเรียน', 'ม.1', '1', '2']]);
   $('#impFile').onchange = async () => {
     const f = $('#impFile').files[0]; if (!f) return;
     const wb = XLSX.read(await f.arrayBuffer(), { cellDates: false, raw: false }), ws = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' }).slice(1).filter(r => r.join('').trim());
-    const list = rows.map(r => ({ studentCode: String(r[0]).trim(), prefix: r[1], fullName: r[2], birthDate: normDate(r[3]), grade: r[4], room: String(r[5]), email: r[6], classNo: String(r[7] || '') }));
+    const list = rows.map(r => ({ studentCode: String(r[0]).trim(), prefix: String(r[1] || '').trim(), fullName: String(r[2] || '').trim(), grade: String(r[3] || '').trim(), room: String(r[4] || '').trim(), classNo: String(r[5] || '').trim() }));
     if (!list.length) return toast('ไม่พบข้อมูลในไฟล์', 'warning');
     if (!await confirmBox({ title: 'ยืนยันนำเข้า', html: `เพิ่มนักเรียน <b>${list.length}</b> คน จากไฟล์ ${esc(f.name)}` })) return;
     const r = await apiMsg('กำลังนำเข้า...', 'importStudents', list);
@@ -1660,7 +1745,7 @@ PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
   <div class="card-x mb-3"><h4 class="fw-bold">${esc(a.title)}</h4><div class="text-muted small mb-2">${esc(d.course.name)} · กำหนดส่ง ${thDate(a.dueAt, true)} · คะแนนเต็ม ${esc(a.maxScore)}</div>
   <div class="grid g4">${statCard('fa-users', d.rows.length, 'นักเรียน')}${statCard('fa-paper-plane', sent, 'ส่งแล้ว', 'background:#dcfce7;color:#15803d')}${statCard('fa-hourglass', d.rows.length - sent, 'ยังไม่ส่ง', 'background:#fef3c7;color:#b45309')}${statCard('fa-check-double', graded, 'ตรวจแล้ว')}</div></div>
   <div id="gl"></div>`;
-  listView($('#gl'), { items: d.rows, size: 20, headers: ['เลขที่', 'ชื่อ-สกุล', 'สถานะ', 'งานที่ส่ง', 'คะแนน / ความคิดเห็น', ''], search: r => r.user.fullName + r.user.studentCode,
+  listView($('#gl'), { items: d.rows, headers: ['เลขที่', 'ชื่อ-สกุล', 'สถานะ', 'งานที่ส่ง', 'คะแนน / ความคิดเห็น', ''], search: r => r.user.fullName + r.user.studentCode,
     filters: `<select class="form-select w-auto" data-f="st" aria-label="สถานะ"><option value="">ทุกสถานะ</option><option value="sent">ส่งแล้ว (รอตรวจ)</option><option value="graded">ตรวจแล้ว</option><option value="none">ยังไม่ส่ง</option></select>`,
     onFilter: (r, root) => { const v = $('[data-f=st]', root).value; return !v || (v === 'sent' && r.sub && r.status !== 'graded') || (v === 'graded' && r.status === 'graded') || (v === 'none' && !r.sub); },
     row: r => [esc(r.user.classNo || '-'), `${esc(r.user.fullName)}<div class="small text-muted">รหัส ${esc(r.user.studentCode)}</div>`, statusChip(r.status) + (r.sub ? `<div class="small text-muted">${thDate(r.sub.submittedAt, true)}</div>` : ''),
