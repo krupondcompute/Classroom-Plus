@@ -20,7 +20,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.selectOption('#wPrefix', 'เด็กชาย'); await page.fill('#wName', 'ทดสอบ ระบบดี');
   const dob = await page.$$('#wDob select'); await dob[0].selectOption('04'); await dob[1].selectOption('05'); await dob[2].selectOption('2013');
   ok((await page.$$eval('#wGrade option', o => o.map(x => x.value))).join() === ',ม.1,ม.2,ม.3,ม.4,ม.5,ม.6', 'grades ม.1-6');
-  await page.selectOption('#wGrade', 'ม.1'); await page.click('#wForm button[type=submit]'); await page.waitForTimeout(200);
+  await page.selectOption('#wGrade', 'ม.1'); await page.fill('#wNo', '7'); await page.click('#wForm button[type=submit]'); await page.waitForTimeout(200);
   await page.fill('#wCode', '24680'); await page.waitForTimeout(700); await page.click('#wForm button[type=submit]'); await idle();
   ok(await page.isVisible('#wOk'), 'step3');
   await page.screenshot({ path: SHOT + '/02-register-step3.png' });
@@ -75,6 +75,19 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('[data-go=reports]'); await idle(); ok(await page.$$eval('#rBody tr', x => x.length) > 1, 'report');
   await page.click('.dock [data-go=settings]'); await idle(); await page.click('[data-st=backup]'); await idle(); await page.click('#bkNow'); await confirm(); await idle();
   ok(await page.$$eval('[data-restore]', x => x.length) === 1, 'backup list');
+  await page.click('[data-st=db]'); await idle(); await page.click('[data-st=audit]'); await page.click('[data-st=db]'); await page.waitForTimeout(800);
+  ok(!(await page.$('.toast-x.error')), 'no null innerHTML error when switching tabs fast');
+  await page.click('[data-st=look]'); await idle(); const wb = await page.$('#wheel'); const bb = await wb.boundingBox();
+  await page.mouse.click(bb.x + bb.width * .85, bb.y + bb.height * .5); await page.waitForTimeout(200);
+  const col = await page.inputValue('#wHex'); ok(/^#[0-9a-f]{6}$/.test(col) && col !== '#2563eb', 'color wheel picks ' + col);
+  await page.click('#wSave'); await confirm(); await idle();
+  await page.screenshot({ path: SHOT + '/11-color.png' });
+  await page.click('[data-st=menus]'); await idle(); await page.uncheck('#mn_search'); await page.click('#cmAdd');
+  await page.fill('[data-cn="0"]', 'แบบฟอร์มส่งงาน'); await page.fill('[data-cu="0"]', 'https://forms.gle/abc'); await page.click('#cmSave'); await confirm(); await idle();
+  await page.click('#modeSwitch'); await idle();
+  ok(!(await page.$('#sideNav [data-go=search]')) && await page.isVisible('#sideNav >> text=แบบฟอร์มส่งงาน') && await page.isVisible('#sideNav [data-logout]'), 'student menus applied + logout button');
+  await page.screenshot({ path: SHOT + '/12-student-home-color.png' });
+  await page.click('#modeSwitch'); await idle();
   await page.click('#modeSwitch'); await idle(); ok(await page.isVisible('.dock [data-go=home]'), 'mode switch');
   await page.click('#sideToggle'); await page.waitForTimeout(300); await page.screenshot({ path: SHOT + '/08-collapsed-student-mode.png' });
   // mobile

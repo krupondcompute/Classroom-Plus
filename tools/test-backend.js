@@ -8,7 +8,7 @@ let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) pass++; else { fail++; console.log('FAIL:', m); } };
 const R = (fn, tok, ...a) => ctx.rpc(fn, tok, a);
 const b = R('bootstrap', null);
-ok(b.ok && b.data.config.schoolName === 'Classroom PLus', 'bootstrap ' + JSON.stringify(b).slice(0, 200));
+ok(b.ok && b.data.config.schoolName === 'Classroom +', 'bootstrap ' + JSON.stringify(b).slice(0, 200));
 ok(b.data.classes.length === 4, 'seed classes');
 ok(!('lineToken' in b.data.config), 'private config hidden');
 let r = R('login', null, { mode: 'admin', username: 'admin', password: 'wrong' });
@@ -89,6 +89,11 @@ const T2v = R('login', null, { mode: 'student', studentCode: '60001' }).data.tok
 function T2() { return T2v; } function A2() { return A2v; }
 for (let i = 0; i < 5; i++) R('login', null, { mode: 'admin', username: 'boss', password: 'x' });
 ok(R('login', null, { mode: 'admin', username: 'boss', password: 'newpass123' }).code === 'THROTTLE', 'throttle');
+// classNo + menus + theme
+ok(R('updateProfile', T2(), { classNo: '07' }).data.classNo === '7', 'classNo');
+ok(!R('saveSettings', A2(), { config: { themeColor: 'red' } }).ok, 'bad color');
+R('saveSettings', A2(), { config: { themeColor: '#16a34a', studentMenus: JSON.stringify({ hidden: ['search', 'home'], custom: [{ name: 'แบบฟอร์ม', url: 'https://forms.gle/x', icon: 'fa-list' }, { name: 'bad', url: 'javascript:1' }] }) } });
+const mc = JSON.parse(R('bootstrap', null).data.config.studentMenus); ok(mc.hidden.join() === 'search' && mc.custom.length === 1 && R('bootstrap', null).data.config.themeColor === '#16a34a', 'menus/theme config');
 // chunked upload + folders + purge
 const DB = ctx.__shimDB();
 const st = R('uploadStart', T2(), { name: 'big.mp4', mime: 'video/mp4', size: 20 * 1024 * 1024, folder: 'การบ้าน' });

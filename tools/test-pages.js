@@ -17,7 +17,9 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
     if (u.startsWith('file:')) return r.continue(); return r.abort();
   });
   const idle = () => p.waitForFunction(() => !document.querySelector('#loader.show'), null, { timeout: 20000 }).then(() => p.waitForTimeout(250));
-  await p.goto('file://' + path.join(__dirname, '..', 'docs', 'index.html')); await idle();
+  const tmp = path.join(require('os').tmpdir(), 'cp-pages-test.html');
+  fs.writeFileSync(tmp, fs.readFileSync(path.join(__dirname, '..', 'docs', 'index.html'), 'utf8').replace(/window\.CP_API_URL = '[^']*'/, "window.CP_API_URL = ''"));
+  await p.goto('file://' + tmp); await idle();
   ok(await p.isVisible('.swal2-input'), 'connect prompt when no API');
   await p.fill('.swal2-input', API); await p.click('.swal2-confirm'); await p.waitForLoadState(); await idle();
   await p.click('[data-tab=admin]'); await p.fill('#lgUser', 'admin'); await p.fill('#lgPass', 'admin123'); await p.click('#loginForm button[type=submit]'); await idle();

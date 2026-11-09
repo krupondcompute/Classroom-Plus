@@ -1,4 +1,4 @@
-# Classroom PLus
+# Classroom +
 
 ระบบห้องเรียนออนไลน์สำหรับครูและนักเรียน ทำงานบน **Google Apps Script** โดยใช้ **Google Sheets** เป็นฐานข้อมูล และ **Google Drive** เก็บไฟล์
 
@@ -19,7 +19,7 @@ Admin เปลี่ยน Sheet/Drive ได้ภายหลังที่ 
 
 ## ติดตั้ง (ประมาณ 10 นาที)
 
-1. เปิด https://script.google.com → **โครงการใหม่** ตั้งชื่อ `Classroom PLus`
+1. เปิด https://script.google.com → **โครงการใหม่** ตั้งชื่อ `Classroom +`
 2. **ตั้งค่าโครงการ** (รูปเฟือง) → ติ๊ก *แสดงไฟล์ Manifest "appsscript.json" ในตัวแก้ไข*
 3. ในตัวแก้ไข
    - เปิด `Code.gs` → ลบโค้ดเดิม → วางเนื้อหา `Code.gs` จาก repo
@@ -38,7 +38,7 @@ Admin เปลี่ยน Sheet/Drive ได้ภายหลังที่ 
 ### ทางเลือก: ใช้ clasp
 ```bash
 npm i -g @google/clasp && clasp login
-clasp clone <SCRIPT_ID>      # หรือ clasp create --type webapp --title "Classroom PLus"
+clasp clone <SCRIPT_ID>      # หรือ clasp create --type webapp --title "Classroom +"
 clasp push                   # .claspignore ตัด tools/ และ README ออกให้แล้ว
 ```
 

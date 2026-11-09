@@ -1,9 +1,9 @@
 /**
- * Classroom PLus — Google Apps Script backend (ไฟล์เดียว)
+ * Classroom + — Google Apps Script backend (ไฟล์เดียว)
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '4.1.0';
+const APP_VERSION = '4.2.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -15,16 +15,18 @@ const GRADES = ['ม.1', 'ม.2', 'ม.3', 'ม.4', 'ม.5', 'ม.6'];
 const ALLOWED_EXT = ['pdf','doc','docx','ppt','pptx','xls','xlsx','csv','txt','jpg','jpeg','png','gif','webp',
   'zip','rar','7z','mp4','mov','webm','mp3','m4a'];
 const CONFIG_DEFAULTS = {
-  schoolName: 'Classroom PLus', logo: '', welcome: 'ยินดีต้อนรับ สู่ห้องเรียนออนไลน์แห่งอนาคต',
+  schoolName: 'Classroom +', logo: '', welcome: 'ยินดีต้อนรับ สู่ห้องเรียนออนไลน์แห่งอนาคต',
   allowAdminSignup: 'true', requireApproval: 'false', sessionHours: '8', rememberDays: '30',
   emailNotify: 'false', lineToken: '', autoBackup: 'true', webNotify: 'true', siteUrl: '',
-  assignmentTypes: 'การบ้าน,ใบงาน,แบบฝึกหัด,สรุปเนื้อหา'
+  assignmentTypes: 'การบ้าน,ใบงาน,แบบฝึกหัด,สรุปเนื้อหา',
+  themeColor: '#2563eb',   // สีหลักของระบบ
+  studentMenus: ''         // JSON {hidden:[...], custom:[{name,url,icon}]} เมนูฝั่งนักเรียน
 };
 const PRIVATE_CONFIG = ['lineToken'];
 const SCHEMA = {
   Config: ['key','value','updatedAt'],
   Users: ['id','role','username','studentCode','passSalt','passHash','prefix','fullName','birthDate','grade','room',
-    'email','avatar','status','mustChangePassword','createdAt','updatedAt','lastLoginAt'],
+    'email','avatar','status','mustChangePassword','createdAt','updatedAt','lastLoginAt','classNo'],
   Sessions: ['id','userId','tokenHash','expiresAt','createdAt'],
   Classes: ['id','grade','room','order','createdAt'],
   Categories: ['id','name','createdAt'],
@@ -53,7 +55,7 @@ const REQUIRED = { Classes: ['grade'], Categories: ['name'], Courses: ['name'], 
 
 /* ============================== Web App ============================== */
 function doGet() {
-  let title = 'Classroom PLus';
+  let title = 'Classroom +';
   try { title = cfg_().schoolName || title; } catch (e) {}
   return HtmlService.createHtmlOutputFromFile('Index')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
@@ -253,6 +255,8 @@ function setup() {
     Object.keys(MEM_).forEach(k => delete MEM_[k]);
     const cfg = rows_('Config');
     Object.keys(CONFIG_DEFAULTS).forEach(k => { if (!cfg.some(r => r.key === k)) insert_('Config', { key: k, value: CONFIG_DEFAULTS[k], updatedAt: now_() }); });
+    const nm = rows_('Config').find(r => r.key === 'schoolName');
+    if (nm && nm.value === 'Classroom PLus') updateRow_('Config', nm, { value: 'Classroom +', updatedAt: now_() }); // เปลี่ยนชื่อโปรแกรม v4.2
     if (!rows_('Users').some(u => u.role === 'admin')) {
       const salt = id_();
       insert_('Users', { id: id_(), role: 'admin', username: 'admin', passSalt: salt, passHash: hashPw_('admin123', salt),
@@ -279,7 +283,7 @@ function seed_() {
   const due = Utilities.formatDate(new Date(Date.now() + 7 * 864e5), TZ, "yyyy-MM-dd'T'16:30:00");
   insert_('Assignments', { id: id_(), courseId: c.id, type: 'การบ้าน', title: 'ใบงานที่ 1 แยกส่วนประกอบปัญหา', description: 'อธิบายขั้นตอนการทำไข่เจียวเป็นขั้นตอนย่อย',
     attachments: '[]', dueAt: due, maxScore: '10', ownerId: o, createdAt: t, updatedAt: t });
-  insert_('Announcements', { id: id_(), type: 'ข่าวสาร', title: 'ยินดีต้อนรับสู่ Classroom PLus', body: 'นักเรียนสามารถเข้าดูบทเรียน ส่งงาน และติดตามคะแนนได้ที่นี่',
+  insert_('Announcements', { id: id_(), type: 'ข่าวสาร', title: 'ยินดีต้อนรับสู่ Classroom +', body: 'นักเรียนสามารถเข้าดูบทเรียน ส่งงาน และติดตามคะแนนได้ที่นี่',
     attachments: '[]', image: '', pinned: 'true', courseId: '', grade: '', room: '', ownerId: o, createdAt: t, updatedAt: t });
   props_().setProperty('SEEDED', sheetId_());
 }
@@ -372,6 +376,7 @@ function validPerson_(d) {
   if (!d.consent) throw err_('กรุณายืนยันความถูกต้องและให้ความยินยอม PDPA');
   return { prefix: prefix, fullName: fullName, birthDate: birthDate };
 }
+function classNo_(v) { v = str_(v, 3); if (v && !/^\d{1,3}$/.test(v)) throw err_('เลขที่ต้องเป็นตัวเลข'); return v ? String(Number(v)) : ''; }
 function codeTaken_(code, exceptId) { return rows_('Users').some(u => u.studentCode === code && u.id !== exceptId); }
 function userTaken_(un, exceptId) { return rows_('Users').some(u => u.username === un && u.id !== exceptId); }
 function checkStudentCode_(ctx, code) {
@@ -395,7 +400,7 @@ function registerStudent_(ctx, d) {
   return lock_(() => {
     delete MEM_.Users;
     if (codeTaken_(code)) throw err_('รหัสนักเรียนนี้ถูกใช้แล้ว');
-    const u = insert_('Users', Object.assign(p, { id: id_(), role: 'student', studentCode: code, grade: str_(d.grade, 20), room: str_(d.room, 20),
+    const u = insert_('Users', Object.assign(p, { id: id_(), role: 'student', studentCode: code, grade: str_(d.grade, 20), room: str_(d.room, 20), classNo: classNo_(d.classNo),
       email: str_(d.email, 100), status: 'active', mustChangePassword: 'false', createdAt: now_(), updatedAt: now_() }));
     log_(u.id, 'register', 'student');
     return createSession_(u, !!d.remember);
@@ -451,6 +456,7 @@ function updateProfile_(ctx, d) {
   const u = ctx.user, patch = { updatedAt: now_() };
   if (d.prefix !== undefined) patch.prefix = str_(d.prefix, 30);
   if (d.fullName !== undefined) { const n = str_(d.fullName, 100).replace(/\s+/g, ' '); if (n.length < 3) throw err_('กรุณากรอกชื่อ-สกุล'); patch.fullName = n; }
+  if (d.classNo !== undefined) patch.classNo = classNo_(d.classNo);
   if (d.email !== undefined) { const e = str_(d.email, 100); if (e && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) throw err_('อีเมลไม่ถูกต้อง'); patch.email = e; }
   if (d.avatar !== undefined) { if (d.avatar && !imgOk_(d.avatar)) throw err_('รูปโปรไฟล์ไม่ถูกต้องหรือใหญ่เกินไป'); patch.avatar = d.avatar; }
   return lock_(() => {
@@ -838,6 +844,7 @@ function saveUser_(ctx, d) {
     const role = isNew ? (d.role === 'admin' ? 'admin' : 'student') : u.role;
     const patch = { updatedAt: now_() };
     ['prefix', 'fullName', 'birthDate', 'grade', 'room', 'email'].forEach(k => { if (d[k] !== undefined) patch[k] = str_(d[k], 100); });
+    if (d.classNo !== undefined) patch.classNo = classNo_(d.classNo);
     if (d.status !== undefined) {
       if (['active', 'pending', 'disabled'].indexOf(d.status) < 0) throw err_('สถานะไม่ถูกต้อง');
       if (!isNew && u.role === 'admin' && d.status !== 'active' && !activeAdmins_(u.id)) throw err_('ต้องมี Admin ที่ใช้งานได้อย่างน้อย 1 คน');
@@ -880,7 +887,7 @@ function importStudents_(ctx, list) {
       if (codes[code]) return out.skipped.push('แถว ' + (i + 2) + ': รหัส ' + code + ' ซ้ำ');
       codes[code] = 1;
       add.push({ id: id_(), role: 'student', studentCode: code, prefix: str_(r.prefix, 30), fullName: name, birthDate: str_(r.birthDate, 10),
-        grade: str_(r.grade, 20), room: str_(r.room, 20), email: str_(r.email, 100), status: 'active', mustChangePassword: 'false', createdAt: now_(), updatedAt: now_() });
+        grade: str_(r.grade, 20), room: str_(r.room, 20), classNo: /^\d{1,3}$/.test(str_(r.classNo, 3)) ? String(Number(r.classNo)) : '', email: str_(r.email, 100), status: 'active', mustChangePassword: 'false', createdAt: now_(), updatedAt: now_() });
     });
     insertMany_('Users', add);
     out.added = add.length;
@@ -961,8 +968,8 @@ function listSubmissions_(ctx, assignmentId) {
   subs.forEach(s => { if (!ids[s.ownerId]) { const u = find_('Users', s.ownerId); if (u) students.push(u); } });
   return { assignment: pub_(a), course: pub_(c), rows: students.map(u => {
     const s = subs.find(x => x.ownerId === u.id) || null;
-    return { user: { id: u.id, fullName: u.prefix + u.fullName, studentCode: u.studentCode, grade: u.grade, room: u.room }, sub: s ? pub_(s) : null, status: subStatus_(a, s) };
-  }).sort((x, y) => String(x.user.studentCode).localeCompare(String(y.user.studentCode))) };
+    return { user: { id: u.id, fullName: u.prefix + u.fullName, studentCode: u.studentCode, grade: u.grade, room: u.room, classNo: u.classNo }, sub: s ? pub_(s) : null, status: subStatus_(a, s) };
+  }).sort((x, y) => (Number(x.user.classNo) || 999) - (Number(y.user.classNo) || 999) || String(x.user.studentCode).localeCompare(String(y.user.studentCode))) };
 }
 function gradeSubmission_(ctx, subId, score, feedback) {
   return lock_(() => {
@@ -1040,6 +1047,16 @@ function auditLog_(ctx, f) {
 }
 
 /* ============================== Admin: ตั้งค่า / สำรองข้อมูล ============================== */
+/** เมนูฝั่งนักเรียน: ซ่อนเมนูมาตรฐาน + เมนูลิงก์ที่ครูเพิ่มเอง */
+function menus_(v) {
+  const o = typeof v === 'string' ? json_(v, {}) : (v || {});
+  const KEYS = ['home', 'courses', 'assignments', 'announcements', 'search', 'profile'];
+  return JSON.stringify({
+    hidden: (Array.isArray(o.hidden) ? o.hidden : []).filter(k => KEYS.indexOf(k) >= 0 && k !== 'home' && k !== 'profile'),
+    custom: (Array.isArray(o.custom) ? o.custom : []).slice(0, 12).map(m => ({ name: str_(m.name, 40), url: str_(m.url, 500), icon: str_(m.icon, 40).replace(/[^a-z0-9-]/g, '') || 'fa-link' }))
+      .filter(m => m.name && /^https:\/\//.test(m.url))
+  });
+}
 function getSettings_() {
   return { config: cfg_(), sheetId: sheetId_(), driveId: driveId_(), sheetUrl: 'https://docs.google.com/spreadsheets/d/' + sheetId_(),
     driveUrl: 'https://drive.google.com/drive/folders/' + driveId_(), webAppUrl: ScriptApp.getService().getUrl(),
@@ -1057,8 +1074,10 @@ function saveSettings_(ctx, d) {
   lock_(() => {
     Object.keys(CONFIG_DEFAULTS).forEach(k => {
       if (d.config && d.config[k] !== undefined) {
-        let v = typeof d.config[k] === 'boolean' ? String(d.config[k]) : str_(d.config[k], k === 'logo' ? 48000 : 500);
+        let v = typeof d.config[k] === 'boolean' ? String(d.config[k]) : str_(d.config[k], k === 'logo' ? 48000 : k === 'studentMenus' ? 6000 : 500);
         if (k === 'logo' && v && !(imgOk_(v) || /^data:image\/svg\+xml;base64,/.test(v))) throw err_('โลโก้ไม่ถูกต้อง');
+        if (k === 'themeColor' && !/^#[0-9a-f]{6}$/i.test(v)) throw err_('รหัสสีไม่ถูกต้อง');
+        if (k === 'studentMenus') v = menus_(d.config[k]);
         if (k === 'assignmentTypes') v = v.split(',').map(cleanSeg_).filter((x, i, a) => x && a.indexOf(x) === i).slice(0, 30).join(',') || CONFIG_DEFAULTS.assignmentTypes;
         const old = cfg_()[k];
         setCfg_(k, v);
