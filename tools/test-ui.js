@@ -59,6 +59,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   ok(await page.isVisible('#lgCode') && !(await page.$('#lgDob')), 'student tab default, no birthdate');
   await page.click('[data-tab=admin]'); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle();
   ok(await page.isVisible('.banner'), 'default pw banner');
+  ok(await page.$$eval('#dock [data-go]', x => x.length) === await page.$$eval('#sideNav [data-go]', x => x.length), 'dock shows all sidebar menus');
   await page.waitForTimeout(600);
   await page.screenshot({ path: SHOT + '/05-admin-dash.png' });
   await page.click('.dock [data-go=users]'); await idle(); ok(await page.isVisible('text=24680'), 'users list');
@@ -88,7 +89,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('[data-go=grade] >> nth=0'); await idle();
   await page.fill('[data-score]', '9'); await page.click('[data-grade]'); await confirm(); await idle();
   await page.screenshot({ path: SHOT + '/07-grade.png' });
-  await page.click('[data-go=reports]'); await idle(); ok(await page.$$eval('#rBody tr', x => x.length) > 1, 'report');
+  await page.click('[data-go=reports]'); await page.waitForSelector('#rBody tr', { timeout: 15000 }).catch(() => {}); ok(await page.$$eval('#rBody tr', x => x.length) > 1, 'report');
   await page.click('.dock [data-go=settings]'); await idle(); await page.click('[data-st=backup]'); await idle(); await page.click('#bkNow'); await confirm(); await idle();
   ok(await page.$$eval('[data-restore]', x => x.length) === 1, 'backup list');
   await page.click('[data-st=db]'); await idle(); await page.click('[data-st=audit]'); await page.click('[data-st=db]'); await page.waitForTimeout(800);

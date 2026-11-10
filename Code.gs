@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '4.4.0';
+const APP_VERSION = '4.5.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -34,9 +34,9 @@ const SCHEMA = {
   Lessons: ['id','courseId','unit','title','description','cover','videoUrl','videoDuration','attachments','links',
     'duration','order','publishAt','closeAt','ownerId','createdAt','updatedAt'],
   Progress: ['id','ownerId','lessonId','courseId','completed','videoPos','videoDone','views','updatedAt'],
-  Assignments: ['id','courseId','type','title','description','attachments','dueAt','maxScore','ownerId','createdAt','updatedAt','grade','room'],
+  Assignments: ['id','courseId','type','title','description','attachments','dueAt','maxScore','ownerId','createdAt','updatedAt','grade','room','group'],
   Submissions: ['id','assignmentId','ownerId','text','files','driveLink','status','submittedAt','score','feedback',
-    'gradedBy','gradedAt','history','updatedAt'],
+    'gradedBy','gradedAt','history','updatedAt','members'],
   Announcements: ['id','type','title','body','attachments','image','pinned','courseId','grade','room','ownerId','createdAt','updatedAt'],
   Notifications: ['id','ownerId','title','body','link','read','createdAt'],
   AuditLog: ['id','userId','action','detail','createdAt']
@@ -47,7 +47,7 @@ const EDITABLE = {
   Categories: ['code','name'],
   Courses: ['code','name','description','category','grade','room','cover','teacher','order','ownerId'],
   Lessons: ['courseId','unit','title','description','cover','videoUrl','videoDuration','attachments','links','duration','order','publishAt','closeAt','ownerId'],
-  Assignments: ['courseId','type','title','description','attachments','dueAt','maxScore','ownerId','grade','room'],
+  Assignments: ['courseId','type','title','description','attachments','dueAt','maxScore','ownerId','grade','room','group'],
   Announcements: ['type','title','body','attachments','image','pinned','courseId','grade','room','ownerId']
 };
 const REQUIRED = { Classes: ['grade'], Categories: ['name'], Courses: ['name'], Lessons: ['courseId','title'],
@@ -101,7 +101,7 @@ const ROUTES = {
   getLesson: ['user', getLesson_], saveProgress: ['user', saveProgress_], listAssignments: ['user', listAssignments_],
   submitWork: ['user', submitWork_], deleteSubmission: ['user', deleteSubmission_],
   listAnnouncements: ['user', listAnnouncements_], search: ['user', search_], uploadFile: ['user', uploadFile_], uploadStart: ['user', uploadStart_], uploadChunk: ['user', uploadChunk_],
-  discardUploads: ['user', discardUploads_], batch: ['user', batch_],
+  discardUploads: ['user', discardUploads_], groupCandidates: ['user', groupCandidates_], batch: ['user', batch_],
   notifications: ['user', notifications_], markRead: ['user', markRead_],
   // admin
   adminDashboard: ['admin', adminDashboard_], list: ['admin', list_], save: ['admin', save_], remove: ['admin', remove_],
@@ -563,12 +563,34 @@ function saveProgress_(ctx, lessonId, d) {
   if (!lessonOk_(ctx.user, l)) throw err_('ไม่มีสิทธิ์', 'FORBIDDEN');
   return pub_(upsertProgress_(ctx.user, l, d || {}));
 }
+/* ---------- งานกลุ่ม ---------- */
+const isGroup_ = a => a.group === 'true' || /กลุ่ม/.test(a.type || '');
+const members_ = s => json_(s && s.members, []);
+const inSub_ = (s, uid) => s.ownerId === uid || members_(s).indexOf(uid) >= 0;
+function subOf_(aid, uid) { return rows_('Submissions').find(s => s.assignmentId === aid && inSub_(s, uid)) || null; }
+function nameOf_(uid) { const u = find_('Users', uid); return u ? u.prefix + u.fullName : '-'; }
+function subPub_(s, uid) {
+  if (!s) return null;
+  const o = pub_(s); o.isLeader = s.ownerId === uid; o.leaderName = nameOf_(s.ownerId);
+  o.memberList = members_(s).map(id => { const u = find_('Users', id); return u ? { id: id, name: u.prefix + u.fullName, classNo: u.classNo, grade: u.grade, room: u.room } : null; }).filter(Boolean);
+  return o;
+}
+/** รายชื่อนักเรียนที่เพิ่มเข้ากลุ่มได้ (ตามชั้น/ห้องที่เลือก) */
+function groupCandidates_(ctx, assignmentId, grade, room) {
+  const a = find_('Assignments', assignmentId), u = ctx.user;
+  if (!a || !isGroup_(a)) throw err_('งานนี้ไม่ใช่งานกลุ่ม');
+  const mine = rows_('Submissions').find(s => s.assignmentId === a.id && s.ownerId === u.id);
+  const taken = {}; rows_('Submissions').filter(s => s.assignmentId === a.id && s !== mine).forEach(s => { taken[s.ownerId] = 1; members_(s).forEach(m => taken[m] = 1); });
+  return studentsFor_(a.grade, a.room, a.courseId).filter(s => s.id !== u.id && !taken[s.id] && (!grade || s.grade === grade) && (!room || s.room === room))
+    .map(s => ({ id: s.id, name: s.prefix + s.fullName, classNo: s.classNo, grade: s.grade, room: s.room, code: s.studentCode }))
+    .sort((x, y) => (Number(x.classNo) || 999) - (Number(y.classNo) || 999));
+}
 function assignmentsFor_(u) {
-  const subs = {}; rows_('Submissions').filter(s => s.ownerId === u.id).forEach(s => subs[s.assignmentId] = s);
+  const subs = {}; rows_('Submissions').filter(s => inSub_(s, u.id)).forEach(s => subs[s.assignmentId] = s);
   const courses = {}; rows_('Courses').forEach(c => courses[c.id] = c);
   return rows_('Assignments').filter(a => courseOk_(u, courses[a.courseId]) && match_(u, a.grade, a.room)).map(a => {
     const s = subs[a.id] || null;
-    return Object.assign(pub_(a), { courseName: courses[a.courseId].name, sub: s ? pub_(s) : null, status: subStatus_(a, s) });
+    return Object.assign(pub_(a), { courseName: courses[a.courseId].name, courseCode: courses[a.courseId].code, isGroup: isGroup_(a), sub: subPub_(s, u.id), status: subStatus_(a, s) });
   });
 }
 function listAssignments_(ctx) { return assignmentsFor_(ctx.user).sort((a, b) => dt_(b.dueAt).localeCompare(dt_(a.dueAt))); }
@@ -586,22 +608,34 @@ function submitWork_(ctx, assignmentId, d) {
   return lock_(() => {
     delete MEM_.Submissions;
     const s = rows_('Submissions').find(x => x.assignmentId === a.id && x.ownerId === u.id);
+    const other = rows_('Submissions').find(x => x.assignmentId === a.id && x.ownerId !== u.id && members_(x).indexOf(u.id) >= 0);
+    if (other) throw err_('คุณเป็นสมาชิกในกลุ่มของ ' + nameOf_(other.ownerId) + ' แล้ว — ตัวแทนกลุ่มเป็นผู้ส่ง/แก้ไขงาน');
+    let members = [];
+    if (isGroup_(a) && Array.isArray(d.members)) {
+      const ok = {}; groupCandidates_(ctx, a.id, '', '').forEach(x => ok[x.id] = 1);
+      members = d.members.map(String).filter((m, i, arr) => arr.indexOf(m) === i && m !== u.id).slice(0, 15);
+      const bad = members.find(m => !ok[m] && !(s && members_(s).indexOf(m) >= 0));
+      if (bad) throw err_(nameOf_(bad) + ' อยู่ในกลุ่มอื่นหรือส่งงานนี้แล้ว');
+    }
+    const added = members.filter(m => !s || members_(s).indexOf(m) < 0);
     const late = dt_(a.dueAt) < now_();
     if (s) {
       if (s.score !== '') throw err_('งานนี้ครูตรวจแล้ว แก้ไขไม่ได้');
       if (late) throw err_('หมดเวลาแก้ไขงานแล้ว');
       const hist = json_(s.history, []); hist.push({ at: s.updatedAt || s.submittedAt, text: s.text, files: json_(s.files, []).length, link: s.driveLink });
       const removed = fileIds_({ files: s.files }).filter(id => fileIds_({ files: files }).indexOf(id) < 0);
-      updateRow_('Submissions', s, { text: text, files: files, driveLink: link, history: hist.slice(-20), updatedAt: now_() });
+      updateRow_('Submissions', s, { text: text, files: files, driveLink: link, history: hist.slice(-20), updatedAt: now_(), members: isGroup_(a) ? members : members_(s) });
       purge_(removed);
+      if (added.length) notifyUsers_(added, 'คุณถูกเพิ่มเข้ากลุ่มงาน', u.fullName + ' เพิ่มคุณในกลุ่ม "' + a.title + '"', 'assignment:' + a.id);
       log_(u.id, 'edit_submission', a.id);
-      return pub_(s);
+      return subPub_(s, u.id);
     }
     const n = insert_('Submissions', { id: id_(), assignmentId: a.id, ownerId: u.id, text: text, files: files, driveLink: link,
-      status: late ? 'late' : 'ontime', submittedAt: now_(), score: '', feedback: '', history: '[]', updatedAt: now_() });
+      status: late ? 'late' : 'ontime', submittedAt: now_(), score: '', feedback: '', history: '[]', updatedAt: now_(), members: members });
     log_(u.id, 'submit', a.id);
+    if (added.length) notifyUsers_(added, 'คุณถูกเพิ่มเข้ากลุ่มงาน', u.fullName + ' เพิ่มคุณในกลุ่ม "' + a.title + '"', 'assignment:' + a.id);
     if (a.ownerId && a.ownerId !== u.id) notifyUsers_([a.ownerId], 'มีงานส่งใหม่', u.fullName + ' ส่ง "' + a.title + '"' + (late ? ' (ส่งช้า)' : ''), 'grade:' + a.id);
-    return pub_(n);
+    return subPub_(n, u.id);
   });
 }
 function deleteSubmission_(ctx, assignmentId) {
@@ -974,10 +1008,10 @@ function listSubmissions_(ctx, assignmentId) {
   const subs = rows_('Submissions').filter(s => s.assignmentId === a.id);
   const students = studentsFor_(a.grade, a.room, a.courseId);
   const ids = {}; students.forEach(s => ids[s.id] = 1);
-  subs.forEach(s => { if (!ids[s.ownerId]) { const u = find_('Users', s.ownerId); if (u) students.push(u); } });
+  subs.forEach(s => [s.ownerId].concat(members_(s)).forEach(id => { if (!ids[id]) { const u = find_('Users', id); if (u) { students.push(u); ids[id] = 1; } } }));
   return { assignment: pub_(a), course: pub_(c), rows: students.map(u => {
-    const s = subs.find(x => x.ownerId === u.id) || null;
-    return { user: { id: u.id, fullName: u.prefix + u.fullName, studentCode: u.studentCode, grade: u.grade, room: u.room, classNo: u.classNo }, sub: s ? pub_(s) : null, status: subStatus_(a, s) };
+    const s = subs.find(x => inSub_(x, u.id)) || null;
+    return { group: s && members_(s).length ? (s.ownerId === u.id ? 'leader' : 'member') : '', leaderName: s ? nameOf_(s.ownerId) : '', groupSize: s ? members_(s).length + 1 : 0, user: { id: u.id, fullName: u.prefix + u.fullName, studentCode: u.studentCode, grade: u.grade, room: u.room, classNo: u.classNo }, sub: s ? pub_(s) : null, status: subStatus_(a, s) };
   }).sort((x, y) => (Number(x.user.classNo) || 999) - (Number(y.user.classNo) || 999) || String(x.user.studentCode).localeCompare(String(y.user.studentCode))) };
 }
 function gradeSubmission_(ctx, subId, score, feedback) {
@@ -987,7 +1021,7 @@ function gradeSubmission_(ctx, subId, score, feedback) {
     const a = find_('Assignments', s.assignmentId), n = Number(score);
     if (score === '' || isNaN(n) || n < 0 || n > Number(a.maxScore)) throw err_('คะแนนต้องอยู่ระหว่าง 0–' + a.maxScore);
     updateRow_('Submissions', s, { score: String(n), feedback: str_(feedback, 2000), gradedBy: ctx.user.id, gradedAt: now_(), updatedAt: now_() });
-    notifyUsers_([s.ownerId], 'ครูตรวจงานแล้ว', a.title + ' ได้ ' + n + '/' + a.maxScore + ' คะแนน', 'assignment:' + a.id);
+    notifyUsers_([s.ownerId].concat(members_(s)), 'ครูตรวจงานแล้ว', a.title + ' ได้ ' + n + '/' + a.maxScore + ' คะแนน', 'assignment:' + a.id);
     log_(ctx.user.id, 'grade', { sub: subId, score: n });
     return pub_(s);
   });
@@ -1032,7 +1066,7 @@ function report_(ctx, type, f) {
     else headers.push('ส่งแล้ว', 'ค้างส่ง');
     return { title: type === 'scores' ? 'รายงานคะแนน' : 'รายงานการส่งงาน', headers: headers, rows: users.map(u => {
       let total = 0, sent = 0;
-      const cells = asg.map(a => { const s = subs.find(x => x.assignmentId === a.id && x.ownerId === u.id);
+      const cells = asg.map(a => { const s = subs.find(x => x.assignmentId === a.id && inSub_(x, u.id));
         if (s) sent++; if (s && s.score !== '') total += Number(s.score);
         if (type === 'scores') return s && s.score !== '' ? Number(s.score) : '';
         return s ? (s.status === 'late' ? 'ส่งช้า' : 'ตรงเวลา') : (dt_(a.dueAt) < now_() ? 'ไม่ส่ง' : 'ยังไม่ส่ง'); });
@@ -1062,8 +1096,9 @@ function menus_(v) {
   const KEYS = ['home', 'courses', 'assignments', 'announcements', 'search', 'profile'];
   return JSON.stringify({
     hidden: (Array.isArray(o.hidden) ? o.hidden : []).filter(k => KEYS.indexOf(k) >= 0 && k !== 'home' && k !== 'profile'),
-    custom: (Array.isArray(o.custom) ? o.custom : []).slice(0, 12).map(m => ({ name: str_(m.name, 40), url: str_(m.url, 500), icon: str_(m.icon, 60).replace(/[^a-z0-9- ]/g, '') || 'auto', mode: m.mode === 'tab' ? 'tab' : 'app' }))
-      .filter(m => m.name && /^https:\/\//.test(m.url))
+    custom: (Array.isArray(o.custom) ? o.custom : []).slice(0, 12).map(m => ({ id: str_(m.id, 20).replace(/[^\w]/g, '') || id_(), name: str_(m.name, 40), url: str_(m.url, 500), icon: str_(m.icon, 60).replace(/[^a-z0-9- ]/g, '') || 'auto', mode: m.mode === 'tab' ? 'tab' : 'app' }))
+      .filter(m => m.name && /^https:\/\//.test(m.url)),
+    order: (Array.isArray(o.order) ? o.order : []).map(k => str_(k, 30)).filter(k => /^(c:\w+|[a-z]+)$/.test(k)).slice(0, 40)
   });
 }
 function getSettings_() {

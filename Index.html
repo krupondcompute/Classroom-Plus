@@ -108,6 +108,9 @@ a{color:var(--blue)}
 @keyframes flashStar{0%,60%,100%{opacity:0;transform:translate(-50%,-50%) scale(0) rotate(-40deg)}67%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(10deg)}74%{opacity:.85;transform:translate(-50%,-50%) scale(.75) rotate(35deg)}86%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(70deg)}}
 .welcome{font-size:clamp(1.9rem,3.6vw,2.9rem);font-weight:800;line-height:1.55;max-width:none;text-shadow:0 4px 18px rgba(2,6,23,.5);animation:glowTxt 4s 2s ease-in-out infinite}
 .welcome{width:100%}
+.welcome .ln{transform-origin:center;animation:breathe 6s 2.2s ease-in-out infinite}
+.welcome .ln+.ln{animation-delay:3.2s}
+@keyframes breathe{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.045);filter:brightness(1.18) drop-shadow(0 0 14px color-mix(in srgb,var(--c3) 70%,transparent))}}
 .welcome .ln{display:block;white-space:nowrap}
 .welcome .w{display:inline-block;padding-block:.08em;opacity:0;animation:wordIn .7s cubic-bezier(.2,.9,.3,1.2) forwards}
 .welcome .w.hl{background:linear-gradient(90deg,#fff,#7dd3fc,#c4b5fd,#fff);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:wordIn .7s cubic-bezier(.2,.9,.3,1.2) forwards,shine 4s 1.5s linear infinite}
@@ -146,7 +149,7 @@ footer{background:#e0f2fe;color:#000;text-align:center;padding:14px calc(16px + 
 body.app footer{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;font-size:.84rem;line-height:1.45;
   min-height:calc(var(--dock-h) + 24px + var(--sab));padding:8px calc(22px + var(--sar)) calc(8px + var(--sab)) 16px}
 body.app footer .fsep{display:none}
-@media (max-width:1199.98px){body.app footer{min-height:0;justify-content:flex-start;padding-top:14px;padding-bottom:calc(var(--dock-h) + 30px + var(--sab));padding-right:calc(92px + var(--sar))}}
+@media (max-width:1499.98px){body.app footer{min-height:0;justify-content:flex-start;padding-top:14px;padding-bottom:calc(var(--dock-h) + 30px + var(--sab));padding-right:calc(92px + var(--sar))}}
 @media (max-width:767.98px){body.app footer{align-items:center;text-align:center;font-size:.76rem;padding-left:16px;padding-right:16px}body.app footer span{max-width:calc(100vw - 150px)}}
 @media (min-width:992px){body.app footer{margin-left:var(--side-w);transition:margin var(--t)} body.app.collapsed footer{margin-left:84px}}
 
@@ -219,10 +222,14 @@ a.navlink{text-decoration:none}
 }
 .dock{position:fixed;z-index:1030;left:50%;transform:translateX(-50%);bottom:calc(12px + var(--sab));display:flex;gap:4px;padding:6px;border-radius:24px;
   background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);box-shadow:var(--shadow-lg);width:max-content;max-width:calc(100% - 20px)}
-.dock button{border:0;background:none;min-width:64px;min-height:54px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.72rem;font-weight:600;color:var(--muted);transition:all var(--t)}
+.dock{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;scroll-behavior:smooth}
+.dock::-webkit-scrollbar{display:none}
+.dock a.navlink{display:flex;text-decoration:none}
+.dock button span{max-width:86px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.5}
+.dock button{flex:none;border:0;background:none;min-width:64px;min-height:54px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.72rem;font-weight:600;color:var(--muted);transition:all var(--t)}
 .dock button i{font-size:1.15rem}
 .dock button.active{background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;box-shadow:0 6px 14px rgba(37,99,235,.35)}
-@media (min-width:992px){.dock{left:calc(50% + var(--side-w)/2)} body.collapsed .dock{left:calc(50% + 42px)} .dock button{min-width:84px;font-size:.8rem}}
+@media (min-width:992px){.dock{left:calc(50% + var(--side-w)/2);max-width:calc(100% - var(--side-w) - 40px)} body.collapsed .dock{left:calc(50% + 42px);max-width:calc(100% - 124px)} .dock button{min-width:78px;font-size:.78rem}}
 @media (max-width:420px){.dock button{min-width:56px;font-size:.66rem}}
 .fab{position:fixed;z-index:1031;right:calc(18px + var(--sar));bottom:calc(var(--dock-h) + 30px + var(--sab));width:58px;height:58px;border-radius:50%;border:0;color:#fff;font-size:1.3rem;
   background:linear-gradient(135deg,var(--blue),var(--blue-dark));box-shadow:0 10px 24px rgba(37,99,235,.45);transition:transform var(--t)}
@@ -238,6 +245,7 @@ a.navlink{text-decoration:none}
 .stat.link:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:color-mix(in srgb,var(--blue) 40%,var(--border))}
 .stat .go{margin-left:auto;align-self:center;color:var(--muted);opacity:.45;transition:all var(--t)}
 .stat.link:hover .go{opacity:1;color:var(--blue);transform:translateX(3px)}
+.g5{grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr))}
 .g6{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media (min-width:1500px){.g6{grid-template-columns:repeat(6,minmax(0,1fr))}}
 @media (max-width:575.98px){.g6{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -261,7 +269,10 @@ a.navlink{text-decoration:none}
 .ann-img{position:relative;border-radius:18px;overflow:hidden;margin-bottom:10px;background:var(--surface-2);max-height:460px;display:grid;place-items:center}
 .ann-img img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(18px);opacity:.6;transform:scale(1.2)}
 .ann-img img.fg{position:relative;max-width:100%;max-height:460px;object-fit:contain}
-.web-frame{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:#fff;height:max(460px,calc(100dvh - 300px))}
+.web-frame{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--border);background:#fff;height:max(480px,calc(100dvh - var(--head-h) - var(--sat) - var(--dock-h) - 110px))}
+.web-frame:fullscreen{border-radius:0;border:0}
+.web-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.page.page-full{max-width:none;padding:12px calc(12px + var(--sar)) 12px calc(12px + var(--sal))}
 .web-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .icon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;max-height:50vh;overflow:auto;padding:4px}
 .icon-grid button{height:64px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:1.25rem}
@@ -298,6 +309,12 @@ a.navlink{text-decoration:none}
 .cover{aspect-ratio:16/9;border-radius:18px;background:linear-gradient(135deg,#60a5fa,#1e3a8a);display:grid;place-items:center;color:#fff;font-size:2rem;overflow:hidden;margin-bottom:12px}
 .cover{position:relative}
 .cover img{position:relative;width:100%;height:100%;object-fit:contain;z-index:1}
+.cover.full{aspect-ratio:auto;display:block;background:var(--surface-2);box-shadow:0 6px 18px rgba(15,23,42,.12)}
+.cover.full img{position:static;display:block;width:100%;height:auto;object-fit:initial;transition:transform .5s ease}
+.card-x.hover:hover .cover.full img,.ccard:hover .cover.full img{transform:scale(1.03)}
+.grid.g3{align-items:start}
+.ccard{transition:transform var(--t),box-shadow var(--t)}.ccard:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.ccard h5 a{color:var(--text)}.ccard h5 a:hover{color:var(--blue)}
 .cover img.bg{position:absolute;inset:0;object-fit:cover;filter:blur(14px) saturate(1.2);transform:scale(1.15);opacity:.7;z-index:0}
 .img-del{width:44px;height:44px;border-radius:14px;flex:none;color:#dc2626;background:#fee2e2;border:0;display:grid;place-items:center;transition:all var(--t)}
 .img-del:hover{background:#dc2626;color:#fff}
@@ -941,7 +958,7 @@ function applyBrand() {
 function fitWelcome() {
   const el = $('#welcomeText'); if (!el || !el.offsetWidth) return;
   let fs = Math.min(48, Math.max(26, el.offsetWidth / 9)); el.style.fontSize = fs + 'px';
-  const over = () => [...el.querySelectorAll('.ln')].some(l => l.scrollWidth > el.clientWidth + 1);
+  const over = () => [...el.querySelectorAll('.ln')].some(l => l.scrollWidth * 1.06 > el.clientWidth); // เผื่อขยายช้า ๆ 4.5%
   while (over() && fs > 16) { fs -= 1; el.style.fontSize = fs + 'px'; }
 }
 addEventListener('resize', () => setTimeout(fitWelcome, 100));
@@ -1184,8 +1201,8 @@ function forgotCode() {
  * ========================================================= */
 const NAV = {
   student: [['home', 'หน้าหลัก', 'fa-house', 1, 'หน้าหลัก'], ['courses', 'รายวิชา', 'fa-book-open', 1, 'รายวิชา'], ['assignments', 'งานของฉัน', 'fa-list-check', 1, 'งาน'], ['announcements', 'ประกาศ', 'fa-bullhorn', 1, 'ประกาศ'], ['search', 'ค้นหา', 'fa-magnifying-glass', 0, 'ค้นหา'], ['profile', 'โปรไฟล์', 'fa-user', 1, 'โปรไฟล์']],
-  admin: [['dash', 'แดชบอร์ด', 'fa-chart-pie', 1, 'แดชบอร์ด'], ['users', 'ผู้ใช้งาน', 'fa-users', 1, 'ผู้ใช้'], ['classes', 'ชั้นเรียน/ประเภทงาน', 'fa-layer-group'], ['acourses', 'รายวิชา/บทเรียน', 'fa-book', 1, 'รายวิชา'],
-    ['aassign', 'งานที่มอบหมาย', 'fa-clipboard-check', 1, 'งาน'], ['aann', 'ประกาศ', 'fa-bullhorn'], ['reports', 'รายงาน', 'fa-file-export'], ['settings', 'ตั้งค่าระบบ', 'fa-gear', 1, 'ตั้งค่า']]
+  admin: [['dash', 'แดชบอร์ด', 'fa-chart-pie', 1, 'แดชบอร์ด'], ['users', 'ผู้ใช้งาน', 'fa-users', 1, 'ผู้ใช้'], ['classes', 'ชั้นเรียน/ประเภทงาน', 'fa-layer-group', 0, 'ชั้นเรียน'], ['acourses', 'รายวิชา/บทเรียน', 'fa-book', 1, 'รายวิชา'],
+    ['aassign', 'งานที่มอบหมาย', 'fa-clipboard-check', 1, 'งาน'], ['aann', 'ประกาศ', 'fa-bullhorn', 0, 'ประกาศ'], ['reports', 'รายงาน', 'fa-file-export', 0, 'รายงาน'], ['settings', 'ตั้งค่าระบบ', 'fa-gear', 1, 'ตั้งค่า']]
 };
 const PAGES = {};
 const HIDDEN_TITLES = { course: 'รายวิชา', lesson: 'บทเรียน', acourse: 'จัดการรายวิชา', grade: 'ตรวจงาน' };
@@ -1235,15 +1252,24 @@ function embedUrl(u) {
   if ((m = u.match(/drive\.google\.com\/drive\/(?:u\/\d+\/)?folders\/([\w-]+)/))) return `https://drive.google.com/embeddedfolderview?id=${m[1]}#grid`;
   return u;
 }
-const stuMenus = () => { const m = J(S.config.studentMenus, {}); return { hidden: m.hidden || [], custom: m.custom || [] }; };
+const stuMenus = () => { const m = J(S.config.studentMenus, {}); return { hidden: m.hidden || [], custom: (m.custom || []).map((c, i) => Object.assign({}, c, { id: c.id || 'i' + i })), order: m.order || [] }; };
+/** รายการเมนูฝั่งนักเรียนตามลำดับที่ครูตั้ง (เมนูมาตรฐาน + เมนูลิงก์) */
+function studentNavItems(includeHidden) {
+  const sm = stuMenus();
+  const items = NAV.student.filter(n => includeHidden || !sm.hidden.includes(n[0])).map(n => ({ key: n[0], label: n[1], short: n[4] || n[1], icon: 'fa-solid ' + n[2], go: n[0] }))
+    .concat(sm.custom.map(m => ({ key: 'c:' + m.id, label: m.name, short: m.name, icon: menuIcon(m), go: m.mode === 'tab' ? '' : 'web', id: m.id, href: m.mode === 'tab' ? m.url : '' })));
+  const pos = k => { const i = sm.order.indexOf(k); return i < 0 ? 1000 + items.findIndex(x => x.key === k) : i; };
+  return items.sort((a, b) => pos(a.key) - pos(b.key));
+}
 function renderShell() {
-  const sm = stuMenus(), nav = S.mode === 'admin' ? NAV.admin : NAV.student.filter(n => !sm.hidden.includes(n[0]));
-  const custom = S.mode === 'admin' ? '' : sm.custom.map((m, i) => m.mode === 'tab'
-    ? `<a class="navlink" href="${safeUrl(m.url)}" target="_blank" rel="noopener"><button tabindex="-1" type="button"><i class="${esc(menuIcon(m))}"></i><span>${esc(m.name)}</span><i class="fa-solid fa-up-right-from-square ms-auto small opacity-50"></i></button></a>`
-    : `<button data-go="web" data-id="${i}" aria-label="${esc(m.name)}"><i class="${esc(menuIcon(m))}"></i><span>${esc(m.name)}</span></button>`).join('');
-  $('#sideNav').innerHTML = `<div class="nav-label">${S.mode === 'admin' ? 'โหมด Admin(ครูผู้สอน)' : 'โหมด User(นักเรียน)'}</div>` + nav.map(n => `<button data-go="${n[0]}" aria-label="${n[1]}"><i class="fa-solid ${n[2]}"></i><span>${n[1]}</span></button>`).join('')
-    + custom + `<button class="nav-logout" data-logout aria-label="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i><span>ออกจากระบบ</span></button>`;
-  $('#dock').innerHTML = nav.filter(n => n[3]).map(n => `<button data-go="${n[0]}" aria-label="${n[1]}"><i class="fa-solid ${n[2]}"></i><span>${n[4] || n[1]}</span></button>`).join('');
+  const items = S.mode === 'admin' ? NAV.admin.map(n => ({ key: n[0], label: n[1], short: n[4] || n[1], icon: 'fa-solid ' + n[2], go: n[0] })) : studentNavItems();
+  const btn = (it, dock) => it.href
+    ? `<a class="navlink" href="${safeUrl(it.href)}" target="_blank" rel="noopener" aria-label="${esc(it.label)} (แท็บใหม่)"><button tabindex="-1" type="button"><i class="${esc(it.icon)}"></i><span>${esc(dock ? it.short : it.label)}</span>${dock ? '' : '<i class="fa-solid fa-up-right-from-square ms-auto small opacity-50"></i>'}</button></a>`
+    : `<button data-go="${it.go}" ${it.id ? `data-id="${esc(it.id)}"` : ''} aria-label="${esc(it.label)}" title="${esc(it.label)}"><i class="${esc(it.icon)}"></i><span>${esc(dock ? it.short : it.label)}</span></button>`;
+  $('#sideNav').innerHTML = `<div class="nav-label">${S.mode === 'admin' ? 'โหมด Admin(ครูผู้สอน)' : 'โหมด User(นักเรียน)'}</div>` + items.map(it => btn(it)).join('')
+    + `<button class="nav-logout" data-logout aria-label="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i><span>ออกจากระบบ</span></button>`;
+  $('#dock').innerHTML = items.map(it => btn(it, true)).join('');   // Dock แสดงเมนูครบเหมือนแถบด้านข้าง
+
   const ms = $('#modeSwitch');
   ms.classList.toggle('student', S.mode === 'student');
   ms.querySelector('.knob').innerHTML = `<i class="fa-solid ${S.mode === 'admin' ? 'fa-chalkboard-user' : 'fa-user-graduate'}"></i>`;
@@ -1251,7 +1277,7 @@ function renderShell() {
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-go]');
-  if (b) { e.preventDefault(); go(b.dataset.go, b.dataset.id ? { id: b.dataset.id, tab: b.dataset.tab } : { tab: b.dataset.tab }); }
+  if (b) { e.preventDefault(); const pr = { tab: b.dataset.tab }; if (b.dataset.id) pr.id = b.dataset.id; if (b.dataset.course) pr.course = b.dataset.course; go(b.dataset.go, pr); }
 });
 $('#modeSwitch').onclick = () => { S.mode = S.mode === 'admin' ? 'student' : 'admin'; store.set('cp_mode', S.mode); renderShell(); go(S.mode === 'admin' ? 'dash' : 'home'); toast(S.mode === 'admin' ? 'เปลี่ยนเป็นโหมด Admin(ครูผู้สอน)' : 'เปลี่ยนเป็นโหมด User(นักเรียน) — เห็นเฉพาะข้อมูลของคุณ', 'info'); };
 $('#sideToggle').onclick = () => {
@@ -1292,6 +1318,8 @@ function go(page, params = {}, opt2 = {}) {
   document.body.classList.remove('side-open'); fixToggleIcon();
   const el = $('#page');
   el.onclick = null; // ล้าง handler ของหน้าก่อน (สาเหตุ error "reading 'id'")
+  el.classList.toggle('page-full', page === 'web');
+  const act = $('#dock .active'); if (act) { const d = $('#dock'); d.scrollLeft = act.offsetLeft - d.clientWidth / 2 + act.offsetWidth / 2; }
   const y = window.scrollY;
   if (!opt2.quiet) { el.style.animation = 'none'; el.offsetHeight; el.style.animation = ''; el.innerHTML = skeleton(); window.scrollTo({ top: 0 }); }
   let shown = false; const lt = opt2.quiet ? 0 : setTimeout(() => { shown = true; Loader.show('กำลังโหลดหน้า...'); }, 180);
@@ -1338,7 +1366,7 @@ $('#notifList').addEventListener('click', e => {
 const coverHtml = (c, icon = 'fa-book-open') => {
   const v = parseVideo(c.videoUrl);
   const src = c.cover || (v && v.type === 'youtube' ? `https://img.youtube.com/vi/${v.id}/hqdefault.jpg` : '');
-  return `<div class="cover">${src ? `<img class="bg" src="${safeUrl(src)}" alt="" aria-hidden="true" loading="lazy"><img src="${safeUrl(src)}" alt="" loading="lazy">` : `<i class="fa-solid ${icon}"></i>`}</div>`;
+  return src ? `<div class="cover full"><img src="${safeUrl(src)}" alt="" loading="lazy"></div>` : `<div class="cover"><i class="fa-solid ${icon}"></i></div>`;
 };
 const statCard = (icon, val, label, color = '', goTo = '', tab = '') => goTo
   ? `<button type="button" class="card-x stat link" data-go="${goTo}" ${tab ? `data-tab="${tab}"` : ''} aria-label="${esc(label)} — ดูรายละเอียด"><div class="ic" style="${color}"><i class="fa-solid ${icon}"></i></div><div><b>${val}</b><small>${label}</small></div><i class="fa-solid fa-chevron-right go"></i></button>`
@@ -1395,7 +1423,7 @@ PAGES.course = { parent: 'courses', async render(el, p) {
   <div class="card-x mb-3"><div class="row g-3 align-items-center"><div class="col-md-4">${coverHtml(c)}</div><div class="col-md-8"><span class="chip info mb-2">${esc(c.code)}</span><h3 class="fw-bold">${esc(c.name)}</h3><p class="text-muted mb-1">${linkify(c.description)}</p><small class="text-muted"><i class="fa-solid fa-chalkboard-user"></i> ${esc(c.teacher || '-')}</small></div></div></div>
   <div class="grid g2"><div class="card-x"><h5 class="fw-bold mb-2">บทเรียน</h5>${d.lessons.length ? Object.keys(units).map(u => `<div class="nav-label px-1">${esc(u)}</div>` + units[u].map(l => { n++; const done = l.progress && l.progress.completed === 'true';
     return `<div class="lesson-item ${done ? 'done' : ''}" data-go="lesson" data-id="${esc(l.id)}" role="button" tabindex="0"><div class="num">${done ? '<i class="fa-solid fa-check"></i>' : n}</div><div class="flex-fill"><b>${esc(l.title)}</b><div class="small text-muted">${l.videoUrl ? '<i class="fa-solid fa-circle-play"></i> วิดีโอ · ' : ''}${l.duration ? esc(l.duration) + ' นาที' : ''}</div></div><i class="fa-solid fa-chevron-right text-muted"></i></div>`; }).join('')).join('') : empty('fa-book', 'ยังไม่มีบทเรียนที่เผยแพร่')}</div>
-  <div class="card-x"><h5 class="fw-bold mb-2">งานในรายวิชา</h5>${d.assignments.length ? d.assignments.map(a => `<div class="lesson-item" data-go="assignments"><div class="num"><i class="fa-solid fa-file-pen"></i></div><div class="flex-fill"><b>${esc(a.title)}</b><div class="small text-muted">ส่ง ${thDate(a.dueAt, true)}</div></div>${statusChip(a.status)}</div>`).join('') : empty('fa-clipboard', 'ยังไม่มีงาน')}</div></div>`;
+  <div class="card-x"><div class="d-flex align-items-center mb-2"><h5 class="fw-bold m-0 flex-fill">งานในรายวิชา</h5><a href="#" class="sec-link" data-go="assignments" data-course="${esc(c.id)}">งานของฉันในวิชานี้ <i class="fa-solid fa-chevron-right"></i></a></div>${d.assignments.length ? d.assignments.map(a => `<div class="lesson-item" data-go="assignments" data-course="${esc(c.id)}"><div class="num"><i class="fa-solid fa-file-pen"></i></div><div class="flex-fill"><b>${esc(a.title)}</b><div class="small text-muted">ส่ง ${thDate(a.dueAt, true)}</div></div>${statusChip(a.status)}</div>`).join('') : empty('fa-clipboard', 'ยังไม่มีงาน')}</div></div>`;
 } };
 
 /* ---------------- วิดีโอ ---------------- */
@@ -1467,37 +1495,73 @@ PAGES.lesson = { parent: 'courses', async render(el, p) {
 
 /* ---------------- งานของฉัน ---------------- */
 PAGES.assignments = { async render(el, p = {}) {
-  const list = await apiC('listAssignments');
+  const all = await apiC('listAssignments');
+  const course = p.course ? all.find(a => a.courseId === p.course) : null;          // เข้ามาจากหน้ารายวิชา → แสดงเฉพาะวิชานั้น
+  const list = p.course ? all.filter(a => a.courseId === p.course) : all;
   let tab = ['all', 'todo', 'sent', 'graded'].includes(p.tab) ? p.tab : 'all';
-  el.innerHTML = `<div class="page-head"><h3>งานของฉัน</h3></div><ul class="nav nav-pills gap-2 mb-3 flex-nowrap overflow-auto">${[['all', 'ทั้งหมด'], ['todo', 'ค้างส่ง'], ['sent', 'ส่งแล้ว'], ['graded', 'ตรวจแล้ว']].map(t => `<li class="nav-item"><button class="nav-link ${t[0] === tab ? 'active' : ''}" data-t="${t[0]}">${t[1]} <span class="badge bg-light text-dark">${list.filter(a => flt(t[0], a)).length}</span></button></li>`).join('')}</ul><div id="al"></div>`;
+  el.innerHTML = `<div class="page-head"><h3>งานของฉัน${course ? `<small class="d-block fs-6 text-muted fw-semibold mt-1"><i class="fa-solid fa-book text-primary"></i> ${esc((course.courseCode ? course.courseCode + ' ' : '') + course.courseName)}</small>` : ''}</h3>
+    ${p.course ? `<button class="btn btn-soft" data-go="course" data-id="${esc(p.course)}"><i class="fa-solid fa-arrow-left"></i> กลับรายวิชา</button><button class="btn btn-soft" data-go="assignments"><i class="fa-solid fa-layer-group"></i> งานทุกวิชา</button>` : ''}</div>
+    <ul class="nav nav-pills gap-2 mb-3 flex-nowrap overflow-auto">${[['all', 'ทั้งหมด'], ['todo', 'ค้างส่ง'], ['sent', 'ส่งแล้ว'], ['graded', 'ตรวจแล้ว']].map(t => `<li class="nav-item"><button class="nav-link ${t[0] === tab ? 'active' : ''}" data-t="${t[0]}">${t[1]} <span class="badge bg-light text-dark">${list.filter(a => flt(t[0], a)).length}</span></button></li>`).join('')}</ul><div id="al"></div>`;
   function flt(t, a) { return t === 'all' || (t === 'todo' && !a.sub) || (t === 'sent' && a.sub && a.status !== 'graded') || (t === 'graded' && a.status === 'graded'); }
   const draw = () => {
     const f = list.filter(a => flt(tab, a));
-    $('#al').innerHTML = f.length ? `<div class="grid g2">${f.map(a => { const canEdit = (!a.sub || a.status !== 'graded') && a.dueAt.replace(' ', 'T') > nowStr();
-      return `<div class="card-x"><div class="d-flex gap-2 mb-2 flex-wrap"><span class="chip info">${esc(a.type)}</span>${statusChip(a.status)}</div>
+    $('#al').innerHTML = f.length ? `<div class="grid g2">${f.map(a => { const lead = !a.sub || a.sub.isLeader, canEdit = lead && (!a.sub || a.status !== 'graded') && a.dueAt.replace(' ', 'T') > nowStr();
+      return `<div class="card-x"><div class="d-flex gap-2 mb-2 flex-wrap"><span class="chip info">${esc(a.type)}</span>${a.isGroup ? '<span class="chip"><i class="fa-solid fa-people-group"></i> งานกลุ่ม</span>' : ''}${statusChip(a.status)}</div>
       <h5 class="fw-bold mb-1">${esc(a.title)}</h5><div class="small text-muted mb-2">${esc(a.courseName)} · คะแนนเต็ม ${esc(a.maxScore)}</div>
       <div class="small mb-2"><i class="fa-solid fa-calendar-day text-danger"></i> กำหนดส่ง ${thDate(a.dueAt, true)}</div>
       ${a.sub ? `<div class="small text-muted mb-2"><i class="fa-solid fa-paper-plane"></i> ส่งเมื่อ ${thDate(a.sub.submittedAt, true)}${a.sub.updatedAt !== a.sub.submittedAt ? ' · แก้ไขล่าสุด ' + thDate(a.sub.updatedAt, true) : ''}</div>` : ''}
+      ${a.sub && a.sub.memberList.length ? `<div class="small mb-2"><i class="fa-solid fa-people-group text-primary"></i> ${a.sub.isLeader ? 'คุณเป็นตัวแทนกลุ่ม' : 'กลุ่มของ ' + esc(a.sub.leaderName)} · สมาชิก ${a.sub.memberList.length + 1} คน</div>` : ''}
       ${a.status === 'graded' ? `<div class="summary mb-2"><div><span>คะแนน</span><b class="text-primary">${esc(a.sub.score)} / ${esc(a.maxScore)}</b></div><div class="border-0 d-block"><span class="text-muted">ความคิดเห็นจากครู</span><div>${linkify(a.sub.feedback || '-')}</div></div></div>` : ''}
-      <div class="d-flex gap-2 flex-wrap"><button class="btn btn-soft" data-view="${esc(a.id)}"><i class="fa-solid fa-eye"></i> รายละเอียด</button>${!a.sub && !canEdit && a.status === 'overdue' ? `<button class="btn btn-warning" data-sub="${esc(a.id)}"><i class="fa-solid fa-upload"></i> ส่งช้า</button>` : canEdit ? `<button class="btn btn-primary" data-sub="${esc(a.id)}"><i class="fa-solid ${a.sub ? 'fa-pen' : 'fa-upload'}"></i> ${a.sub ? 'แก้ไขงาน' : 'ส่งงาน'}</button>` : ''}</div></div>`; }).join('')}</div>`
+      <div class="d-flex gap-2 flex-wrap"><button class="btn btn-soft" data-view="${esc(a.id)}"><i class="fa-solid fa-eye"></i> รายละเอียด</button>${lead && !a.sub && !canEdit && a.status === 'overdue' ? `<button class="btn btn-warning" data-sub="${esc(a.id)}"><i class="fa-solid fa-upload"></i> ส่งช้า</button>` : canEdit ? `<button class="btn btn-primary" data-sub="${esc(a.id)}"><i class="fa-solid ${a.sub ? 'fa-pen' : 'fa-upload'}"></i> ${a.sub ? 'แก้ไขงาน' : 'ส่งงาน'}</button>` : ''}</div></div>`; }).join('')}</div>`
       : empty('fa-clipboard-check', 'ไม่มีงานในหมวดนี้');
-    $$('[data-sub]').forEach(b => b.onclick = () => submitModal(list.find(a => a.id === b.dataset.sub)));
-    $$('[data-view]').forEach(b => b.onclick = () => { const a = list.find(x => x.id === b.dataset.view);
-      modal(a.title, `<p>${linkify(a.description) || '-'}</p>${filesHtml(J(a.attachments))}${a.sub ? `<hr><h6 class="fw-bold">งานที่ส่ง</h6><p>${linkify(a.sub.text)}</p>${filesHtml(J(a.sub.files))}${a.sub.driveLink ? `<a href="${safeUrl(a.sub.driveLink)}" target="_blank" rel="noopener">${esc(a.sub.driveLink)}</a>` : ''}
-        ${J(a.sub.history).length ? `<details class="mt-3"><summary>ประวัติการแก้ไข (${J(a.sub.history).length})</summary>${J(a.sub.history).map(h => `<div class="small text-muted">${thDate(h.at, true)} · ไฟล์ ${h.files} รายการ</div>`).join('')}</details>` : ''}` : ''}`); });
+    $$('[data-sub]').forEach(b => b.onclick = () => submitModal(list.find(a => a.id === b.dataset.sub), () => go('assignments', p)));
+    $$('[data-view]').forEach(b => b.onclick = () => assignmentDetail(list.find(x => x.id === b.dataset.view)));
   };
   $$('[data-t]').forEach(b => b.onclick = () => { tab = b.dataset.t; $$('[data-t]').forEach(x => x.classList.toggle('active', x === b)); draw(); });
   draw();
 } };
-function submitModal(a) {
+/** รายละเอียดงาน: คำสั่ง ไฟล์ กำหนดส่ง สถานะ เวลาส่ง คะแนน ความคิดเห็น สมาชิกกลุ่ม ประวัติ */
+function assignmentDetail(a) {
+  const s = a.sub, row = (k, v) => `<div><span class="text-muted">${k}</span><b class="text-end">${v}</b></div>`;
+  modal(a.title, `<div class="d-flex gap-2 flex-wrap mb-3"><span class="chip info">${esc(a.type)}</span>${a.isGroup ? '<span class="chip"><i class="fa-solid fa-people-group"></i> งานกลุ่ม</span>' : ''}${statusChip(a.status)}</div>
+    <div class="summary mb-3">${row('รายวิชา', esc((a.courseCode ? a.courseCode + ' ' : '') + a.courseName))}${row('มอบหมายเมื่อ', thDate(a.createdAt, true))}${row('กำหนดส่ง', thDate(a.dueAt, true))}${row('คะแนนเต็ม', esc(a.maxScore) + ' คะแนน')}
+      ${s ? row('ส่งเมื่อ', thDate(s.submittedAt, true) + (s.status === 'late' ? ' <span class="chip warn">ส่งช้า</span>' : ' <span class="chip ok">ตรงเวลา</span>')) + (s.updatedAt !== s.submittedAt ? row('แก้ไขล่าสุด', thDate(s.updatedAt, true)) : '') : row('การส่ง', '<span class="chip warn">ยังไม่ส่ง</span>')}
+      ${s && s.score !== '' ? row('คะแนนที่ได้', `<span class="text-primary fs-5">${esc(s.score)} / ${esc(a.maxScore)}</span>`) + row('ตรวจเมื่อ', thDate(s.gradedAt, true)) : ''}</div>
+    ${s && s.score !== '' ? `<div class="card-x mb-3" style="background:var(--blue-light);border:0"><b><i class="fa-solid fa-comment-dots text-primary"></i> ความคิดเห็นจากครู</b><div class="mt-1">${linkify(s.feedback || '-')}</div></div>` : ''}
+    <h6 class="fw-bold"><i class="fa-solid fa-list-check text-primary"></i> รายละเอียด / คำสั่ง</h6><div class="mb-2">${linkify(a.description) || '<span class="text-muted">ไม่มีคำอธิบาย</span>'}</div>${filesHtml(J(a.attachments))}
+    ${s ? `<hr><h6 class="fw-bold"><i class="fa-solid fa-paper-plane text-primary"></i> งานที่ส่ง</h6>
+      ${s.memberList.length ? `<div class="mb-2"><span class="chip info"><i class="fa-solid fa-crown"></i> ${esc(s.leaderName)}</span> ${s.memberList.map(m => `<span class="chip">${esc(m.name)}${m.classNo ? ' (' + esc(m.classNo) + ')' : ''}</span>`).join(' ')}</div>` : ''}
+      <div>${linkify(s.text) || '<span class="text-muted">ไม่มีข้อความ</span>'}</div>${filesHtml(J(s.files))}${s.driveLink ? `<a class="file-row text-decoration-none" href="${safeUrl(s.driveLink)}" target="_blank" rel="noopener"><i class="fa-brands fa-google-drive fa-lg text-success"></i><span class="flex-fill">${esc(s.driveLink)}</span></a>` : ''}
+      ${J(s.history).length ? `<details class="mt-3"><summary>ประวัติการแก้ไข (${J(s.history).length})</summary>${J(s.history).map(h => `<div class="small text-muted">${thDate(h.at, true)} · ไฟล์ ${h.files} รายการ</div>`).join('')}</details>` : ''}` : ''}`);
+}
+function submitModal(a, after) {
   const key = 'cp_draft_' + S.user.id + '_' + a.id, draft = J(store.get(key), null);
   const s = a.sub || {}, init = draft || { text: s.text || '', files: J(s.files), driveLink: s.driveLink || '' };
+  let members = (s.memberList || []).map(m => ({ id: m.id, name: m.name, classNo: m.classNo }));
   const F = [{ k: 'text', label: 'ข้อความ / คำตอบ', type: 'textarea', rows: 5 }, { k: 'files', label: 'แนบไฟล์', type: 'files', folder: (a.type || 'งาน') + '/งานที่นักเรียนส่ง' },
     { k: 'driveLink', label: 'ลิงก์ Google Drive (ไฟล์ใหญ่ให้แนบเป็นลิงก์)', valid: v => v && !/^https:\/\/(drive|docs)\.google\.com\//.test(v) ? 'ต้องเป็นลิงก์ Google Drive/Docs' : '' }];
+  const groupBox = a.isGroup ? `<div class="card-x mb-3" style="background:var(--surface-2)"><h6 class="fw-bold mb-1"><i class="fa-solid fa-people-group text-primary"></i> สมาชิกในกลุ่ม</h6>
+    <p class="small text-muted mb-2">คุณเป็นตัวแทนกลุ่ม เลือกชั้น/ห้อง แล้วเพิ่มเพื่อนเข้ากลุ่ม — สมาชิกทุกคนจะเห็นงานนี้และได้คะแนนเท่ากัน</p>
+    <div id="gMembers" class="d-flex flex-wrap gap-2 mb-2"></div>
+    <div class="row g-2"><div class="col-6 col-md-4"><select class="form-select" id="gGrade" aria-label="ชั้น">${opt([['', 'ทุกชั้น']].concat(grades()), S.user.grade)}</select></div>
+      <div class="col-6 col-md-4"><select class="form-select" id="gRoom" aria-label="ห้อง">${opt([['', 'ทุกห้อง']].concat(rooms()), S.user.room)}</select></div>
+      <div class="col-12 col-md-4"><button type="button" class="btn btn-primary w-100" id="gLoad"><i class="fa-solid fa-user-plus"></i> เพิ่มสมาชิกในกลุ่ม</button></div></div>
+    <div id="gList" class="mt-2"></div></div>` : '';
   const m = modal((a.sub ? 'แก้ไขงาน: ' : 'ส่งงาน: ') + a.title, `<div class="summary mb-3"><div><span>กำหนดส่ง</span><b>${thDate(a.dueAt, true)}</b></div><div><span>คะแนนเต็ม</span><b>${esc(a.maxScore)}</b></div></div>
-    <div class="mb-3">${linkify(a.description)}</div>${filesHtml(J(a.attachments))}<hr>${formHtml(F, init)}<div class="small text-muted" id="dSaved"></div>`,
+    <div class="mb-3">${linkify(a.description)}</div>${filesHtml(J(a.attachments))}<hr>${groupBox}${formHtml(F, init)}<div class="small text-muted" id="dSaved"></div>`,
     `<button class="btn btn-soft" data-bs-dismiss="modal">ยกเลิก</button>${a.sub ? '<button class="btn btn-outline-danger" id="unsub"><i class="fa-solid fa-trash"></i> ยกเลิกการส่ง</button>' : ''}<button class="btn btn-primary" id="doSub"><i class="fa-solid fa-paper-plane"></i> ${a.sub ? 'บันทึกการแก้ไข' : 'ส่งงาน'}</button>`);
   bindForm(m.body, F); m.body.__keep = true; // ไฟล์ในฉบับร่างเก็บไว้ใช้ต่อ
+  if (a.isGroup) {
+    const drawM = () => { $('#gMembers').innerHTML = `<span class="chip info"><i class="fa-solid fa-crown"></i> ${esc(S.user.prefix + S.user.fullName)} (ตัวแทน)</span>` + members.map((x, i) => `<span class="chip ok">${esc(x.name)}${x.classNo ? ' · เลขที่ ' + esc(x.classNo) : ''}<button type="button" class="btn btn-sm p-0 ms-1" data-gx="${i}" aria-label="นำออก ${esc(x.name)}"><i class="fa-solid fa-xmark"></i></button></span>`).join('');
+      $$('[data-gx]', m.body).forEach(b => b.onclick = () => { members.splice(+b.dataset.gx, 1); drawM(); }); };
+    drawM();
+    $('#gLoad').onclick = async () => {
+      const list = (await api('groupCandidates', a.id, $('#gGrade').value, $('#gRoom').value)).filter(x => !members.some(y => y.id === x.id));
+      $('#gList').innerHTML = list.length ? `<div class="d-flex flex-column gap-1" style="max-height:260px;overflow:auto">${list.map(x => `<label class="file-row m-0" style="cursor:pointer"><input type="checkbox" class="form-check-input m-0" value="${esc(x.id)}" data-gn="${esc(x.name)}" data-gc="${esc(x.classNo || '')}"><span class="flex-fill">${esc(x.name)}</span><small class="text-muted">${esc(x.grade)}/${esc(x.room)} · เลขที่ ${esc(x.classNo || '-')}</small></label>`).join('')}</div>
+        <button type="button" class="btn btn-success btn-sm mt-2" id="gAdd"><i class="fa-solid fa-check"></i> เพิ่มที่เลือกเข้ากลุ่ม</button>` : '<div class="small text-muted">ไม่พบนักเรียนที่เพิ่มได้ (อาจอยู่ในกลุ่มอื่นหรือส่งงานแล้ว)</div>';
+      $('#gAdd') && ($('#gAdd').onclick = () => { $$('#gList input:checked').forEach(c => members.push({ id: c.value, name: c.dataset.gn, classNo: c.dataset.gc })); $('#gList').innerHTML = ''; drawM(); });
+    };
+  }
   const autosave = debounce(() => { if (!$('#dSaved')) return; store.set(key, JSON.stringify(readForm(m.body, F))); $('#dSaved').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกฉบับร่างอัตโนมัติแล้ว ' + new Date().toLocaleTimeString('th-TH'); }, 800);
   const ac = new AbortController();
   m.body.addEventListener('input', autosave, { signal: ac.signal }); m.body.addEventListener('change', autosave, { signal: ac.signal });
@@ -1505,13 +1569,14 @@ function submitModal(a) {
   $('#doSub').onclick = async () => {
     const d = validate(m.body, F); if (!d) return;
     if (!d.text && !d.files.length && !d.driveLink) return toast('กรุณาแนบไฟล์ ลิงก์ หรือพิมพ์ข้อความอย่างน้อย 1 อย่าง', 'warning');
-    if (!await confirmBox({ title: a.sub ? 'ยืนยันการแก้ไขงาน' : 'ยืนยันการส่งงาน', html: `<b>${esc(a.title)}</b>${a.dueAt.replace(' ', 'T') < nowStr() ? '<br><span class="text-danger">เลยกำหนดส่งแล้ว ระบบจะบันทึกว่า "ส่งช้า"</span>' : ''}` })) return;
+    if (a.isGroup) d.members = members.map(x => x.id);
+    if (!await confirmBox({ title: a.sub ? 'ยืนยันการแก้ไขงาน' : 'ยืนยันการส่งงาน', html: `<b>${esc(a.title)}</b>${a.isGroup ? `<br>สมาชิกกลุ่ม ${members.length + 1} คน` : ''}${a.dueAt.replace(' ', 'T') < nowStr() ? '<br><span class="text-danger">เลยกำหนดส่งแล้ว ระบบจะบันทึกว่า "ส่งช้า"</span>' : ''}` })) return;
     await apiMsg('กำลังส่งงาน...', 'submitWork', a.id, d);
-    store.del(key); m.hide(); toast('ส่งงานเรียบร้อย'); go('assignments');
+    store.del(key); m.hide(); toast('ส่งงานเรียบร้อย'); (after || (() => go('assignments')))();
   };
   $('#unsub') && ($('#unsub').onclick = async () => {
-    if (!await confirmBox({ title: 'ยกเลิกการส่งงาน?', html: `งาน <b>${esc(a.title)}</b> จะถูกลบออก (ไฟล์ใน Drive ยังอยู่)`, danger: true, confirmText: 'ยกเลิกการส่ง' })) return;
-    await api('deleteSubmission', a.id); m.hide(); toast('ยกเลิกการส่งแล้ว'); go('assignments');
+    if (!await confirmBox({ title: 'ยกเลิกการส่งงาน?', html: `งาน <b>${esc(a.title)}</b> จะถูกลบออก`, danger: true, confirmText: 'ยกเลิกการส่ง' })) return;
+    await api('deleteSubmission', a.id); m.hide(); toast('ยกเลิกการส่งแล้ว'); (after || (() => go('assignments')))();
   });
 }
 
@@ -1559,12 +1624,14 @@ PAGES.search = { async render(el) {
 
 /* ---------------- เว็บที่ครูเพิ่ม (แสดงในระบบ) ---------------- */
 PAGES.web = { async render(el, p) {
-  const m = stuMenus().custom[+p.id];
+  const m = stuMenus().custom.find(x => x.id === String(p.id));
   if (!m) throw new Error('ไม่พบเมนูนี้');
   $('#pageTitle').textContent = m.name;
-  el.innerHTML = `<div class="page-head"><h3><i class="${esc(menuIcon(m))} text-primary me-2"></i>${esc(m.name)}</h3><a class="btn btn-soft" href="${safeUrl(m.url)}" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i> เปิดในแท็บใหม่</a></div>
-    <div class="web-frame"><iframe src="${safeUrl(embedUrl(m.url))}" title="${esc(m.name)}" allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe></div>
-    <p class="small text-muted mt-2"><i class="fa-solid fa-circle-info"></i> ถ้าหน้าเว็บไม่แสดง แปลว่าเว็บไซต์นั้นไม่อนุญาตให้แสดงในระบบอื่น — กด "เปิดในแท็บใหม่"</p>`;
+  el.innerHTML = `<div class="web-bar"><b class="flex-fill text-truncate"><i class="${esc(menuIcon(m))} text-primary me-2"></i>${esc(m.name)}</b>
+      <button class="btn btn-sm btn-soft" id="webFs"><i class="fa-solid fa-expand"></i><span class="d-none d-sm-inline"> เต็มจอ</span></button>
+      <a class="btn btn-sm btn-soft" href="${safeUrl(m.url)}" target="_blank" rel="noopener" title="ถ้าหน้าเว็บไม่แสดง ให้เปิดในแท็บใหม่"><i class="fa-solid fa-up-right-from-square"></i><span class="d-none d-sm-inline"> เปิดในแท็บใหม่</span></a></div>
+    <div class="web-frame" id="webBox"><iframe src="${safeUrl(embedUrl(m.url))}" title="${esc(m.name)}" allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe></div>`;
+  $('#webFs').onclick = () => { const b = $('#webBox'); (b.requestFullscreen || b.webkitRequestFullscreen || (() => {})).call(b); };
 } };
 
 /* ---------------- โปรไฟล์ ---------------- */
@@ -1617,7 +1684,8 @@ const FIELDS = {
     { k: 'grade', label: 'มอบหมายให้ระดับชั้น', type: 'multi', opts: grades, help: '"ทั้งหมด" = ทุกชั้นที่เรียนรายวิชานี้' }, { k: 'room', label: 'มอบหมายให้ห้อง', type: 'multi', opts: () => rooms(), prefix: 'ห้อง ' },
     { k: 'type', label: 'ประเภท', type: 'select', opts: aTypes, addable: true, col: 'col-md-4' }, { k: 'title', label: 'ชื่องาน', req: true, col: 'col-md-8' },
     { k: 'description', label: 'รายละเอียด / คำสั่ง', type: 'textarea', rows: 5 }, { k: 'attachments', label: 'ไฟล์แนบ', type: 'files', folder: '{type}/ไฟล์จากครู' },
-    { k: 'dueAt', label: 'วันและเวลาส่ง', type: 'datetime', req: true, col: 'col-md-6' }, { k: 'maxScore', label: 'คะแนนเต็ม', type: 'number', req: true, def: 10, col: 'col-md-6', valid: v => +v > 0 ? '' : 'ต้องมากกว่า 0' }],
+    { k: 'dueAt', label: 'วันและเวลาส่ง', type: 'datetime', req: true, col: 'col-md-6' }, { k: 'maxScore', label: 'คะแนนเต็ม', type: 'number', req: true, def: 10, col: 'col-md-6', valid: v => +v > 0 ? '' : 'ต้องมากกว่า 0' },
+    { k: 'group', label: 'งานกลุ่ม — นักเรียนเพิ่มเพื่อนเข้ากลุ่มได้ และสมาชิกได้คะแนนเท่ากัน', type: 'check', help: 'ประเภทที่มีคำว่า "กลุ่ม" (เช่น งานกลุ่ม) จะเป็นงานกลุ่มอัตโนมัติ' }],
   Announcements: () => [{ k: 'type', label: 'ประเภท', type: 'select', opts: ['ข่าวสาร', 'แจ้งกำหนดส่ง', 'แจ้งเปลี่ยนแปลง', 'แจ้งสอบ'], col: 'col-md-4' }, { k: 'title', label: 'หัวข้อ', req: true, col: 'col-md-8' },
     { k: 'body', label: 'รายละเอียด', type: 'textarea', rows: 5 }, { k: 'image', label: 'รูปภาพ', type: 'image', w: 1600, h: 1200, folder: 'รูปภาพ/ประกาศ' }, { k: 'attachments', label: 'ไฟล์แนบ', type: 'files', folder: 'ประกาศ' },
     { k: 'courseId', label: 'รายวิชา', type: 'select', opts: () => [['', 'ทุกรายวิชา']].concat(S.cache.courses.map(c => [c.id, (c.code ? c.code + ' ' : '') + c.name])) },
@@ -1878,20 +1946,25 @@ PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
   const d = await apiC('listSubmissions', p.id), a = d.assignment;
   $('#pageTitle').textContent = 'ตรวจงาน: ' + a.title;
   const sent = d.rows.filter(r => r.sub).length, graded = d.rows.filter(r => r.status === 'graded').length;
+  const rk = r => (r.user.grade || '-') + '/' + (r.user.room || '-'), roomKeys = [...new Set(d.rows.map(rk))].sort(natural);
+  const roomsSent = roomKeys.filter(k => d.rows.some(r => rk(r) === k && r.sub)).length;
+  const gList = [...new Set(d.rows.map(r => r.user.grade).filter(Boolean))].sort(natural), rList = [...new Set(d.rows.map(r => r.user.room).filter(Boolean))].sort(natural);
   el.innerHTML = `<button class="btn btn-soft mb-3" data-go="aassign"><i class="fa-solid fa-arrow-left"></i> งานทั้งหมด</button>
   <div class="card-x mb-3"><h4 class="fw-bold">${esc(a.title)}</h4><div class="text-muted small mb-2">${esc(d.course.name)} · กำหนดส่ง ${thDate(a.dueAt, true)} · คะแนนเต็ม ${esc(a.maxScore)}</div>
-  <div class="grid g4">${statCard('fa-users', d.rows.length, 'นักเรียน')}${statCard('fa-paper-plane', sent, 'ส่งแล้ว', 'background:#dcfce7;color:#15803d')}${statCard('fa-hourglass', d.rows.length - sent, 'ยังไม่ส่ง', 'background:#fef3c7;color:#b45309')}${statCard('fa-check-double', graded, 'ตรวจแล้ว')}</div></div>
+  <div class="grid g5">${statCard('fa-users', d.rows.length, 'นักเรียน')}${statCard('fa-door-open', `${roomsSent}/${roomKeys.length}`, 'ห้องที่ส่งแล้ว', 'background:#e0f2fe;color:#0369a1')}${statCard('fa-paper-plane', sent, 'ส่งแล้ว', 'background:#dcfce7;color:#15803d')}${statCard('fa-hourglass', d.rows.length - sent, 'ยังไม่ส่ง', 'background:#fef3c7;color:#b45309')}${statCard('fa-check-double', graded, 'ตรวจแล้ว')}</div></div>
   <div class="d-flex flex-wrap gap-2 mb-3"><input class="form-control flex-fill" style="min-width:220px;width:auto" type="search" placeholder="ค้นหาชื่อ / รหัส / เลขที่..." id="gq" aria-label="ค้นหา">
+    <select class="form-select w-auto" id="gG" aria-label="ระดับชั้น"><option value="">ทุกชั้น</option>${opt(gList)}</select>
+    <select class="form-select w-auto" id="gR" aria-label="ห้อง"><option value="">ทุกห้อง</option>${opt(rList.map(x => [x, 'ห้อง ' + x]))}</select>
     <select class="form-select w-auto" id="gst" aria-label="สถานะ"><option value="">ทุกสถานะ</option><option value="sent">ส่งแล้ว (รอตรวจ)</option><option value="graded">ตรวจแล้ว</option><option value="none">ยังไม่ส่ง</option></select></div>
   <div id="gl"></div>`;
-  const stuRow = r => `<div class="stu-row"><div class="d-flex align-items-center" style="min-width:0"><span class="no">${esc(r.user.classNo || '-')}</span><div style="min-width:0"><b class="d-block text-truncate">${esc(r.user.fullName)}</b><small class="text-muted">รหัส ${esc(r.user.studentCode)}</small></div></div>
+  const stuRow = r => `<div class="stu-row"><div class="d-flex align-items-center" style="min-width:0"><span class="no">${esc(r.user.classNo || '-')}</span><div style="min-width:0"><b class="d-block text-truncate">${esc(r.user.fullName)}</b><small class="text-muted">รหัส ${esc(r.user.studentCode)}</small>${r.group ? `<div><span class="chip info" style="font-size:.72rem"><i class="fa-solid fa-people-group"></i> ${r.group === 'leader' ? 'ตัวแทนกลุ่ม' : 'กลุ่มของ ' + esc(r.leaderName)} · ${r.groupSize} คน</span></div>` : ''}</div></div>
     <div>${statusChip(r.status)}${r.sub ? `<div class="small text-muted">${thDate(r.sub.submittedAt, true)}</div>` : ''}</div>
     <div class="d-flex gap-1 flex-wrap">${r.sub ? `<button class="btn btn-sm btn-soft" data-view="${esc(r.user.id)}"><i class="fa-solid fa-eye"></i> ดูงาน</button>${subFiles(r.sub).length ? `<button class="btn btn-sm btn-success dl" data-dlsub="${esc(r.user.id)}"><i class="fa-solid fa-download"></i> ดาวน์โหลด${subFiles(r.sub).length > 1 ? ` (${subFiles(r.sub).length})` : ''}</button>` : ''}` : '<span class="text-muted small">ยังไม่มีงาน</span>'}</div>
     <div>${r.sub ? `<div class="score-box"><div class="input-group"><input class="form-control text-center" type="number" min="0" max="${esc(a.maxScore)}" step="0.5" value="${esc(r.sub.score)}" data-score="${esc(r.sub.id)}" aria-label="คะแนนที่ได้" placeholder="0"><span class="input-group-text">/ ${esc(a.maxScore)} คะแนน</span></div><input class="form-control fb" value="${esc(r.sub.feedback)}" data-fb="${esc(r.sub.id)}" placeholder="ความคิดเห็นถึงนักเรียน" aria-label="ความคิดเห็น"></div>` : ''}</div>
     <div>${r.sub ? `<button class="btn btn-sm btn-primary" data-grade="${esc(r.sub.id)}" data-name="${esc(r.user.fullName)}"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>` : ''}</div></div>`;
   const drawRooms = () => {
-    const q = $('#gq').value.trim().toLowerCase(), st = $('#gst').value;
-    const list = d.rows.filter(r => (!q || (r.user.fullName + r.user.studentCode + r.user.classNo).toLowerCase().includes(q))
+    const q = $('#gq').value.trim().toLowerCase(), st = $('#gst').value, fg = $('#gG').value, fr = $('#gR').value;
+    const list = d.rows.filter(r => (!fg || r.user.grade === fg) && (!fr || r.user.room === fr) && (!q || (r.user.fullName + r.user.studentCode + r.user.classNo).toLowerCase().includes(q))
       && (!st || (st === 'sent' && r.sub && r.status !== 'graded') || (st === 'graded' && r.status === 'graded') || (st === 'none' && !r.sub)));
     const groups = {}; list.forEach(r => { const k = (r.user.grade || '-') + '/' + (r.user.room || '-'); (groups[k] = groups[k] || []).push(r); });
     const keys = Object.keys(groups).sort(natural);
@@ -1899,7 +1972,7 @@ PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
       return `<div class="card-x room-card"><div class="room-head"><h5 class="fw-bold m-0"><i class="fa-solid fa-door-open text-primary me-2"></i>ห้อง ${esc(k)}</h5><span class="chip ok">ส่งแล้ว ${sn}/${all.length}</span><span class="chip info">ตรวจแล้ว ${gd}</span>${all.length - sn ? `<span class="chip warn">ยังไม่ส่ง ${all.length - sn}</span>` : ''}
         <div class="progress flex-fill" style="min-width:120px"><div class="progress-bar" style="width:${all.length ? Math.round(sn * 100 / all.length) : 0}%"></div></div></div>${g.map(stuRow).join('')}</div>`; }).join('') : empty('fa-users-slash', 'ไม่พบนักเรียนตามเงื่อนไข');
   };
-  $('#gq').addEventListener('input', debounce(drawRooms, 300)); $('#gst').onchange = drawRooms; drawRooms();
+  $('#gq').addEventListener('input', debounce(drawRooms, 300)); ['#gst', '#gG', '#gR'].forEach(x => $(x).onchange = drawRooms); drawRooms();
   el.onclick = async e => {
     const v = e.target.closest('[data-view]'), g = e.target.closest('[data-grade]'), dl = e.target.closest('[data-dlsub]');
     if (dl) { const r = d.rows.find(x => x.user.id === dl.dataset.dlsub), fs = subFiles(r.sub);
@@ -2077,7 +2150,9 @@ function drawLook(B, c) {
 }
 /* ---------- ตั้งค่า: เมนูฝั่งนักเรียน ---------- */
 function drawMenus(B, c) {
-  const m = J(c.studentMenus, {}); let hidden = m.hidden || [], custom = (m.custom || []).map(x => Object.assign({ icon: 'auto', mode: 'app' }, x));
+  const m = J(c.studentMenus, {}); let hidden = m.hidden || [], custom = (m.custom || []).map((x, i) => Object.assign({ icon: 'auto', mode: 'app', id: 'm' + Date.now().toString(36) + i }, x)), order = m.order || [];
+  const orderItems = () => { const its = NAV.student.map(n => ({ key: n[0], label: n[1], icon: 'fa-solid ' + n[2], hidden: hidden.includes(n[0]) })).concat(custom.filter(x => x.name).map(x => ({ key: 'c:' + x.id, label: x.name, icon: menuIcon(x) })));
+    const pos = k => { const i = order.indexOf(k); return i < 0 ? 1000 + its.findIndex(x => x.key === k) : i; }; return its.sort((a, b) => pos(a.key) - pos(b.key)); };
   const draw = () => {
     B.innerHTML = `<h5 class="fw-bold mb-1">เมนูมาตรฐาน</h5><p class="text-muted small">เปิด/ปิดเมนูที่นักเรียนเห็นในแถบด้านซ้ายและแถบล่าง (หน้าหลัก และ โปรไฟล์ ปิดไม่ได้)</p>
       <div class="row g-2 mb-4">${NAV.student.map(n => `<div class="col-sm-6 col-lg-4"><div class="form-check form-switch file-row m-0"><input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="mn_${n[0]}" data-mn="${n[0]}" ${hidden.includes(n[0]) ? '' : 'checked'} ${['home', 'profile'].includes(n[0]) ? 'disabled' : ''}>
@@ -2089,9 +2164,15 @@ function drawMenus(B, c) {
         <input class="form-control" style="flex:2 1 240px" data-cu="${i}" value="${esc(x.url)}" placeholder="https://..." aria-label="ลิงก์">
         <select class="form-select" style="flex:0 1 170px" data-cm="${i}" aria-label="วิธีเปิด">${opt([['app', 'แสดงในระบบ'], ['tab', 'เปิดแท็บใหม่']], x.mode)}</select>
         <button class="btn btn-icon btn-soft text-danger flex-none" data-cd="${i}" aria-label="ลบเมนู"><i class="fa-solid fa-trash"></i></button></div>`).join('') || '<div class="text-muted small mb-2">ยังไม่มีเมนูเพิ่มเติม</div>'}</div>
-      <div class="d-flex flex-wrap gap-2 mt-3"><button class="btn btn-soft" id="cmAdd"><i class="fa-solid fa-plus"></i> เพิ่มเมนูลิงก์</button><button class="btn btn-primary" id="cmSave"><i class="fa-solid fa-floppy-disk"></i> บันทึกเมนู</button></div>`;
+      <div class="d-flex flex-wrap gap-2 mt-3 mb-4"><button class="btn btn-soft" id="cmAdd"><i class="fa-solid fa-plus"></i> เพิ่มเมนูลิงก์</button></div>
+      <h5 class="fw-bold mb-1">ลำดับเมนู</h5><p class="text-muted small">กดลูกศรเพื่อเรียงลำดับเมนูที่นักเรียนเห็นในแถบด้านซ้ายและแถบล่าง</p>
+      <div class="d-flex flex-column gap-2 mb-3" id="ordList">${orderItems().map((it, i, arr) => `<div class="file-row m-0"><span class="ord" style="width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:var(--blue-light);color:var(--blue);font-weight:800">${i + 1}</span>
+        <i class="${esc(it.icon)} text-primary"></i><span class="flex-fill">${esc(it.label)}</span>${it.hidden ? '<span class="chip">ซ่อน</span>' : ''}
+        <button class="btn btn-sm btn-icon btn-soft" data-ou="${i}" ${i ? '' : 'disabled'} aria-label="เลื่อนขึ้น"><i class="fa-solid fa-arrow-up"></i></button><button class="btn btn-sm btn-icon btn-soft" data-od="${i}" ${i < arr.length - 1 ? '' : 'disabled'} aria-label="เลื่อนลง"><i class="fa-solid fa-arrow-down"></i></button></div>`).join('')}</div>
+      <button class="btn btn-primary" id="cmSave"><i class="fa-solid fa-floppy-disk"></i> บันทึกเมนู</button>`;
+    $$('[data-ou],[data-od]', B).forEach(b => b.onclick = () => { read(); const list = orderItems().map(x => x.key), i = +(b.dataset.ou ?? b.dataset.od), j = b.dataset.ou !== undefined ? i - 1 : i + 1; [list[i], list[j]] = [list[j], list[i]]; order = list; draw(); });
     const read = () => { hidden = $$('[data-mn]', B).filter(x => !x.checked).map(x => x.dataset.mn); custom = custom.map((x, i) => Object.assign(x, { name: $(`[data-cn="${i}"]`, B).value.trim(), url: $(`[data-cu="${i}"]`, B).value.trim(), mode: $(`[data-cm="${i}"]`, B).value })); };
-    $('#cmAdd').onclick = () => { read(); custom.push({ name: '', url: '', icon: 'auto', mode: 'app' }); draw(); };
+    $('#cmAdd').onclick = () => { read(); custom.push({ name: '', url: '', icon: 'auto', mode: 'app', id: 'm' + Date.now().toString(36) }); draw(); };
     $$('[data-cd]', B).forEach(b => b.onclick = () => { read(); custom.splice(+b.dataset.cd, 1); draw(); });
     $$('[data-cu]', B).forEach(inp => inp.addEventListener('input', () => { const i = +inp.dataset.cu; if (custom[i].icon === 'auto') $(`[data-cicon="${i}"] i`, B).className = autoIcon(inp.value); }));
     $$('[data-cicon]', B).forEach(b => b.onclick = async () => {
@@ -2107,7 +2188,7 @@ function drawMenus(B, c) {
       const bad = custom.find(x => !x.name || !/^https:\/\//.test(x.url));
       if (bad) return toast('เมนูเพิ่มเติมต้องมีชื่อ และลิงก์ขึ้นต้นด้วย https://', 'warning');
       if (!await confirmBox({ title: 'ยืนยันบันทึกเมนูนักเรียน', html: `ซ่อน ${hidden.length} เมนู · เมนูลิงก์ ${custom.length} รายการ` })) return;
-      const v = JSON.stringify({ hidden, custom });
+      const v = JSON.stringify({ hidden, custom, order: orderItems().map(x => x.key) });
       await api('saveSettings', { config: { studentMenus: v } }); c.studentMenus = S.config.studentMenus = v; toast('บันทึกเมนูแล้ว — นักเรียนจะเห็นเมื่อเปิดหน้าเว็บใหม่');
     };
   };

@@ -96,6 +96,16 @@ const ma = R('save', A2(), 'Assignments', { courseId: mc1.id, title: 'เฉพ�
 ok(!R('listAssignments', T2()).data.some(a => a.id === ma.id), 'assignment room targeting hides from room 3');
 R('save', A2(), 'Assignments', { id: ma.id, room: '3,9' }); ok(R('listAssignments', T2()).data.some(a => a.id === ma.id), 'assignment multi-room visible');
 ok(R('listSubmissions', A2(), ma.id).data.rows.length === 1, 'submission roster follows targeting');
+// group work
+const g2 = R('registerStudent', null, { prefix: 'นาย', fullName: 'เพื่อน กลุ่ม', birthDate: '2008-02-02', grade: 'ม.6', room: '3', studentCode: '60002', consent: true }).data.token;
+const ga = R('save', A2(), 'Assignments', { courseId: mc1.id, title: 'โครงงานกลุ่ม', dueAt: '2099-01-01T10:00', maxScore: 20, type: 'งานกลุ่ม', grade: 'ม.6' }).data;
+const cand = R('groupCandidates', T2(), ga.id, 'ม.6', '3'); ok(cand.ok && cand.data.length === 1, 'group candidates ' + JSON.stringify(cand).slice(0, 150));
+const gs = R('submitWork', T2(), ga.id, { text: 'งานกลุ่ม', members: [cand.data[0].id] }); ok(gs.ok && gs.data.memberList.length === 1, 'group submit');
+const seen = R('listAssignments', g2).data.find(a => a.id === ga.id); ok(seen && seen.sub && !seen.sub.isLeader && seen.status === 'ontime', 'member sees group work');
+ok(!R('submitWork', g2, ga.id, { text: 'แยกส่ง' }).ok, 'member cannot submit separately');
+ok(R('groupCandidates', T2(), ga.id, '', '').data.length === 1, 'leader still sees own member');
+const gl = R('listSubmissions', A2(), ga.id).data.rows; ok(gl.filter(r => r.sub).length === 2 && gl.some(r => r.group === 'member'), 'grade view shows group');
+R('gradeSubmission', A2(), gs.data.id, 18, 'ดี'); ok(R('listAssignments', g2).data.find(a => a.id === ga.id).sub.score === '18', 'member gets same score');
 ok(R('save', A2(), 'Categories', { code: 'ว21102', name: 'วิทยาการคำนวณ' }).data.code === 'ว21102', 'category code');
 // classNo + menus + theme
 ok(R('updateProfile', T2(), { classNo: '07' }).data.classNo === '7', 'classNo');
