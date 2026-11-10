@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '4.2.0';
+const APP_VERSION = '4.4.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -29,12 +29,12 @@ const SCHEMA = {
     'email','avatar','status','mustChangePassword','createdAt','updatedAt','lastLoginAt','classNo'],
   Sessions: ['id','userId','tokenHash','expiresAt','createdAt'],
   Classes: ['id','grade','room','order','createdAt'],
-  Categories: ['id','name','createdAt'],
+  Categories: ['id','name','createdAt','code'],
   Courses: ['id','code','name','description','category','grade','room','cover','teacher','order','ownerId','createdAt','updatedAt'],
   Lessons: ['id','courseId','unit','title','description','cover','videoUrl','videoDuration','attachments','links',
     'duration','order','publishAt','closeAt','ownerId','createdAt','updatedAt'],
   Progress: ['id','ownerId','lessonId','courseId','completed','videoPos','videoDone','views','updatedAt'],
-  Assignments: ['id','courseId','type','title','description','attachments','dueAt','maxScore','ownerId','createdAt','updatedAt'],
+  Assignments: ['id','courseId','type','title','description','attachments','dueAt','maxScore','ownerId','createdAt','updatedAt','grade','room'],
   Submissions: ['id','assignmentId','ownerId','text','files','driveLink','status','submittedAt','score','feedback',
     'gradedBy','gradedAt','history','updatedAt'],
   Announcements: ['id','type','title','body','attachments','image','pinned','courseId','grade','room','ownerId','createdAt','updatedAt'],
@@ -44,10 +44,10 @@ const SCHEMA = {
 // ตารางที่ Admin แก้ไขผ่าน save()/remove() ได้ และฟิลด์ที่อนุญาต
 const EDITABLE = {
   Classes: ['grade','room','order'],
-  Categories: ['name'],
+  Categories: ['code','name'],
   Courses: ['code','name','description','category','grade','room','cover','teacher','order','ownerId'],
   Lessons: ['courseId','unit','title','description','cover','videoUrl','videoDuration','attachments','links','duration','order','publishAt','closeAt','ownerId'],
-  Assignments: ['courseId','type','title','description','attachments','dueAt','maxScore','ownerId'],
+  Assignments: ['courseId','type','title','description','attachments','dueAt','maxScore','ownerId','grade','room'],
   Announcements: ['type','title','body','attachments','image','pinned','courseId','grade','room','ownerId']
 };
 const REQUIRED = { Classes: ['grade'], Categories: ['name'], Courses: ['name'], Lessons: ['courseId','title'],
@@ -320,9 +320,13 @@ function createSession_(user, remember) {
   const th = sha_(token);
   insert_('Sessions', { id: id_(), userId: user.id, tokenHash: th, expiresAt: String(exp), createdAt: now_() });
   CacheService.getScriptCache().put('s_' + th, JSON.stringify({ u: user.id, e: exp }), Math.min(21600, hours * 3600));
-  updateRow_('Users', user, { lastLoginAt: now_() });
-  log_(user.id, 'login', user.role);
-  return { token: token, expiresAt: exp, user: pub_(user) };
+  log_(user.id, 'login', user.role); // ไม่เขียนชีต Users ทุกครั้งที่ login (เร็วขึ้น) — เวลาเข้าล่าสุดดูจาก AuditLog
+  const pu = pub_(user); pu.lastLoginAt = now_();
+  // ส่งข้อมูลหน้าแรกกลับไปพร้อมกัน → เข้าหน้าหลักได้ทันทีไม่ต้องเรียกซ้ำ
+  const ctx = { user: user, token: token }, boot = {};
+  try { if (user.role === 'admin') boot.adminDashboard = adminDashboard_(ctx); else boot.studentHome = studentHome_(ctx); } catch (e) {}
+  try { boot.notifications = notifications_(ctx); } catch (e) {}
+  return { token: token, expiresAt: exp, user: pu, boot: boot };
 }
 function auth_(token) {
   if (!token || typeof token !== 'string' || token.length < 40) return null;
@@ -440,8 +444,10 @@ function forgotCode_(ctx, d) {
     return { ok: true };
   });
 }
+function lastLogin_(uid) { const l = rows_('AuditLog'); for (let i = l.length - 1; i >= 0; i--) if (l[i].userId === uid && l[i].action === 'login') return l[i].createdAt; return ''; }
 function me_(ctx) {
-  return { user: pub_(ctx.user), config: publicCfg_(), classes: rows_('Classes').map(pub_), maxUploadMB: MAX_UPLOAD_MB,
+  const pu = pub_(ctx.user); pu.lastLoginAt = lastLogin_(ctx.user.id) || pu.lastLoginAt;
+  return { user: pu, config: publicCfg_(), classes: rows_('Classes').map(pub_), maxUploadMB: MAX_UPLOAD_MB,
     unread: rows_('Notifications').filter(n => n.ownerId === ctx.user.id && n.read !== 'true').length };
 }
 function logout_(ctx) {
@@ -475,7 +481,9 @@ function updateProfile_(ctx, d) {
 }
 
 /* ============================== สิทธิ์การมองเห็น ============================== */
-function match_(u, grade, room) { return u.role === 'admin' || ((!grade || grade === u.grade) && (!room || room === u.room)); }
+/** ระดับชั้น/ห้องเก็บแบบหลายค่าคั่นด้วย , (ว่าง = ทั้งหมด) */
+function inList_(list, v) { const a = String(list || '').split(',').map(s => s.trim()).filter(Boolean); return !a.length || a.indexOf(String(v || '')) >= 0; }
+function match_(u, grade, room) { return u.role === 'admin' || (inList_(grade, u.grade) && inList_(room, u.room)); }
 function courseOk_(u, c) { return !!c && match_(u, c.grade, c.room); }
 function lessonOk_(u, l) {
   if (!l || !courseOk_(u, find_('Courses', l.courseId))) return false;
@@ -558,7 +566,7 @@ function saveProgress_(ctx, lessonId, d) {
 function assignmentsFor_(u) {
   const subs = {}; rows_('Submissions').filter(s => s.ownerId === u.id).forEach(s => subs[s.assignmentId] = s);
   const courses = {}; rows_('Courses').forEach(c => courses[c.id] = c);
-  return rows_('Assignments').filter(a => courseOk_(u, courses[a.courseId])).map(a => {
+  return rows_('Assignments').filter(a => courseOk_(u, courses[a.courseId]) && match_(u, a.grade, a.room)).map(a => {
     const s = subs[a.id] || null;
     return Object.assign(pub_(a), { courseName: courses[a.courseId].name, sub: s ? pub_(s) : null, status: subStatus_(a, s) });
   });
@@ -633,7 +641,7 @@ function search_(ctx, f) {
   const has = s => !q || String(s).toLowerCase().indexOf(q) >= 0;
   const inDate = d => (!f.from || String(d).slice(0, 10) >= f.from) && (!f.to || String(d).slice(0, 10) <= f.to);
   const extOk = att => !f.fileType || json_(att, []).some(x => String(x.name).toLowerCase().split('.').pop() === f.fileType);
-  const roomOk = c => !f.room || (c && (c.grade + '/' + c.room) === f.room) || (c && c.grade === f.room.split('/')[0] && !c.room);
+  const roomOk = c => !f.room || (c && inList_(c.grade, f.room.split('/')[0]) && inList_(c.room, f.room.split('/')[1]));
   rows_('Courses').filter(c => courseOk_(u, c) && (!f.courseId || c.id === f.courseId) && roomOk(c) && inDate(c.createdAt) && !f.fileType)
     .forEach(c => { if (has(c.name + c.code + c.description + c.category + c.teacher + users[c.ownerId])) out.push({ kind: 'course', id: c.id, title: c.name, sub: c.category + ' · ' + (c.teacher || users[c.ownerId] || ''), date: c.createdAt }); });
   rows_('Lessons').filter(l => lessonOk_(u, l) && (!f.courseId || l.courseId === f.courseId) && roomOk(courses[l.courseId]) && inDate(l.createdAt) && extOk(l.attachments))
@@ -751,8 +759,9 @@ function imgOk_(v) { return /^data:image\/(jpeg|png|webp);base64,/.test(v) ? v.l
 
 /* ============================== แจ้งเตือน ============================== */
 function studentsFor_(grade, room, courseId) {
-  if (courseId) { const c = find_('Courses', courseId); if (c) { grade = grade || c.grade; room = room || c.room; } }
-  return rows_('Users').filter(u => u.role === 'student' && u.status === 'active' && (!grade || u.grade === grade) && (!room || u.room === room));
+  const co = courseId ? find_('Courses', courseId) : null;
+  return rows_('Users').filter(u => u.role === 'student' && u.status === 'active' && inList_(grade, u.grade) && inList_(room, u.room)
+    && (!co || (inList_(co.grade, u.grade) && inList_(co.room, u.room))));
 }
 function notifyUsers_(ids, title, body, link) {
   insertMany_('Notifications', ids.map(id => ({ id: id_(), ownerId: id, title: title, body: body, link: link || '', read: 'false', createdAt: now_() })));
@@ -804,7 +813,7 @@ function save_(ctx, entity, obj) {
       row = insert_(entity, Object.assign({ id: id_(), ownerId: ctx.user.id, createdAt: now_(), updatedAt: now_() }, data));
       log_(ctx.user.id, 'create_' + entity, row.id);
       if (entity === 'Lessons' && !(row.publishAt && row.publishAt > now_())) broadcast_(studentsFor_('', '', row.courseId), 'บทเรียนใหม่: ' + row.title, find_('Courses', row.courseId).name, 'lesson:' + row.id);
-      if (entity === 'Assignments') broadcast_(studentsFor_('', '', row.courseId), row.type + 'ใหม่: ' + row.title, 'กำหนดส่ง ' + row.dueAt.replace('T', ' ').slice(0, 16), 'assignment:' + row.id);
+      if (entity === 'Assignments') broadcast_(studentsFor_(row.grade, row.room, row.courseId), row.type + 'ใหม่: ' + row.title, 'กำหนดส่ง ' + row.dueAt.replace('T', ' ').slice(0, 16), 'assignment:' + row.id);
       if (entity === 'Announcements') broadcast_(studentsFor_(row.grade, row.room, row.courseId), (row.type || 'ประกาศ') + ': ' + row.title, str_(row.body, 200), 'announcement:' + row.id);
     }
     return pub_(row);
@@ -963,7 +972,7 @@ function listSubmissions_(ctx, assignmentId) {
   if (!a) throw err_('ไม่พบงาน');
   const c = find_('Courses', a.courseId);
   const subs = rows_('Submissions').filter(s => s.assignmentId === a.id);
-  const students = studentsFor_(c.grade, c.room);
+  const students = studentsFor_(a.grade, a.room, a.courseId);
   const ids = {}; students.forEach(s => ids[s.id] = 1);
   subs.forEach(s => { if (!ids[s.ownerId]) { const u = find_('Users', s.ownerId); if (u) students.push(u); } });
   return { assignment: pub_(a), course: pub_(c), rows: students.map(u => {
@@ -991,7 +1000,7 @@ function adminDashboard_() {
   const count = (list, field) => d.map(day => list.filter(x => String(x[field]).slice(0, 10) === day).length);
   const subs = rows_('Submissions');
   return {
-    cards: { courses: rows_('Courses').length, lessons: rows_('Lessons').length, students: users.filter(u => u.role === 'student').length,
+    cards: { announcements: rows_('Announcements').length, courses: rows_('Courses').length, lessons: rows_('Lessons').length, students: users.filter(u => u.role === 'student').length,
       ungraded: subs.filter(s => s.score === '').length, assignments: rows_('Assignments').length, pendingUsers: users.filter(u => u.status === 'pending').length },
     days: d, logins: count(logs.filter(l => l.action === 'login'), 'createdAt'), views: count(logs.filter(l => l.action === 'view_lesson'), 'createdAt'),
     submissions: count(subs, 'submittedAt'),
@@ -1008,7 +1017,7 @@ function report_(ctx, type, f) {
   const logs = rows_('AuditLog');
   if (type === 'attendance') {
     return { title: 'รายงานการเข้าเรียน (การเข้าสู่ระบบ)', headers: ['รหัส', 'ชื่อ-สกุล', 'ชั้น/ห้อง', 'จำนวนครั้งที่เข้าระบบ', 'เข้าล่าสุด'],
-      rows: users.map(u => { const l = logs.filter(x => x.userId === u.id && x.action === 'login'); return [u.studentCode, name(u), u.grade + '/' + u.room, l.length, u.lastLoginAt]; }) };
+      rows: users.map(u => { const l = logs.filter(x => x.userId === u.id && x.action === 'login'); return [u.studentCode, name(u), u.grade + '/' + u.room, l.length, l.length ? l[l.length - 1].createdAt : (u.lastLoginAt || '-')]; }) };
   }
   if (type === 'views') {
     const lessons = rows_('Lessons').filter(l => cids.indexOf(l.courseId) >= 0), prog = rows_('Progress');
@@ -1053,7 +1062,7 @@ function menus_(v) {
   const KEYS = ['home', 'courses', 'assignments', 'announcements', 'search', 'profile'];
   return JSON.stringify({
     hidden: (Array.isArray(o.hidden) ? o.hidden : []).filter(k => KEYS.indexOf(k) >= 0 && k !== 'home' && k !== 'profile'),
-    custom: (Array.isArray(o.custom) ? o.custom : []).slice(0, 12).map(m => ({ name: str_(m.name, 40), url: str_(m.url, 500), icon: str_(m.icon, 40).replace(/[^a-z0-9-]/g, '') || 'fa-link' }))
+    custom: (Array.isArray(o.custom) ? o.custom : []).slice(0, 12).map(m => ({ name: str_(m.name, 40), url: str_(m.url, 500), icon: str_(m.icon, 60).replace(/[^a-z0-9- ]/g, '') || 'auto', mode: m.mode === 'tab' ? 'tab' : 'app' }))
       .filter(m => m.name && /^https:\/\//.test(m.url))
   });
 }
@@ -1139,7 +1148,7 @@ function dailyJob() {
     const key = 'remind_' + a.id;
     if (props_().getProperty(key)) return;
     const sent = rows_('Submissions').filter(s => s.assignmentId === a.id).map(s => s.ownerId);
-    broadcast_(studentsFor_('', '', a.courseId).filter(s => sent.indexOf(s.id) < 0), 'ใกล้ครบกำหนดส่ง: ' + a.title, 'กำหนดส่ง ' + a.dueAt.replace('T', ' ').slice(0, 16), 'assignment:' + a.id);
+    broadcast_(studentsFor_(a.grade, a.room, a.courseId).filter(s => sent.indexOf(s.id) < 0), 'ใกล้ครบกำหนดส่ง: ' + a.title, 'กำหนดส่ง ' + a.dueAt.replace('T', ' ').slice(0, 16), 'assignment:' + a.id);
     props_().setProperty(key, '1');
   });
   deleteWhere_('Sessions', s => Number(s.expiresAt) < Date.now());

@@ -89,6 +89,14 @@ const T2v = R('login', null, { mode: 'student', studentCode: '60001' }).data.tok
 function T2() { return T2v; } function A2() { return A2v; }
 for (let i = 0; i < 5; i++) R('login', null, { mode: 'admin', username: 'boss', password: 'x' });
 ok(R('login', null, { mode: 'admin', username: 'boss', password: 'newpass123' }).code === 'THROTTLE', 'throttle');
+// multi grade/room targeting
+const mc1 = R('save', A2(), 'Courses', { name: 'หลายชั้น', grade: 'ม.6,ม.2', room: '' }).data;
+ok(R('listCourses', T2()).data.some(c => c.id === mc1.id), 'multi-grade course visible to ม.6');
+const ma = R('save', A2(), 'Assignments', { courseId: mc1.id, title: 'เฉพาะห้อง 9', dueAt: '2099-01-01T10:00', maxScore: 5, grade: 'ม.6', room: '9' }).data;
+ok(!R('listAssignments', T2()).data.some(a => a.id === ma.id), 'assignment room targeting hides from room 3');
+R('save', A2(), 'Assignments', { id: ma.id, room: '3,9' }); ok(R('listAssignments', T2()).data.some(a => a.id === ma.id), 'assignment multi-room visible');
+ok(R('listSubmissions', A2(), ma.id).data.rows.length === 1, 'submission roster follows targeting');
+ok(R('save', A2(), 'Categories', { code: 'ว21102', name: 'วิทยาการคำนวณ' }).data.code === 'ว21102', 'category code');
 // classNo + menus + theme
 ok(R('updateProfile', T2(), { classNo: '07' }).data.classNo === '7', 'classNo');
 ok(!R('saveSettings', A2(), { config: { themeColor: 'red' } }).ok, 'bad color');

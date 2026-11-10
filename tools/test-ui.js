@@ -63,6 +63,16 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.screenshot({ path: SHOT + '/05-admin-dash.png' });
   await page.click('.dock [data-go=users]'); await idle(); ok(await page.isVisible('text=24680'), 'users list');
   await page.screenshot({ path: SHOT + '/06-users.png' });
+  await page.click('#sideNav [data-go=classes]'); await idle(); await page.click('#addK'); await page.waitForSelector('#modal.show');
+  await page.fill('[name=code]', 'ว21102'); await page.fill('[name=name]', 'วิทยาการคำนวณ 2'); await page.click('#crudSave'); await confirm(); await idle();
+  ok(await page.isVisible('#tk >> text=ว21102'), 'category with subject code');
+  await page.click('.dock [data-go=acourses]'); await idle(); ok(await page.$$eval('#cl .ccard', x => x.length) >= 1, 'course cards');
+  await page.click('#fab'); await page.waitForSelector('#modal.show'); await page.selectOption('[name=subject]', 'ว21102|วิทยาการคำนวณ 2');
+  await page.click('[data-multi=grade] label:has-text("ม.2")'); await page.click('[data-multi=room] label:has-text("ห้อง 3")');
+  ok(await page.inputValue('[name=grade]') === 'ม.2' && await page.inputValue('[name=room]') === '3', 'multi checkbox values');
+  await page.screenshot({ path: SHOT + '/06c-course-form.png' });
+  await page.click('#crudSave'); await confirm(); await idle();
+  ok((await page.textContent('#pageTitle')).includes('วิทยาการคำนวณ 2'), 'course created from subject');
   await page.click('#sideNav [data-go=aann]'); await idle(); await page.click('#nl [data-edit]'); await page.waitForSelector('#modal.show'); await page.waitForTimeout(400);
   ok(!(await page.$('.toast-x.error')), 'no error when editing announcement after users page');
   await page.click('#modal .btn-close'); await page.waitForTimeout(400);
@@ -71,7 +81,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   ok(await page.inputValue('[name=type]') === 'โครงงาน', 'add assignment type inline');
   await page.screenshot({ path: SHOT + '/06b-assign-type.png' });
   await page.click('#modal .btn-close'); await page.waitForTimeout(400);
-  await page.click('.dock [data-go=acourses]'); await idle(); await page.click('#cl [data-go=acourse] >> nth=0'); await idle();
+  await page.click('.dock [data-go=acourses]'); await idle(); await page.click('#cl .ccard:has-text("วิทยาการคำนวณ 1") button[data-go=acourse]'); await idle();
   await page.click('#aL'); await page.waitForSelector('#modal.show'); await page.fill('[name=title]', 'บทเรียนใหม่ทดสอบ'); await page.click('#crudSave'); await confirm(); await idle();
   ok(await page.isVisible('text=บทเรียนใหม่ทดสอบ'), 'add lesson');
   await page.click('[data-down="0"]'); await idle(); ok(true, 'reorder');
@@ -92,6 +102,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.fill('[data-cn="0"]', 'แบบฟอร์มส่งงาน'); await page.fill('[data-cu="0"]', 'https://forms.gle/abc'); await page.click('#cmSave'); await confirm(); await idle();
   await page.click('#modeSwitch'); await idle();
   ok(!(await page.$('#sideNav [data-go=search]')) && await page.isVisible('#sideNav >> text=แบบฟอร์มส่งงาน') && await page.isVisible('#sideNav [data-logout]'), 'student menus applied + logout button');
+  await page.click('#sideNav [data-go=web]'); await idle(); ok(await page.$('.web-frame iframe') !== null, 'custom menu opens inside app');
   await page.screenshot({ path: SHOT + '/12-student-home-color.png' });
   await page.click('#modeSwitch'); await idle();
   await page.click('#modeSwitch'); await idle(); ok(await page.isVisible('.dock [data-go=home]'), 'mode switch');

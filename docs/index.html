@@ -96,12 +96,15 @@ a{color:var(--blue)}
 .orbit::after{content:"";position:absolute;top:-4px;left:50%;width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 12px #7dd3fc,0 0 24px var(--c3)}
 @keyframes pop{from{opacity:0;transform:scale(.4) rotate(-20deg)}to{opacity:1;transform:none}}
 .brand-name{font-weight:900;letter-spacing:.5px;color:#fff;text-shadow:0 1px 0 #cfe3ff,0 2px 0 #9cc2f5,0 3px 0 #6b97d8,0 4px 0 #3f6fb8,0 10px 22px rgba(2,6,23,.55),0 0 28px color-mix(in srgb,var(--c3) 70%,transparent);animation:rise .9s .25s both}
-.plus{position:relative;display:inline-block;font-size:.62em;font-weight:900;line-height:1;vertical-align:super;margin-left:.06em;top:-.12em;color:#fff;
-  text-shadow:0 0 .25em #fff,0 0 .6em var(--c3),0 0 1.1em var(--c3)}
-.plus::before,.plus::after{content:"";position:absolute;left:50%;top:50%;pointer-events:none;border-radius:50%;transform:translate(-50%,-50%) scale(0);opacity:0}
-.plus::before{width:2.6em;height:2.6em;background:radial-gradient(circle,rgba(255,255,255,.95) 0%,color-mix(in srgb,var(--c3) 70%,transparent) 30%,transparent 65%);animation:flash 2.8s ease-out infinite}
-.plus::after{width:3.2em;height:3.2em;border-radius:0;background:linear-gradient(90deg,transparent 46%,#fff 50%,transparent 54%),linear-gradient(0deg,transparent 46%,#fff 50%,transparent 54%);animation:flash 2.8s ease-out infinite}
-@keyframes flash{0%,62%,100%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(0)}70%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(45deg)}82%{opacity:0;transform:translate(-50%,-50%) scale(1.25) rotate(60deg)}}
+.plus{position:relative;display:inline-block;font-size:.6em;font-weight:900;line-height:1;vertical-align:super;margin-left:.08em;top:-.12em;isolation:isolate;
+  color:#fff;background:linear-gradient(180deg,#fff 15%,#bae6fd 55%,var(--c3) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 1px 0 rgba(15,23,42,.35)) drop-shadow(0 0 5px color-mix(in srgb,var(--c3) 90%,transparent))}
+.plus::before,.plus::after{content:"";position:absolute;left:50%;top:48%;pointer-events:none;transform:translate(-50%,-50%) scale(0);opacity:0;z-index:-1}
+.plus::before{width:1.9em;height:1.9em;border-radius:50%;background:radial-gradient(circle,#fff 0 12%,rgba(224,242,254,.9) 22%,color-mix(in srgb,var(--c3) 55%,transparent) 42%,transparent 70%);animation:flashCore 3.2s ease-out infinite}
+.plus::after{width:2.5em;height:2.5em;background:radial-gradient(circle,#fff 0 18%,#e0f2fe 35%,var(--c3) 70%);
+  clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%);animation:flashStar 3.2s ease-out infinite}
+@keyframes flashCore{0%,58%,100%{opacity:0;transform:translate(-50%,-50%) scale(.3)}64%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}82%{opacity:0;transform:translate(-50%,-50%) scale(1.6)}}
+@keyframes flashStar{0%,60%,100%{opacity:0;transform:translate(-50%,-50%) scale(0) rotate(-40deg)}67%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(10deg)}74%{opacity:.85;transform:translate(-50%,-50%) scale(.75) rotate(35deg)}86%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(70deg)}}
 .welcome{font-size:clamp(1.9rem,3.6vw,2.9rem);font-weight:800;line-height:1.55;max-width:none;text-shadow:0 4px 18px rgba(2,6,23,.5);animation:glowTxt 4s 2s ease-in-out infinite}
 .welcome{width:100%}
 .welcome .ln{display:block;white-space:nowrap}
@@ -120,9 +123,10 @@ a{color:var(--blue)}
 [data-theme=dark] .auth-right{color:#bfdbfe}
 .auth-right h2{font-weight:800;margin-bottom:18px}
 .seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface-2);border-radius:16px;padding:5px;margin-bottom:20px;position:relative}
-.seg button{border:0;background:transparent;min-height:44px;border-radius:12px;font-weight:700;color:var(--muted);position:relative;z-index:1;transition:color var(--t)}
+.seg button{border:0;background:transparent;min-height:44px;border-radius:12px;font-weight:700;color:var(--muted);position:relative;z-index:1;transition:color .3s ease .05s}
 .seg button.active{color:#fff}
-.seg .thumb{position:absolute;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--blue-dark));transition:transform var(--t)}
+.seg .thumb{position:absolute;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--blue-dark));transition:transform .42s cubic-bezier(.34,1.45,.5,1);box-shadow:0 6px 16px color-mix(in srgb,var(--blue) 35%,transparent)}
+#loginForm,.login-links{animation:fadeUp .35s ease}
 .seg.right .thumb{transform:translateX(100%)}
 .pw{position:relative}.pw .form-control{padding-right:52px}
 .pw .eye{position:absolute;right:4px;top:0;border:0;background:none;color:var(--muted)}
@@ -170,7 +174,9 @@ a.navlink{text-decoration:none}
 .hero .online{color:#bbf7d0;background:rgba(0,0,0,.15);padding:3px 10px;border-radius:999px}
 @media (max-width:575.98px){.hero .clock{text-align:left;width:100%}}
 .side-brand b{font-size:1.15rem;font-weight:900;color:var(--blue-dark);overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 0 color-mix(in srgb,var(--blue) 30%,transparent),0 4px 10px color-mix(in srgb,var(--blue) 22%,transparent)}
-.side-brand .plus{font-size:.7em;text-shadow:0 0 .3em color-mix(in srgb,var(--c3) 80%,transparent);color:var(--blue)}
+.side-brand b{overflow:visible!important;padding-top:6px}
+.side-brand .plus{font-size:.68em;background:linear-gradient(180deg,var(--c3),var(--blue) 70%,var(--blue-dark));-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--c3) 70%,transparent))}
+.side-brand .plus::before{width:1.5em;height:1.5em}.side-brand .plus::after{width:1.9em;height:1.9em}
 [data-theme=dark] .side-brand b{color:#bfdbfe}
 .nav-side{display:flex;flex-direction:column;gap:4px;overflow-y:auto;flex:1}
 .nav-side button{display:flex;align-items:center;gap:14px;min-height:46px;border:0;background:none;border-radius:14px;padding:0 14px;color:var(--muted);font-weight:600;white-space:nowrap;text-align:left;transition:background var(--t),color var(--t)}
@@ -227,6 +233,60 @@ a.navlink{text-decoration:none}
 .page-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
 .page-head h3{margin:0;font-weight:800;flex:1;min-width:200px}
 .stat{display:flex;gap:14px;align-items:center}
+.stat.link{cursor:pointer;text-align:left;width:100%;color:inherit;font:inherit;position:relative}
+.stat.link:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:color-mix(in srgb,var(--blue) 40%,var(--border))}
+.stat .go{margin-left:auto;align-self:center;color:var(--muted);opacity:.45;transition:all var(--t)}
+.stat.link:hover .go{opacity:1;color:var(--blue);transform:translateX(3px)}
+.g6{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (min-width:1500px){.g6{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media (max-width:575.98px){.g6{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sec-link{font-size:.85rem;font-weight:600;text-decoration:none;white-space:nowrap}
+.multi{display:flex;flex-wrap:wrap;gap:8px}
+.mchip{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:6px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-weight:600;font-size:.92rem;user-select:none;transition:all var(--t)}
+.mchip input{position:absolute;opacity:0;pointer-events:none}
+.mchip:has(input:checked){background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border-color:transparent;box-shadow:0 4px 12px color-mix(in srgb,var(--blue) 30%,transparent)}
+.mchip:has(input:focus-visible){outline:3px solid rgba(56,189,248,.55)}
+.mchip.all{border-style:dashed}
+.ccard .cover{margin-bottom:10px}.ccard .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:10px}
+.ccard{display:flex;flex-direction:column}
+.lcard{display:flex;flex-direction:column;gap:6px}.lcard .ord{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:var(--blue-light);color:var(--blue);font-weight:800;flex:none}
+.room-card{margin-bottom:16px}
+.room-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}
+.stu-row{display:grid;grid-template-columns:minmax(190px,1.3fr) minmax(130px,.8fr) minmax(150px,auto) minmax(280px,1.7fr) auto;gap:12px;align-items:center;padding:10px 12px;border-radius:16px}
+.stu-row:nth-child(odd){background:var(--surface-2)}
+.stu-row .no{width:34px;height:34px;border-radius:10px;display:inline-grid;place-items:center;background:var(--blue-light);color:var(--blue);font-weight:800;margin-right:8px;flex:none}
+@media (max-width:991.98px){.stu-row{grid-template-columns:1fr 1fr}.stu-row>:nth-child(4){grid-column:1/-1}.stu-row>:nth-child(5){justify-self:end}}
+@media (max-width:575.98px){.stu-row{grid-template-columns:1fr}.stu-row>:nth-child(5){justify-self:stretch}.stu-row>:nth-child(5) .btn{width:100%}}
+.ann-img{position:relative;border-radius:18px;overflow:hidden;margin-bottom:10px;background:var(--surface-2);max-height:460px;display:grid;place-items:center}
+.ann-img img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(18px);opacity:.6;transform:scale(1.2)}
+.ann-img img.fg{position:relative;max-width:100%;max-height:460px;object-fit:contain}
+.web-frame{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:#fff;height:max(460px,calc(100dvh - 300px))}
+.web-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.icon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;max-height:50vh;overflow:auto;padding:4px}
+.icon-grid button{height:64px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:1.25rem}
+.icon-grid button small{font-size:.65rem;color:var(--muted)}
+.icon-grid button.on,.icon-grid button:hover{background:var(--blue-light);color:var(--blue);border-color:var(--blue)}
+/* ---------- SweetAlert2 ให้เข้ากับระบบ ---------- */
+.swal2-container.swal2-backdrop-show{background:rgba(15,23,42,.45)!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.cp-swal{border-radius:26px!important;padding:26px 22px 22px!important;background:var(--surface)!important;color:var(--text)!important;box-shadow:var(--shadow-lg)!important;font-family:'Sarabun',sans-serif!important;width:min(460px,92vw)!important}
+.cp-swal .swal2-title{font-weight:800;font-size:1.45rem;color:var(--text);padding:.3em 1em 0;line-height:1.45}
+.cp-swal .swal2-html-container{color:var(--muted);font-size:1rem;line-height:1.65;margin:.8em 1.2em 0}
+.cp-swal .swal2-actions{gap:10px;margin-top:1.4em;flex-wrap:wrap}
+.cp-swal .swal2-actions .btn{min-width:120px}
+.cp-swal .swal2-input,.cp-swal .swal2-textarea,.cp-swal .swal2-select{width:auto;margin:1.1em 1.2em 0;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:16px;height:52px;box-shadow:none;padding:0 16px;font-family:inherit}
+.cp-swal .swal2-input:focus{border-color:var(--blue);box-shadow:0 0 0 4px color-mix(in srgb,var(--blue) 18%,transparent)}
+.cp-swal .swal2-input::placeholder{color:var(--muted)}
+.cp-swal .swal2-validation-message{background:#fef2f2;color:#b91c1c;border-radius:12px;margin:1em 1.2em 0;font-size:.92rem}
+.cp-swal .swal2-icon{margin:.6em auto .2em}
+.cp-swal .swal2-icon.swal2-question,.cp-swal .swal2-icon.swal2-info{border-color:color-mix(in srgb,var(--blue) 35%,transparent)!important;color:var(--blue)!important}
+.cp-swal .swal2-icon.swal2-warning{border-color:#fcd34d!important;color:#f59e0b!important}
+.cp-swal .swal2-icon.swal2-success [class^=swal2-success-line]{background:var(--ok)!important}
+.cp-swal .swal2-icon.cp-ic{border:0!important;width:84px;height:84px;border-radius:26px;display:grid!important;place-items:center;font-size:2.1rem;color:#fff!important;
+  background:linear-gradient(135deg,var(--blue),var(--blue-dark));box-shadow:0 12px 26px color-mix(in srgb,var(--blue) 35%,transparent)}
+.cp-swal .swal2-icon.cp-ic.red{background:linear-gradient(135deg,#f87171,#dc2626);box-shadow:0 12px 26px rgba(220,38,38,.35)}
+.cp-swal .swal2-icon.cp-ic .swal2-icon-content{font-size:2.1rem}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#b91c1c);border:0;color:#fff;box-shadow:0 6px 16px rgba(220,38,38,.3)}
+.btn-danger:hover{filter:brightness(1.06);color:#fff}
 .stat .ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:1.3rem;flex:none;background:var(--blue-light);color:var(--blue)}
 .stat b{font-size:1.6rem;display:block;line-height:1.3}
 .stat small{color:var(--muted)}
@@ -406,7 +466,7 @@ a.navlink{text-decoration:none}
   <button class="fab hidden" id="fab" aria-label="เพิ่มรายการ"><i class="fa-solid fa-plus"></i></button>
 </div>
 
-<footer><span>© 2026 Classroom +</span><span class="fsep">&nbsp;|&nbsp;</span><span>KruPond (Mr.Nattawut Nukong)</span></footer>
+<footer><span>© 2026 Classroom PLus</span><span class="fsep">&nbsp;|&nbsp;</span><span>KruPond [Mr.Nattawut Nukong]</span></footer>
 
 <div class="modal fade" id="modal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
@@ -483,9 +543,13 @@ function toast(msg, type = 'success') {
   $('#toasts').appendChild(d);
   setTimeout(() => { d.style.transition = 'opacity .3s'; d.style.opacity = 0; setTimeout(() => d.remove(), 300); }, type === 'error' ? 5000 : 3000);
 }
-async function confirmBox({ title, html, danger = false, confirmText = 'ยืนยัน', icon }) {
-  const r = await Swal.fire({ title, html, icon: icon || (danger ? 'warning' : 'question'), showCancelButton: true, reverseButtons: true, focusCancel: danger,
-    confirmButtonText: confirmText, cancelButtonText: 'ยกเลิก', confirmButtonColor: danger ? '#dc2626' : '#2563eb', cancelButtonColor: '#64748b' });
+/* SweetAlert2 แบบเดียวกับดีไซน์ระบบ */
+const SW_CLASS = (danger) => ({ popup: 'cp-swal', confirmButton: 'btn ' + (danger ? 'btn-danger' : 'btn-primary') + ' px-4', cancelButton: 'btn btn-soft px-4', denyButton: 'btn btn-soft px-4', input: 'form-control' });
+const Sw = Swal.mixin({ buttonsStyling: false, reverseButtons: true, customClass: SW_CLASS(false), showClass: { popup: 'swal2-show' }, cancelButtonText: 'ยกเลิก', confirmButtonText: 'ตกลง' });
+async function confirmBox({ title, html, danger = false, confirmText = 'ยืนยัน', icon, faIcon }) {
+  const cls = SW_CLASS(danger); if (faIcon) cls.icon = 'cp-ic' + (danger ? ' red' : '');
+  const r = await Sw.fire({ title, html, icon: faIcon ? 'info' : (icon || (danger ? 'warning' : 'question')), iconHtml: faIcon ? `<i class="fa-solid ${faIcon}"></i>` : undefined,
+    showCancelButton: true, focusCancel: danger, confirmButtonText: confirmText, customClass: cls });
   return r.isConfirmed;
 }
 window.addEventListener('unhandledrejection', e => { if (e.reason && e.reason.message) { toast(e.reason.message, 'error'); e.preventDefault(); } });
@@ -553,7 +617,9 @@ const empty = (icon, text, btn = '', act = '') => `<div class="empty"><i class="
 const GRADES = ['ม.1', 'ม.2', 'ม.3', 'ม.4', 'ม.5', 'ม.6'];
 const natural = (a, b) => String(a).localeCompare(String(b), 'th', { numeric: true });
 const grades = () => [...new Set(GRADES.concat(S.classes.map(c => c.grade)))].filter(Boolean).sort(natural);
-const rooms = g => { const r = S.classes.filter(c => !g || c.grade === g).map(c => c.room).filter((v, i, a) => v && a.indexOf(v) === i).sort(natural); return r.length || !g ? r : Array.from({ length: 12 }, (_, i) => String(i + 1)); };
+const ROOMS10 = Array.from({ length: 10 }, (_, i) => String(i + 1));
+/** ห้อง 1–10 เป็นค่าหลัก + ห้องที่ครูเพิ่มเองในเมนูชั้นเรียน */
+const rooms = g => [...new Set(ROOMS10.concat(S.classes.filter(c => !g || c.grade === g).map(c => c.room)))].filter(Boolean).sort(natural);
 const STATUS = { pending: ['ยังไม่ส่ง', 'warn'], overdue: ['เลยกำหนด', 'danger'], ontime: ['ส่งตรงเวลา', 'ok'], late: ['ส่งช้า', 'warn'], submitted: ['ส่งแล้ว', 'ok'], graded: ['ตรวจแล้ว', 'info'] };
 const statusChip = s => `<span class="chip ${STATUS[s] ? STATUS[s][1] : ''}">${STATUS[s] ? STATUS[s][0] : esc(s)}</span>`;
 const fileIcon = n => { const e = String(n).split('.').pop().toLowerCase(); return { pdf: 'fa-file-pdf text-danger', doc: 'fa-file-word text-primary', docx: 'fa-file-word text-primary', ppt: 'fa-file-powerpoint text-warning', pptx: 'fa-file-powerpoint text-warning', xls: 'fa-file-excel text-success', xlsx: 'fa-file-excel text-success', zip: 'fa-file-zipper', rar: 'fa-file-zipper', jpg: 'fa-file-image text-info', jpeg: 'fa-file-image text-info', png: 'fa-file-image text-info', mp4: 'fa-file-video', mp3: 'fa-file-audio' }[e] || 'fa-file'; };
@@ -582,12 +648,14 @@ function fieldHtml(f, v) {
     case 'select': input = `<select class="form-select" id="${id}" name="${f.k}">${opt(typeof f.opts === 'function' ? f.opts() : f.opts, v)}</select>`;
       if (f.addable) input = `<div class="input-group">${input}<button type="button" class="btn btn-soft" data-addopt="${f.k}" title="เพิ่ม${esc(f.label)}" aria-label="เพิ่ม${esc(f.label)}"><i class="fa-solid fa-plus"></i></button></div>`; break;
     case 'check': return `<div class="mb-3 ${f.col || ''}"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="${id}" name="${f.k}" ${String(v) === 'true' ? 'checked' : ''}><label class="form-check-label" for="${id}">${f.label}</label></div>${f.help ? `<div class="form-text">${f.help}</div>` : ''}</div>`;
-    case 'image': input = `<div class="d-flex gap-3 align-items-center"><img data-preview="${f.k}" src="${v ? safeUrl(v) : ''}" class="${v ? '' : 'hidden'}" alt="" style="width:96px;height:64px;object-fit:${f.contain ? 'contain' : 'cover'};border-radius:12px;background:var(--surface-2)">
+    case 'image': input = `<div class="d-flex gap-3 align-items-center"><img data-preview="${f.k}" src="${v ? safeUrl(v) : ''}" class="${v ? '' : 'hidden'}" alt="" style="width:96px;height:64px;object-fit:${f.crop ? 'cover' : 'contain'};border-radius:12px;background:var(--surface-2)">
       <input type="file" accept="image/*" class="form-control" id="${id}" data-image="${f.k}" data-w="${f.w || 1280}" data-h="${f.h || 720}" data-png="${f.png ? 1 : ''}" data-crop="${f.crop ? 1 : ''}" data-folder="${esc(f.folder || 'รูปภาพ')}">${f.crop ? `<button type="button" class="btn btn-soft flex-none hidden" data-recrop="${f.k}" title="ปรับตำแหน่งรูป"><i class="fa-solid fa-up-down-left-right"></i><span class="d-none d-md-inline"> ปรับตำแหน่ง</span></button>` : ''}<button type="button" class="img-del" data-clear-img="${f.k}" title="ลบรูป" aria-label="ลบรูป"><i class="fa-solid fa-trash-can"></i></button></div><input type="hidden" name="${f.k}" value="${esc(v)}">`; break;
     case 'files': input = `<div class="drop" data-drop="${f.k}" data-folder="${esc(f.folder || '')}" tabindex="0" role="button" aria-label="อัปโหลดไฟล์"><i class="fa-solid fa-cloud-arrow-up fa-xl mb-2 d-block"></i>ลากไฟล์มาวาง หรือแตะเพื่อเลือก<br><small>ไฟล์ละไม่เกิน ${fmtSize(S.maxMB * 1048576)} · บันทึกลง Google Drive อัตโนมัติ</small><input type="file" multiple class="hidden"></div><div data-files="${f.k}"></div><input type="hidden" name="${f.k}" value="${esc(JSON.stringify(J(v)))}">`; break;
     case 'links': input = `<textarea class="form-control" id="${id}" name="${f.k}" rows="3" placeholder="ชื่อลิงก์ | https://...">${esc(J(v).map(l => l.name + ' | ' + l.url).join('\n'))}</textarea><div class="form-text">บรรทัดละ 1 ลิงก์ รูปแบบ: ชื่อ | URL</div>`; break;
     case 'video': input = `<div class="input-group"><input class="form-control" id="${id}" name="${f.k}" value="${esc(v)}" placeholder="ลิงก์ YouTube / Vimeo / Google Drive / ไฟล์ .mp4"><button type="button" class="btn btn-soft" data-upvideo="${f.k}" data-folder="${esc(f.folder || 'วิดีโอ')}"><i class="fa-solid fa-upload"></i> อัปโหลด</button><input type="file" accept="video/*" class="hidden"></div>`; break;
     case 'datetime': case 'date': input = `<input class="form-control" data-fp="${f.type}" id="${id}" name="${f.k}" value="${esc(v)}" placeholder="แตะเพื่อเลือก${f.type === 'date' ? 'วันที่' : 'วันและเวลา'}">`; break;
+    case 'multi': { const ops = typeof f.opts === 'function' ? f.opts() : f.opts, sel = String(v || '').split(',').map(x => x.trim()).filter(Boolean);
+      input = `<div class="multi" data-multi="${f.k}" role="group" aria-label="${esc(f.label)}"><label class="mchip all"><input type="checkbox" value="" data-all ${sel.length ? '' : 'checked'}><i class="fa-solid fa-layer-group"></i> ทั้งหมด</label>${ops.map(o => `<label class="mchip"><input type="checkbox" value="${esc(o)}" ${sel.includes(String(o)) ? 'checked' : ''}>${esc(f.prefix || '')}${esc(o)}</label>`).join('')}</div><input type="hidden" name="${f.k}" value="${esc(sel.join(','))}">`; break; }
     case 'dob': input = dobHtml(id, v) + `<input type="hidden" name="${f.k}" value="${esc(v)}">`; break;
     default: input = `<input class="form-control" type="${f.type || 'text'}" id="${id}" name="${f.k}" value="${esc(v)}" ${f.attrs || ''}>`;
   }
@@ -680,6 +748,12 @@ function bindForm(root, fields = []) {
     const inp = b.nextElementSibling;
     b.onclick = () => inp.click();
     inp.onchange = async () => { const up = await uploadFiles([...inp.files], folderOf(root, b.dataset.folder)); if (up[0]) { root.__up.push(up[0].id); root.querySelector(`[name="${b.dataset.upvideo}"]`).value = up[0].url; } inp.value = ''; };
+  });
+  $$('[data-multi]', root).forEach(box => {
+    const all = $('[data-all]', box), items = $$('input:not([data-all])', box), hid = root.querySelector(`[name="${box.dataset.multi}"]`);
+    const sync = () => { hid.value = items.filter(x => x.checked).map(x => x.value).join(','); };
+    all.onchange = () => { if (all.checked) items.forEach(x => x.checked = false); else if (!items.some(x => x.checked)) all.checked = true; sync(); };
+    items.forEach(x => x.onchange = () => { if (x.checked) all.checked = false; if (!items.some(y => y.checked)) all.checked = true; sync(); });
   });
   $$('[data-addopt]', root).forEach(b => b.onclick = () => addAssignmentType(root.querySelector(`[name="${b.dataset.addopt}"]`)));
 }
@@ -800,7 +874,7 @@ function tableHtml(headers, rows) {
   return `<div class="table-responsive-md"><table class="table-x"><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td data-label="${esc(String(headers[i]).replace(/<[^>]+>/g, ''))}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
 /** list view: ค้นหา debounce 300ms + Pagination */
-function listView(root, { items, headers, row, search, filters = '', size = 30, onFilter }) {
+function listView(root, { items, headers, row, card, search, filters = '', size = 30, onFilter, emptyText }) {
   root.innerHTML = `<div class="d-flex flex-wrap gap-2 mb-3"><div class="flex-fill" style="min-width:220px"><input class="form-control" type="search" placeholder="ค้นหา..." aria-label="ค้นหา" data-q></div>${filters}</div><div data-t></div><nav class="d-flex justify-content-center gap-2 mt-3 flex-wrap" data-p></nav>`;
   let page = 1;
   const draw = () => {
@@ -808,7 +882,8 @@ function listView(root, { items, headers, row, search, filters = '', size = 30, 
     let list = items.filter(it => !q || search(it).toLowerCase().includes(q));
     if (onFilter) list = list.filter(it => onFilter(it, root));
     const pages = Math.max(1, Math.ceil(list.length / size)); page = Math.min(page, pages);
-    $('[data-t]', root).innerHTML = tableHtml(headers, list.slice((page - 1) * size, page * size).map(row)) + `<div class="text-muted small mt-2">ทั้งหมด ${list.length} รายการ</div>`;
+    const part = list.slice((page - 1) * size, page * size);
+    $('[data-t]', root).innerHTML = (card ? (part.length ? `<div class="grid g3">${part.map(card).join('')}</div>` : empty('fa-inbox', emptyText || 'ยังไม่มีข้อมูล')) : tableHtml(headers, part.map(row))) + `<div class="text-muted small mt-2">ทั้งหมด ${list.length} รายการ</div>`;
     const nums = Array.from({ length: pages }, (_, i) => i + 1).filter(n => n === 1 || n === pages || Math.abs(n - page) <= 2);
     $('[data-p]', root).innerHTML = pages > 1 ? `<button class="btn btn-sm btn-soft" data-pg="${page - 1}" ${page > 1 ? '' : 'disabled'} aria-label="หน้าก่อนหน้า"><i class="fa-solid fa-chevron-left"></i> ก่อนหน้า</button>`
       + nums.map((n, i) => (i && n - nums[i - 1] > 1 ? '<span class="align-self-center px-1">…</span>' : '') + `<button class="btn btn-sm ${n === page ? 'btn-primary' : 'btn-soft'}" data-pg="${n}" style="min-width:44px" aria-label="หน้า ${n}">${n}</button>`).join('')
@@ -953,8 +1028,8 @@ function renderLogin(tab = 'student') {
     <button type="button" role="tab" class="${stu ? '' : 'active'}" data-tab="admin" aria-selected="${!stu}">Admin(ครูผู้สอน)</button>
     <button type="button" role="tab" class="${stu ? 'active' : ''}" data-tab="student" aria-selected="${stu}">User(นักเรียน)</button></div>
   <form id="loginForm" novalidate>
-    ${stu ? pwInput('lgCode', 'รหัสนักเรียน (5 หลัก)', 'inputmode="numeric" maxlength="5" autocomplete="username" pattern="\\d{5}" required')
-      : `<div class="mb-3"><label class="form-label" for="lgUser">Username</label><input class="form-control" id="lgUser" autocomplete="username" required><div class="invalid-msg" data-err="lgUser"></div></div>` + pwInput('lgPass', 'Password', 'autocomplete="current-password" required')}
+    ${stu ? pwInput('lgCode', 'รหัสนักเรียน (5 หลัก)', 'inputmode="numeric" maxlength="5" autocomplete="username" pattern="\\d{5}" required placeholder="กรุณาพิมพ์รหัสนักเรียน (5 หลัก) ให้ถูกต้อง"')
+      : `<div class="mb-3"><label class="form-label" for="lgUser">Username</label><input class="form-control" id="lgUser" autocomplete="username" required placeholder="กรุณาพิมพ์ Username ให้ถูกต้อง"><div class="invalid-msg" data-err="lgUser"></div></div>` + pwInput('lgPass', 'Password', 'autocomplete="current-password" required placeholder="กรุณาพิมพ์ Password ให้ถูกต้อง"')}
     <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="lgRemember"><label class="form-check-label" for="lgRemember">จดจำฉัน (30 วัน)</label></div>
     <button class="btn btn-primary w-100 btn-lg" type="submit"><i class="fa-solid fa-right-to-bracket me-2"></i>เข้าสู่ระบบ</button>
   </form>
@@ -963,7 +1038,13 @@ function renderLogin(tab = 'student') {
       : (c.allowAdminSignup === 'true' ? `<button class="btn btn-link px-0" id="toRegAdmin"><i class="fa-solid fa-user-plus"></i> สมัครบัญชีครูผู้สอน</button>` : '')}
   </div>`;
   bindPw(R);
-  $$('[data-tab]', R).forEach(b => b.onclick = () => renderLogin(b.dataset.tab));
+  $$('[data-tab]', R).forEach(b => b.onclick = () => {
+    if (b.dataset.tab === AUTH_TAB) return;
+    const seg = $('.seg', R), toStu = b.dataset.tab === 'student';
+    seg.classList.toggle('right', toStu); $$('[data-tab]', R).forEach(x => x.classList.toggle('active', x === b));
+    $('#loginForm').style.transition = 'opacity .18s'; $('#loginForm').style.opacity = 0;
+    setTimeout(() => renderLogin(b.dataset.tab), 260); // ให้แถบสีเลื่อนจบก่อนสลับฟอร์ม
+  });
   $('#toReg', R) && ($('#toReg', R).onclick = () => wizard('student'));
   $('#toRegAdmin', R) && ($('#toRegAdmin', R).onclick = () => wizard('admin'));
   $('#toForgot', R) && ($('#toForgot', R).onclick = forgotCode);
@@ -1006,16 +1087,16 @@ function wizard(role) {
     <form id="wForm" novalidate>${W.step === 1 ? `
       <div class="mb-3"><label class="form-label" for="wPrefix">คำนำหน้าชื่อ</label><select class="form-select" id="wPrefix"><option value="">เลือก</option>${opt(PREFIX, PREFIX.includes(d.prefix) ? d.prefix : d.prefix ? 'อื่นๆ' : '')}</select>
         <input class="form-control mt-2 ${d.prefix && !PREFIX.includes(d.prefix) ? '' : 'hidden'}" id="wPrefixOther" placeholder="ระบุคำนำหน้า" value="${esc(PREFIX.includes(d.prefix) ? '' : d.prefix || '')}"><div class="invalid-msg" data-err="prefix"></div></div>
-      <div class="mb-3"><label class="form-label" for="wName">ชื่อ-สกุล</label><input class="form-control" id="wName" value="${esc(d.fullName || '')}" placeholder="เช่น สมชาย ใจดี"><div class="invalid-msg" data-err="fullName"></div></div>
+      <div class="mb-3"><label class="form-label" for="wName">ชื่อ-สกุล</label><input class="form-control" id="wName" placeholder="กรุณาพิมพ์ชื่อ-สกุลให้ถูกต้อง" value="${esc(d.fullName || '')}" placeholder="เช่น สมชาย ใจดี"><div class="invalid-msg" data-err="fullName"></div></div>
       <div class="mb-3"><label class="form-label">วัน/เดือน/ปีเกิด</label>${dobHtml('wDob', d.birthDate)}<div class="invalid-msg" data-err="birthDate"></div></div>
       ${stu ? `<div class="row g-2"><div class="col-6 mb-3"><label class="form-label" for="wGrade">ระดับชั้น</label><select class="form-select" id="wGrade"><option value="">เลือก</option>${opt(grades(), d.grade)}</select><div class="invalid-msg" data-err="grade"></div></div>
         <div class="col-3 mb-3"><label class="form-label" for="wRoom">ห้อง</label><select class="form-select" id="wRoom">${opt(d.grade ? rooms(d.grade) : [['', '-']], d.room)}</select></div>
         <div class="col-3 mb-3"><label class="form-label" for="wNo">เลขที่</label><input class="form-control" id="wNo" type="number" min="1" max="99" inputmode="numeric" value="${esc(d.classNo || '')}"><div class="invalid-msg" data-err="classNo"></div></div></div>` : ''}`
       : W.step === 2 ? (stu ? `
-      <div class="mb-3"><label class="form-label" for="wCode">รหัสนักเรียน (ตัวเลข 5 หลัก)</label><input class="form-control" id="wCode" inputmode="numeric" maxlength="5" value="${esc(d.studentCode || '')}"><div class="form-text" id="wCodeMsg"></div><div class="invalid-msg" data-err="studentCode"></div></div>`
-      : `<div class="mb-3"><label class="form-label" for="wUser">Username</label><input class="form-control" id="wUser" autocomplete="username" value="${esc(d.username || '')}" placeholder="a-z 0-9 . _ (4–20 ตัว)"><div class="form-text" id="wUserMsg"></div><div class="invalid-msg" data-err="username"></div></div>
-      ${pwInput('wPass', 'Password (อย่างน้อย 8 ตัว)', 'autocomplete="new-password"')}<div class="strength mb-1"><i id="wStr"></i></div><div class="small text-muted mb-3" id="wStrTxt"></div>
-      ${pwInput('wPass2', 'ยืนยัน Password', 'autocomplete="new-password"')}`)
+      <div class="mb-3"><label class="form-label" for="wCode">รหัสนักเรียน (ตัวเลข 5 หลัก)</label><input class="form-control" id="wCode" inputmode="numeric" maxlength="5" placeholder="กรุณาพิมพ์รหัสนักเรียน (5 หลัก) ให้ถูกต้อง" value="${esc(d.studentCode || '')}"><div class="form-text" id="wCodeMsg"></div><div class="invalid-msg" data-err="studentCode"></div></div>`
+      : `<div class="mb-3"><label class="form-label" for="wUser">Username</label><input class="form-control" id="wUser" autocomplete="username" value="${esc(d.username || '')}" placeholder="กรุณาพิมพ์ Username ให้ถูกต้อง (a-z 0-9 . _ 4–20 ตัว)"><div class="form-text" id="wUserMsg"></div><div class="invalid-msg" data-err="username"></div></div>
+      ${pwInput('wPass', 'Password (อย่างน้อย 8 ตัว)', 'autocomplete="new-password" placeholder="กรุณาพิมพ์ Password ให้ถูกต้อง"')}<div class="strength mb-1"><i id="wStr"></i></div><div class="small text-muted mb-3" id="wStrTxt"></div>
+      ${pwInput('wPass2', 'ยืนยัน Password', 'autocomplete="new-password" placeholder="กรุณาพิมพ์ Password อีกครั้ง"')}`)
       : `<div class="summary mb-3">${[['คำนำหน้า', d.prefix], ['ชื่อ-สกุล', d.fullName], ['วันเกิด', thDate(d.birthDate)]].concat(stu ? [['ระดับชั้น/ห้อง', (d.grade || '-') + (d.room ? '/' + d.room : '')], ['เลขที่', d.classNo || '-'], ['รหัสนักเรียน', d.studentCode]] : [['Username', d.username]]).map(r => `<div><span class="text-muted">${r[0]}</span><b>${esc(r[1])}</b></div>`).join('')}</div>
       <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="wOk"><label class="form-check-label" for="wOk">ข้าพเจ้ายืนยันว่าข้อมูลถูกต้อง และยินยอมให้เก็บและใช้ข้อมูลส่วนบุคคลเพื่อการจัดการเรียนการสอนตาม พ.ร.บ.คุ้มครองข้อมูลส่วนบุคคล (PDPA)</label></div><div class="invalid-msg" data-err="consent"></div>`}
       <div class="d-flex gap-2 mt-3">${W.step > 1 ? `<button type="button" class="btn btn-soft flex-fill" id="wPrev"><i class="fa-solid fa-pen"></i> ${W.step === 3 ? 'แก้ไข' : 'ย้อนกลับ'}</button>` : ''}
@@ -1078,7 +1159,7 @@ function wizard(role) {
         if (!E('consent', $('#wOk').checked ? '' : 'กรุณาติ๊กยืนยันก่อนสมัคร')) return;
         if (!await confirmBox({ title: 'ยืนยันสมัครใช้งาน', html: `สร้างบัญชีสำหรับ <b>${esc(W.d.prefix + W.d.fullName)}</b> ?` })) return;
         const res = await apiMsg('กำลังบันทึกข้อมูล...', stu ? 'registerStudent' : 'registerAdmin', Object.assign({ consent: true }, W.d));
-        if (res.pending) { await Swal.fire({ icon: 'info', title: 'สมัครเรียบร้อย', text: 'บัญชีของคุณรอการอนุมัติจาก Admin ก่อนใช้งาน' }); return renderLogin('admin'); }
+        if (res.pending) { await Sw.fire({ icon: 'info', title: 'สมัครเรียบร้อย', text: 'บัญชีของคุณรอการอนุมัติจาก Admin ก่อนใช้งาน' }); return renderLogin('admin'); }
         return loginDone(res, false);
       }
       W.step++; draw();
@@ -1097,7 +1178,7 @@ function forgotCode() {
     if (!d.fullName || !d.birthDate || d.birthDate === 'invalid' || !/^\d{5}$/.test(d.newCode)) return toast('กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
     if (!await confirmBox({ title: 'ยืนยันการตั้งรหัสใหม่', html: `ตั้งรหัสนักเรียนใหม่เป็น <b>${esc(d.newCode)}</b> ?` })) return;
     await api('forgotCode', d);
-    m.hide(); Swal.fire({ icon: 'success', title: 'ตั้งรหัสใหม่เรียบร้อย', text: 'เข้าสู่ระบบด้วยรหัสนักเรียนใหม่ได้ทันที' });
+    m.hide(); Sw.fire({ icon: 'success', title: 'ตั้งรหัสใหม่เรียบร้อย', text: 'เข้าสู่ระบบด้วยรหัสนักเรียนใหม่ได้ทันที' });
   };
 }
 
@@ -1120,7 +1201,7 @@ function enterApp() {
   renderMe(); renderShell();
   go(S.mode === 'admin' ? 'dash' : 'home');
   refreshNotifs();
-  S.bg = S.bg || setInterval(() => { if (S.token) { refreshNotifs(); if (S.expiresAt && Date.now() > S.expiresAt) { localLogout(); Swal.fire({ icon: 'info', title: 'หมดเวลาการใช้งาน', text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง' }); } } }, 60000);
+  S.bg = S.bg || setInterval(() => { if (S.token) { refreshNotifs(); if (S.expiresAt && Date.now() > S.expiresAt) { localLogout(); Sw.fire({ icon: 'info', title: 'หมดเวลาการใช้งาน', text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง' }); } } }, 60000);
 }
 function renderMe() {
   const u = S.user;
@@ -1131,10 +1212,38 @@ function renderMe() {
   $('#bannerBox').innerHTML = u.role === 'admin' && u.mustChangePassword === 'true'
     ? `<div class="banner"><i class="fa-solid fa-shield-halved"></i><div class="flex-fill">คุณยังใช้รหัสผ่านเริ่มต้นอยู่ กรุณาเปลี่ยน Username/รหัสผ่านเพื่อความปลอดภัย</div><button class="btn btn-sm btn-dark" data-go="settings" data-tab="account">เปลี่ยนเลย</button></div>` : '';
 }
+/* ---------- เมนูลิงก์ฝั่งนักเรียน ---------- */
+const MENU_ICONS = [['auto', 'อัตโนมัติ'], ['fa-solid fa-link', 'ลิงก์'], ['fa-solid fa-globe', 'เว็บไซต์'], ['fa-solid fa-clipboard-list', 'แบบฟอร์ม'], ['fa-brands fa-google-drive', 'Drive'],
+  ['fa-brands fa-youtube', 'YouTube'], ['fa-solid fa-chalkboard', 'ห้องเรียน'], ['fa-solid fa-file-lines', 'เอกสาร'], ['fa-solid fa-file-pdf', 'PDF'], ['fa-solid fa-person-chalkboard', 'สไลด์'],
+  ['fa-solid fa-table', 'ตาราง'], ['fa-solid fa-video', 'วิดีโอ'], ['fa-solid fa-calendar-days', 'ปฏิทิน'], ['fa-solid fa-book', 'หนังสือ'], ['fa-solid fa-book-atlas', 'คลังความรู้'],
+  ['fa-solid fa-flask', 'วิทย์'], ['fa-solid fa-calculator', 'คณิต'], ['fa-solid fa-language', 'ภาษา'], ['fa-solid fa-code', 'โค้ด'], ['fa-solid fa-robot', 'AI'], ['fa-solid fa-gamepad', 'เกม'],
+  ['fa-solid fa-trophy', 'รางวัล'], ['fa-solid fa-star', 'ดาว'], ['fa-solid fa-music', 'ดนตรี'], ['fa-solid fa-palette', 'ศิลปะ'], ['fa-solid fa-futbol', 'กีฬา'], ['fa-brands fa-line', 'LINE'],
+  ['fa-brands fa-facebook', 'Facebook'], ['fa-solid fa-school', 'โรงเรียน'], ['fa-solid fa-circle-question', 'ช่วยเหลือ']];
+function autoIcon(u) {
+  const rules = [[/forms\.gle|docs\.google\.com\/forms/, 'fa-solid fa-clipboard-list'], [/youtu\.?be/, 'fa-brands fa-youtube'], [/classroom\.google/, 'fa-solid fa-chalkboard'],
+    [/docs\.google\.com\/document/, 'fa-solid fa-file-lines'], [/docs\.google\.com\/presentation|canva\.com/, 'fa-solid fa-person-chalkboard'], [/docs\.google\.com\/spreadsheets/, 'fa-solid fa-table'],
+    [/drive\.google/, 'fa-brands fa-google-drive'], [/calendar\.google/, 'fa-solid fa-calendar-days'], [/line\.me/, 'fa-brands fa-line'], [/facebook\.com|fb\.com/, 'fa-brands fa-facebook'],
+    [/kahoot|quizizz|wordwall|blooket|gimkit/, 'fa-solid fa-gamepad'], [/\.pdf(\?|$)/i, 'fa-solid fa-file-pdf'], [/chatgpt|gemini|claude\.ai/, 'fa-solid fa-robot'], [/padlet/, 'fa-solid fa-palette'], [/\.ac\.th|\.go\.th/, 'fa-solid fa-school']];
+  for (const [re, ic] of rules) if (re.test(String(u))) return ic;
+  return 'fa-solid fa-globe';
+}
+const menuIcon = m => !m.icon || m.icon === 'auto' ? autoIcon(m.url) : (/fa-(solid|brands|regular)/.test(m.icon) ? m.icon : 'fa-solid ' + m.icon);
+/** แปลงลิงก์ให้แสดงในระบบได้ (YouTube / Google Form / Docs / Drive) */
+function embedUrl(u) {
+  let m; u = String(u || '');
+  if ((m = u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/))([\w-]{11})/))) return 'https://www.youtube.com/embed/' + m[1];
+  if (/docs\.google\.com\/forms\/.+\/viewform/.test(u) && !/embedded=true/.test(u)) return u + (u.includes('?') ? '&' : '?') + 'embedded=true';
+  if ((m = u.match(/docs\.google\.com\/(document|presentation|spreadsheets)\/d\/([\w-]+)/))) return `https://docs.google.com/${m[1]}/d/${m[2]}/preview`;
+  if ((m = u.match(/drive\.google\.com\/file\/d\/([\w-]+)/))) return `https://drive.google.com/file/d/${m[1]}/preview`;
+  if ((m = u.match(/drive\.google\.com\/drive\/(?:u\/\d+\/)?folders\/([\w-]+)/))) return `https://drive.google.com/embeddedfolderview?id=${m[1]}#grid`;
+  return u;
+}
 const stuMenus = () => { const m = J(S.config.studentMenus, {}); return { hidden: m.hidden || [], custom: m.custom || [] }; };
 function renderShell() {
   const sm = stuMenus(), nav = S.mode === 'admin' ? NAV.admin : NAV.student.filter(n => !sm.hidden.includes(n[0]));
-  const custom = S.mode === 'admin' ? '' : sm.custom.map(m => `<a class="navlink" href="${safeUrl(m.url)}" target="_blank" rel="noopener"><button tabindex="-1" type="button"><i class="fa-solid ${esc(m.icon)}"></i><span>${esc(m.name)}</span></button></a>`).join('');
+  const custom = S.mode === 'admin' ? '' : sm.custom.map((m, i) => m.mode === 'tab'
+    ? `<a class="navlink" href="${safeUrl(m.url)}" target="_blank" rel="noopener"><button tabindex="-1" type="button"><i class="${esc(menuIcon(m))}"></i><span>${esc(m.name)}</span><i class="fa-solid fa-up-right-from-square ms-auto small opacity-50"></i></button></a>`
+    : `<button data-go="web" data-id="${i}" aria-label="${esc(m.name)}"><i class="${esc(menuIcon(m))}"></i><span>${esc(m.name)}</span></button>`).join('');
   $('#sideNav').innerHTML = `<div class="nav-label">${S.mode === 'admin' ? 'โหมด Admin(ครูผู้สอน)' : 'โหมด User(นักเรียน)'}</div>` + nav.map(n => `<button data-go="${n[0]}" aria-label="${n[1]}"><i class="fa-solid ${n[2]}"></i><span>${n[1]}</span></button>`).join('')
     + custom + `<button class="nav-logout" data-logout aria-label="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i><span>ออกจากระบบ</span></button>`;
   $('#dock').innerHTML = nav.filter(n => n[3]).map(n => `<button data-go="${n[0]}" aria-label="${n[1]}"><i class="fa-solid ${n[2]}"></i><span>${n[4] || n[1]}</span></button>`).join('');
@@ -1159,7 +1268,7 @@ addEventListener('resize', debounce(fixToggleIcon, 150));
 document.addEventListener('click', e => { if (e.target.closest('[data-logout]')) doLogout(); });
 $('#logoutBtn').onclick = () => doLogout();
 async function doLogout() {
-  if (!await confirmBox({ title: 'ออกจากระบบ?', html: 'คุณต้องการออกจากระบบใช่หรือไม่', confirmText: 'ออกจากระบบ' })) return;
+  if (!await confirmBox({ title: 'ออกจากระบบ?', html: `<b>${esc(S.user.prefix + S.user.fullName)}</b><br>ต้องการออกจากระบบใช่หรือไม่ ข้อมูลที่บันทึกแล้วจะยังอยู่ครบ`, danger: true, faIcon: 'fa-right-from-bracket', confirmText: '<i class="fa-solid fa-right-from-bracket me-1"></i> ออกจากระบบ' })) return;
   call('logout', [], { loader: false, retry: 0 }).catch(() => {}); // ส่งคำสั่งเบื้องหลัง (อ่าน token ทันที)
   localLogout(); toast('ออกจากระบบแล้ว', 'info');              // ออกทันที ไม่ต้องรอ server
 }
@@ -1179,7 +1288,7 @@ function go(page, params = {}, opt2 = {}) {
   if (S.mode === 'student' && stuMenus().hidden.includes(page)) page = 'home';
   stopTimers();
   S.page = page; S.params = params || {};
-  $$('[data-go]', $('#appView')).forEach(b => b.classList.toggle('active', b.dataset.go === page || (PAGES[page].parent === b.dataset.go)));
+  $$('[data-go]', $('#appView')).forEach(b => b.classList.toggle('active', (b.dataset.go === page && (page !== 'web' || b.dataset.id === String(S.params.id))) || (PAGES[page].parent === b.dataset.go)));
   const nav = NAV.student.concat(NAV.admin).find(n => n[0] === page);
   $('#pageTitle').textContent = nav ? nav[1] : HIDDEN_TITLES[page] || '';
   $('#fab').classList.add('hidden'); $('#fab').onclick = null;
@@ -1234,7 +1343,10 @@ const coverHtml = (c, icon = 'fa-book-open') => {
   const src = c.cover || (v && v.type === 'youtube' ? `https://img.youtube.com/vi/${v.id}/hqdefault.jpg` : '');
   return `<div class="cover">${src ? `<img class="bg" src="${safeUrl(src)}" alt="" aria-hidden="true" loading="lazy"><img src="${safeUrl(src)}" alt="" loading="lazy">` : `<i class="fa-solid ${icon}"></i>`}</div>`;
 };
-const statCard = (icon, val, label, color = '') => `<div class="card-x stat"><div class="ic" style="${color}"><i class="fa-solid ${icon}"></i></div><div><b>${val}</b><small>${label}</small></div></div>`;
+const statCard = (icon, val, label, color = '', goTo = '', tab = '') => goTo
+  ? `<button type="button" class="card-x stat link" data-go="${goTo}" ${tab ? `data-tab="${tab}"` : ''} aria-label="${esc(label)} — ดูรายละเอียด"><div class="ic" style="${color}"><i class="fa-solid ${icon}"></i></div><div><b>${val}</b><small>${label}</small></div><i class="fa-solid fa-chevron-right go"></i></button>`
+  : `<div class="card-x stat"><div class="ic" style="${color}"><i class="fa-solid ${icon}"></i></div><div><b>${val}</b><small>${label}</small></div></div>`;
+const secHead = (icon, title, goTo, tab, label = 'ดูทั้งหมด') => `<div class="d-flex align-items-center gap-2 mb-3"><h5 class="fw-bold m-0 flex-fill">${icon}${title}</h5>${goTo ? `<a href="#" class="sec-link" data-go="${goTo}" ${tab ? `data-tab="${tab}"` : ''}>${label} <i class="fa-solid fa-chevron-right"></i></a>` : ''}</div>`;
 
 PAGES.home = { async render(el) {
   const d = await apiC('studentHome'), s = d.stats, u = S.user;
@@ -1244,20 +1356,20 @@ PAGES.home = { async render(el) {
     ${ann.length ? `<div class="d-flex flex-column gap-2">${ann.map(a => `<div class="ann-item" data-go="announcements" role="button" tabindex="0"><i class="fa-solid ${a.pinned === 'true' ? 'fa-thumbtack text-warning' : 'fa-circle-info text-primary'} mt-1"></i>
       <div class="flex-fill" style="min-width:0"><div class="d-flex gap-2 flex-wrap align-items-center"><b>${esc(a.title)}</b><span class="chip info">${esc(a.type)}</span>${a.pinned === 'true' ? '<span class="chip warn">ปักหมุด</span>' : ''}</div>
       <div class="small text-muted text-truncate">${esc(String(a.body || '').slice(0, 140))}</div><small class="text-muted">${thDate(a.createdAt, true)}</small></div></div>`).join('')}</div>` : '<div class="text-muted">ยังไม่มีประกาศ</div>'}</div>` + `
-  <div class="grid g4 mb-3">
-    ${statCard('fa-chart-line', s.percent + '%', 'ความคืบหน้าการเรียน')}
-    ${statCard('fa-book-open-reader', `${s.lessonsDone}/${s.lessonsTotal}`, 'บทเรียนที่เรียนแล้ว')}
-    ${statCard('fa-circle-play', s.videosDone, 'วิดีโอที่ดูครบ', 'background:#ede9fe;color:#7c3aed')}
-    ${statCard('fa-hourglass-half', s.pending, 'งานค้างส่ง', 'background:#fef3c7;color:#b45309')}
-    ${statCard('fa-paper-plane', s.submitted, 'งานที่ส่งแล้ว', 'background:#dcfce7;color:#15803d')}
-    ${statCard('fa-star', s.avgScore === null ? '-' : s.avgScore + '%', 'คะแนนเฉลี่ย', 'background:#fee2e2;color:#b91c1c')}
+  <div class="grid g6 mb-3">
+    ${statCard('fa-chart-line', s.percent + '%', 'ความคืบหน้าการเรียน', '', 'courses')}
+    ${statCard('fa-book-open-reader', `${s.lessonsDone}/${s.lessonsTotal}`, 'บทเรียนที่เรียนแล้ว', '', 'courses')}
+    ${statCard('fa-circle-play', s.videosDone, 'วิดีโอที่ดูครบ', 'background:#ede9fe;color:#7c3aed', 'courses')}
+    ${statCard('fa-hourglass-half', s.pending, 'งานค้างส่ง', 'background:#fef3c7;color:#b45309', 'assignments', 'todo')}
+    ${statCard('fa-paper-plane', s.submitted, 'งานที่ส่งแล้ว', 'background:#dcfce7;color:#15803d', 'assignments', 'sent')}
+    ${statCard('fa-star', s.avgScore === null ? '-' : s.avgScore + '%', 'คะแนนเฉลี่ย', 'background:#fee2e2;color:#b91c1c', 'assignments', 'graded')}
   </div>
   <div class="grid g2">
-    <div class="card-x"><h5 class="fw-bold mb-3"><i class="fa-solid fa-book me-2 text-primary"></i>วิชาที่กำลังเรียน</h5>
+    <div class="card-x">${secHead('<i class="fa-solid fa-book me-2 text-primary"></i>', 'วิชาที่กำลังเรียน', 'courses')}
       ${d.courses.length ? `<canvas id="chCourse" height="${Math.max(120, d.courses.length * 38)}"></canvas>` : empty('fa-book', 'ยังไม่มีรายวิชาสำหรับชั้นเรียนของคุณ')}</div>
-    <div class="card-x"><h5 class="fw-bold mb-3"><i class="fa-solid fa-hourglass-half me-2 text-warning"></i>งานค้างส่ง</h5>
-      ${d.pending.length ? d.pending.map(a => `<div class="lesson-item" data-go="assignments"><div class="num"><i class="fa-solid fa-file-pen"></i></div><div class="flex-fill"><b>${esc(a.title)}</b><div class="small text-muted">${esc(a.courseName)} · ส่ง ${thDate(a.dueAt, true)}</div></div>${statusChip(a.status)}</div>`).join('') : empty('fa-face-smile', 'ไม่มีงานค้าง เยี่ยมมาก!')}</div>
-    <div class="card-x"><h5 class="fw-bold mb-3"><i class="fa-solid fa-star me-2 text-danger"></i>คะแนนล่าสุด</h5>
+    <div class="card-x">${secHead('<i class="fa-solid fa-hourglass-half me-2 text-warning"></i>', 'งานค้างส่ง', 'assignments', 'todo')}
+      ${d.pending.length ? d.pending.map(a => `<div class="lesson-item" data-go="assignments" data-tab="todo"><div class="num"><i class="fa-solid fa-file-pen"></i></div><div class="flex-fill"><b>${esc(a.title)}</b><div class="small text-muted">${esc(a.courseName)} · ส่ง ${thDate(a.dueAt, true)}</div></div>${statusChip(a.status)}</div>`).join('') : empty('fa-face-smile', 'ไม่มีงานค้าง เยี่ยมมาก!')}</div>
+    <div class="card-x">${secHead('<i class="fa-solid fa-star me-2 text-danger"></i>', 'คะแนนล่าสุด', 'assignments', 'graded')}
       ${d.latestScores.length ? d.latestScores.map(a => `<div class="lesson-item" data-go="assignments"><div class="num">${esc(a.sub.score)}</div><div class="flex-fill"><b>${esc(a.title)}</b><div class="small text-muted">เต็ม ${esc(a.maxScore)} · ${esc(a.sub.feedback || 'ไม่มีความคิดเห็น')}</div></div></div>`).join('') : empty('fa-star', 'ยังไม่มีคะแนน')}</div>
   </div>`;
   if (d.courses.length) chart('chCourse', { type: 'bar', data: { labels: d.courses.map(c => c.name), datasets: [{ label: 'ความคืบหน้า %', data: d.courses.map(c => c.percent), backgroundColor: cv('--blue'), borderRadius: 10 }] },
@@ -1357,9 +1469,9 @@ PAGES.lesson = { parent: 'courses', async render(el, p) {
 } };
 
 /* ---------------- งานของฉัน ---------------- */
-PAGES.assignments = { async render(el) {
+PAGES.assignments = { async render(el, p = {}) {
   const list = await apiC('listAssignments');
-  let tab = 'all';
+  let tab = ['all', 'todo', 'sent', 'graded'].includes(p.tab) ? p.tab : 'all';
   el.innerHTML = `<div class="page-head"><h3>งานของฉัน</h3></div><ul class="nav nav-pills gap-2 mb-3 flex-nowrap overflow-auto">${[['all', 'ทั้งหมด'], ['todo', 'ค้างส่ง'], ['sent', 'ส่งแล้ว'], ['graded', 'ตรวจแล้ว']].map(t => `<li class="nav-item"><button class="nav-link ${t[0] === tab ? 'active' : ''}" data-t="${t[0]}">${t[1]} <span class="badge bg-light text-dark">${list.filter(a => flt(t[0], a)).length}</span></button></li>`).join('')}</ul><div id="al"></div>`;
   function flt(t, a) { return t === 'all' || (t === 'todo' && !a.sub) || (t === 'sent' && a.sub && a.status !== 'graded') || (t === 'graded' && a.status === 'graded'); }
   const draw = () => {
@@ -1421,7 +1533,7 @@ PAGES.announcements = { async render(el) {
   io.observe($('#annMore')); S.onLeave.push(() => io.disconnect());
 } };
 const annCard = a => `<div class="card-x"><div class="d-flex gap-2 mb-2 flex-wrap">${a.pinned === 'true' ? '<span class="chip warn"><i class="fa-solid fa-thumbtack"></i> ปักหมุด</span>' : ''}<span class="chip info">${esc(a.type)}</span><small class="text-muted ms-auto">${thDate(a.createdAt, true)}</small></div>
-  <h5 class="fw-bold">${esc(a.title)}</h5>${a.image ? `<img src="${safeUrl(a.image)}" alt="" class="w-100 rounded-4 mb-2" style="max-height:360px;object-fit:cover">` : ''}<div>${linkify(a.body)}</div>${filesHtml(J(a.attachments))}</div>`;
+  <h5 class="fw-bold">${esc(a.title)}</h5>${a.image ? `<div class="ann-img"><img class="bg" src="${safeUrl(a.image)}" alt="" aria-hidden="true"><img class="fg" src="${safeUrl(a.image)}" alt="${esc(a.title)}" loading="lazy"></div>` : ''}<div>${linkify(a.body)}</div>${filesHtml(J(a.attachments))}</div>`;
 
 /* ---------------- ค้นหา ---------------- */
 PAGES.search = { async render(el) {
@@ -1446,6 +1558,16 @@ PAGES.search = { async render(el) {
   };
   $('#sq').addEventListener('input', debounce(run, 300)); ['#sc', '#sr', '#sf', '#st', '#sx'].forEach(s => $(s).addEventListener('change', run));
   run();
+} };
+
+/* ---------------- เว็บที่ครูเพิ่ม (แสดงในระบบ) ---------------- */
+PAGES.web = { async render(el, p) {
+  const m = stuMenus().custom[+p.id];
+  if (!m) throw new Error('ไม่พบเมนูนี้');
+  $('#pageTitle').textContent = m.name;
+  el.innerHTML = `<div class="page-head"><h3><i class="${esc(menuIcon(m))} text-primary me-2"></i>${esc(m.name)}</h3><a class="btn btn-soft" href="${safeUrl(m.url)}" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i> เปิดในแท็บใหม่</a></div>
+    <div class="web-frame"><iframe src="${safeUrl(embedUrl(m.url))}" title="${esc(m.name)}" allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe></div>
+    <p class="small text-muted mt-2"><i class="fa-solid fa-circle-info"></i> ถ้าหน้าเว็บไม่แสดง แปลว่าเว็บไซต์นั้นไม่อนุญาตให้แสดงในระบบอื่น — กด "เปิดในแท็บใหม่"</p>`;
 } };
 
 /* ---------------- โปรไฟล์ ---------------- */
@@ -1483,9 +1605,8 @@ const byOwner = (it, root) => { const v = $('[data-f="owner"]', root)?.value; re
 const gradeOpts = () => [['', 'ทุกระดับชั้น']].concat(grades());
 const roomOpts = () => [['', 'ทุกห้อง']].concat(rooms());
 const FIELDS = {
-  Courses: () => [{ k: 'code', label: 'รหัสวิชา', col: 'col-md-4' }, { k: 'name', label: 'ชื่อวิชา', req: true, col: 'col-md-8' },
-    { k: 'category', label: 'หมวดหมู่', type: 'select', opts: () => [['', '- ไม่ระบุ -']].concat(S.cache.categories.map(c => c.name)), col: 'col-md-4' },
-    { k: 'grade', label: 'ระดับชั้น', type: 'select', opts: gradeOpts, col: 'col-md-4' }, { k: 'room', label: 'ห้องเรียน', type: 'select', opts: roomOpts, col: 'col-md-4' },
+  Courses: () => [{ k: 'subject', label: 'รหัสวิชา / ชื่อวิชา', type: 'select', req: true, opts: subjectOpts, help: 'ดึงจาก "หมวดหมู่รายวิชา" — เพิ่มรายวิชาใหม่ได้ที่เมนู ชั้นเรียน/ประเภทงาน' },
+    { k: 'grade', label: 'ระดับชั้น (เลือกได้หลายชั้น)', type: 'multi', opts: grades }, { k: 'room', label: 'ห้องเรียน (เลือกได้หลายห้อง)', type: 'multi', opts: () => rooms(), prefix: 'ห้อง ' },
     { k: 'teacher', label: 'ครูผู้สอน', col: 'col-md-8', def: S.user.prefix + S.user.fullName }, { k: 'order', label: 'ลำดับ', type: 'number', col: 'col-md-4' },
     { k: 'description', label: 'คำอธิบายรายวิชา', type: 'textarea' }, { k: 'cover', label: 'รูปปก', type: 'image', folder: 'รูปภาพ/ปกรายวิชา' }],
   Lessons: () => [{ k: 'courseId', label: 'รายวิชา', type: 'select', req: true, opts: () => S.cache.courses.map(c => [c.id, c.name]) },
@@ -1495,22 +1616,23 @@ const FIELDS = {
     { k: 'videoDuration', label: 'ความยาววิดีโอ', col: 'col-md-6', attrs: 'placeholder="เช่น 12:30"' }, { k: 'duration', label: 'ระยะเวลาเรียน (นาที)', type: 'number', col: 'col-md-6' },
     { k: 'attachments', label: 'เอกสารประกอบ / ไฟล์ดาวน์โหลด (PDF, Word, PowerPoint, รูป, ZIP)', type: 'files', folder: 'บทเรียน/{course}' }, { k: 'links', label: 'ลิงก์ภายนอก (เว็บไซต์ / Google Drive / YouTube)', type: 'links' },
     { k: 'publishAt', label: 'วันที่เผยแพร่ (เว้นว่าง = ทันที)', type: 'datetime', col: 'col-md-6' }, { k: 'closeAt', label: 'วันที่ปิดการเข้าถึง (เว้นว่าง = ไม่ปิด)', type: 'datetime', col: 'col-md-6', valid: (v, o) => v && o.publishAt && v <= o.publishAt ? 'ต้องหลังวันเผยแพร่' : '' }],
-  Assignments: () => [{ k: 'courseId', label: 'รายวิชา', type: 'select', req: true, opts: () => S.cache.courses.map(c => [c.id, c.name]) },
+  Assignments: () => [{ k: 'courseId', label: 'รายวิชา', type: 'select', req: true, opts: () => S.cache.courses.map(c => [c.id, (c.code ? c.code + ' ' : '') + c.name]) },
+    { k: 'grade', label: 'มอบหมายให้ระดับชั้น', type: 'multi', opts: grades, help: '"ทั้งหมด" = ทุกชั้นที่เรียนรายวิชานี้' }, { k: 'room', label: 'มอบหมายให้ห้อง', type: 'multi', opts: () => rooms(), prefix: 'ห้อง ' },
     { k: 'type', label: 'ประเภท', type: 'select', opts: aTypes, addable: true, col: 'col-md-4' }, { k: 'title', label: 'ชื่องาน', req: true, col: 'col-md-8' },
     { k: 'description', label: 'รายละเอียด / คำสั่ง', type: 'textarea', rows: 5 }, { k: 'attachments', label: 'ไฟล์แนบ', type: 'files', folder: '{type}/ไฟล์จากครู' },
     { k: 'dueAt', label: 'วันและเวลาส่ง', type: 'datetime', req: true, col: 'col-md-6' }, { k: 'maxScore', label: 'คะแนนเต็ม', type: 'number', req: true, def: 10, col: 'col-md-6', valid: v => +v > 0 ? '' : 'ต้องมากกว่า 0' }],
   Announcements: () => [{ k: 'type', label: 'ประเภท', type: 'select', opts: ['ข่าวสาร', 'แจ้งกำหนดส่ง', 'แจ้งเปลี่ยนแปลง', 'แจ้งสอบ'], col: 'col-md-4' }, { k: 'title', label: 'หัวข้อ', req: true, col: 'col-md-8' },
     { k: 'body', label: 'รายละเอียด', type: 'textarea', rows: 5 }, { k: 'image', label: 'รูปภาพ', type: 'image', w: 1600, h: 1200, folder: 'รูปภาพ/ประกาศ' }, { k: 'attachments', label: 'ไฟล์แนบ', type: 'files', folder: 'ประกาศ' },
-    { k: 'courseId', label: 'เฉพาะรายวิชา', type: 'select', opts: () => [['', 'ทุกรายวิชา']].concat(S.cache.courses.map(c => [c.id, c.name])), col: 'col-md-4' },
-    { k: 'grade', label: 'ระดับชั้น', type: 'select', opts: gradeOpts, col: 'col-md-4' }, { k: 'room', label: 'ห้อง', type: 'select', opts: roomOpts, col: 'col-md-4' },
+    { k: 'courseId', label: 'รายวิชา', type: 'select', opts: () => [['', 'ทุกรายวิชา']].concat(S.cache.courses.map(c => [c.id, (c.code ? c.code + ' ' : '') + c.name])) },
+    { k: 'grade', label: 'ระดับชั้น', type: 'multi', opts: grades }, { k: 'room', label: 'ห้อง', type: 'multi', opts: () => rooms(), prefix: 'ห้อง ' },
     { k: 'pinned', label: 'ปักหมุดประกาศ', type: 'check' }],
   Classes: () => [{ k: 'grade', label: 'ระดับชั้น', req: true, col: 'col-md-5', attrs: 'placeholder="เช่น ม.1"' }, { k: 'room', label: 'ห้อง', col: 'col-md-4', attrs: 'placeholder="เช่น 1"' }, { k: 'order', label: 'ลำดับ', type: 'number', col: 'col-md-3' }],
-  Categories: () => [{ k: 'name', label: 'ชื่อหมวดหมู่', req: true }]
+  Categories: () => [{ k: 'code', label: 'รหัสวิชา', col: 'col-md-4', attrs: 'placeholder="เช่น ว21102"' }, { k: 'name', label: 'ชื่อวิชา', req: true, col: 'col-md-8', attrs: 'placeholder="เช่น วิทยาการคำนวณ"' }]
 };
 function aTypes() { return String(S.config.assignmentTypes || 'การบ้าน,ใบงาน,แบบฝึกหัด,สรุปเนื้อหา').split(',').filter(Boolean); }
 async function saveTypes(list) { const v = list.join(','); await api('saveSettings', { config: { assignmentTypes: v } }); S.config.assignmentTypes = v; }
 async function addAssignmentType(select) {
-  const r = await Swal.fire({ title: 'เพิ่มประเภทงาน', input: 'text', inputPlaceholder: 'เช่น โครงงาน, รายงาน, สอบย่อย', showCancelButton: true, confirmButtonText: 'เพิ่ม', cancelButtonText: 'ยกเลิก',
+  const r = await Sw.fire({ title: 'เพิ่มประเภทงาน', input: 'text', inputPlaceholder: 'เช่น โครงงาน, รายงาน, สอบย่อย', showCancelButton: true, confirmButtonText: 'เพิ่ม', cancelButtonText: 'ยกเลิก',
     inputValidator: v => { v = String(v).trim(); return !v ? 'กรุณาพิมพ์ชื่อประเภท' : /[,/\\]/.test(v) ? 'ห้ามใช้เครื่องหมาย , / \\' : aTypes().includes(v) ? 'มีประเภทนี้แล้ว' : null; } });
   if (!r.isConfirmed) return;
   const v = r.value.trim();
@@ -1518,16 +1640,28 @@ async function addAssignmentType(select) {
   if (select) { select.insertAdjacentHTML('beforeend', `<option value="${esc(v)}">${esc(v)}</option>`); select.value = v; }
   toast('เพิ่มประเภท "' + v + '" แล้ว — สร้างโฟลเดอร์ใน Drive ให้อัตโนมัติเมื่อมีการอัปโหลด');
 }
+/** ตัวเลือกรายวิชาจาก "หมวดหมู่รายวิชา" (รหัส|ชื่อ) */
+let CUR_SUBJECT = '';
+function subjectOpts() {
+  const list = (S.cache.categories || []).map(c => [(c.code || '') + '|' + c.name, (c.code ? c.code + ' ' : '') + c.name]);
+  if (CUR_SUBJECT && !list.some(o => o[0] === CUR_SUBJECT)) list.unshift([CUR_SUBJECT, CUR_SUBJECT.replace('|', ' ').trim() + ' (เดิม)']);
+  return [['', '— เลือกรายวิชา —']].concat(list);
+}
+const targetTxt = (g, r) => { const gs = String(g || '').split(',').filter(Boolean), rs = String(r || '').split(',').filter(Boolean);
+  return (gs.length ? gs.join(', ') : 'ทุกชั้น') + (rs.length ? ' · ห้อง ' + rs.join(', ') : ''); };
 const LABEL = { Courses: 'รายวิชา', Lessons: 'บทเรียน', Assignments: 'งาน', Announcements: 'ประกาศ', Classes: 'ระดับชั้น/ห้อง', Categories: 'หมวดหมู่' };
 const nameOf = (e, r) => r.name || r.title || (r.grade ? r.grade + (r.room ? '/' + r.room : '') : '');
+const PREP = { Courses: d => { if (d.subject !== undefined) { const [code, ...n] = String(d.subject).split('|'); d.code = code; d.name = n.join('|'); d.category = d.name; delete d.subject; } } };
 async function crudForm(entity, row = {}, after) {
   await lists();
+  if (entity === 'Courses') { CUR_SUBJECT = row.id ? (row.code || '') + '|' + row.name : ''; row = Object.assign({}, row, { subject: CUR_SUBJECT }); }
   const F = FIELDS[entity](), isNew = !row.id;
   const m = modal((isNew ? 'เพิ่ม' : 'แก้ไข') + LABEL[entity], formHtml(F, row), `<button class="btn btn-soft" data-bs-dismiss="modal">ยกเลิก</button><button class="btn btn-primary" id="crudSave"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>`);
   bindForm(m.body, F);
   $('#crudSave').onclick = async () => {
     const d = validate(m.body, F);
     if (!d) return toast('กรุณาตรวจสอบข้อมูลที่ไม่ถูกต้อง', 'warning');
+    if (PREP[entity]) PREP[entity](d);
     if (!await confirmBox({ title: (isNew ? 'ยืนยันการเพิ่ม' : 'ยืนยันการแก้ไข') + LABEL[entity], html: `<b>${esc(nameOf(entity, d))}</b>` + (isNew && ['Lessons', 'Assignments', 'Announcements'].includes(entity) ? '<br><small class="text-muted">ระบบจะแจ้งเตือนนักเรียนที่เกี่ยวข้อง</small>' : '') })) return;
     if (row.id) d.id = row.id;
     const r = await apiMsg('กำลังบันทึก...', 'save', entity, d);
@@ -1554,11 +1688,12 @@ PAGES.dash = { admin: true, async render(el) {
     const d = await (quiet ? apiQ('adminDashboard') : apiC('adminDashboard')), c = d.cards;
     const html = heroHtml() + `<div class="page-head"><h3>แดชบอร์ดครูผู้สอน</h3><span class="chip ok"><i class="fa-solid fa-circle fa-2xs"></i> อัปเดตอัตโนมัติทุก 60 วินาที</span></div>
     ${c.pendingUsers ? `<div class="banner mx-0 mb-3"><i class="fa-solid fa-user-clock"></i><div class="flex-fill">มีผู้สมัครรออนุมัติ ${c.pendingUsers} คน</div><button class="btn btn-sm btn-dark" data-go="users">ตรวจสอบ</button></div>` : ''}
-    <div class="grid g4 mb-3">${statCard('fa-book', c.courses, 'รายวิชา')}${statCard('fa-book-open-reader', c.lessons, 'จำนวนบทเรียน', 'background:#ede9fe;color:#7c3aed')}${statCard('fa-user-graduate', c.students, 'จำนวนผู้เรียน', 'background:#dcfce7;color:#15803d')}${statCard('fa-clipboard-question', c.ungraded, 'งานที่ยังไม่ตรวจ', 'background:#fee2e2;color:#b91c1c')}</div>
-    <div class="grid g2"><div class="card-x"><h5 class="fw-bold">สถิติการเข้าเรียน (14 วัน)</h5><canvas id="chLogin" height="200"></canvas></div>
-    <div class="card-x"><h5 class="fw-bold">กราฟการส่งงาน (14 วัน)</h5><canvas id="chSub" height="200"></canvas></div>
-    <div class="card-x"><h5 class="fw-bold">สถานะงานที่ส่ง</h5><div style="max-width:280px;margin:auto"><canvas id="chStat"></canvas></div></div>
-    <div class="card-x"><h5 class="fw-bold">กิจกรรมล่าสุด</h5>${d.recent.map(r => `<div class="d-flex gap-2 py-1 border-bottom small"><span class="chip">${esc(r.action)}</span><span class="flex-fill">${esc(r.user)}</span><span class="text-muted">${thDate(r.at, true)}</span></div>`).join('') || empty('fa-clock', 'ยังไม่มีกิจกรรม')}</div></div>`;
+    <div class="grid g6 mb-3">${statCard('fa-book', c.courses, 'รายวิชา', '', 'acourses')}${statCard('fa-book-open-reader', c.lessons, 'บทเรียน', 'background:#ede9fe;color:#7c3aed', 'acourses')}${statCard('fa-user-graduate', c.students, 'ผู้เรียน', 'background:#dcfce7;color:#15803d', 'users')}
+      ${statCard('fa-clipboard-list', c.assignments, 'งานที่มอบหมาย', 'background:#e0f2fe;color:#0369a1', 'aassign')}${statCard('fa-clipboard-question', c.ungraded, 'งานรอตรวจ', 'background:#fee2e2;color:#b91c1c', 'aassign')}${statCard('fa-bullhorn', c.announcements ?? '-', 'ประกาศ', 'background:#fef3c7;color:#b45309', 'aann')}</div>
+    <div class="grid g2"><div class="card-x">${secHead('', 'สถิติการเข้าเรียน (14 วัน)', 'reports', '', 'ดูรายงาน')}<canvas id="chLogin" height="200"></canvas></div>
+    <div class="card-x">${secHead('', 'กราฟการส่งงาน (14 วัน)', 'aassign', '', 'ดูงาน')}<canvas id="chSub" height="200"></canvas></div>
+    <div class="card-x">${secHead('', 'สถานะงานที่ส่ง', 'aassign', '', 'ตรวจงาน')}<div style="max-width:280px;margin:auto"><canvas id="chStat"></canvas></div></div>
+    <div class="card-x">${secHead('', 'กิจกรรมล่าสุด', 'settings', 'audit', 'ดู Audit Log')}${d.recent.map(r => `<div class="d-flex gap-2 py-1 border-bottom small"><span class="chip">${esc(r.action)}</span><span class="flex-fill">${esc(r.user)}</span><span class="text-muted">${thDate(r.at, true)}</span></div>`).join('') || empty('fa-clock', 'ยังไม่มีกิจกรรม')}</div></div>`;
     stopCharts(); el.innerHTML = html;
     const labels = d.days.map(x => thDate(x).replace(/ \d{4}$/, ''));
     chart('chLogin', { type: 'line', data: { labels, datasets: [{ label: 'เข้าสู่ระบบ', data: d.logins, borderColor: cv('--blue'), backgroundColor: cv('--blue') + '26', fill: true, tension: .35 }, { label: 'เปิดบทเรียน', data: d.views, borderColor: cv('--c3'), tension: .35 }] }, options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
@@ -1600,7 +1735,7 @@ PAGES.users = { admin: true, async render(el) {
   };
   $('#expBtn').onclick = () => exportXlsx('ผู้ใช้งาน', ['สิทธิ์', 'รหัสนักเรียน', 'Username', 'คำนำหน้า', 'ชื่อ-สกุล', 'วันเกิด', 'ชั้น', 'ห้อง', 'เลขที่', 'อีเมล', 'สถานะ'], users.map(u => [u.role, u.studentCode, u.username, u.prefix, u.fullName, u.birthDate, u.grade, u.room, u.classNo, u.email, u.status]));
   $('#impBtn').onclick = async () => {
-    await Swal.fire({ title: 'นำเข้านักเรียน', icon: 'info', html: 'ไฟล์ Excel/CSV แถวแรกเป็นหัวคอลัมน์ 6 ช่อง:<br><code>รหัสนักเรียน, คำนำหน้า, ชื่อ-สกุล, ชั้น, ห้อง, เลขที่</code><br><small class="text-muted">ข้อมูลอื่น (วันเกิด อีเมล รูป) นักเรียนหรือครูเพิ่มภายหลังได้</small>', showCancelButton: true, cancelButtonText: 'ยกเลิก', confirmButtonText: 'เลือกไฟล์' }).then(r => { if (r.isConfirmed) $('#impFile').click(); });
+    await Sw.fire({ title: 'นำเข้านักเรียน', icon: 'info', html: 'ไฟล์ Excel/CSV แถวแรกเป็นหัวคอลัมน์ 6 ช่อง:<br><code>รหัสนักเรียน, คำนำหน้า, ชื่อ-สกุล, ชั้น, ห้อง, เลขที่</code><br><small class="text-muted">ข้อมูลอื่น (วันเกิด อีเมล รูป) นักเรียนหรือครูเพิ่มภายหลังได้</small>', showCancelButton: true, cancelButtonText: 'ยกเลิก', confirmButtonText: 'เลือกไฟล์' }).then(r => { if (r.isConfirmed) $('#impFile').click(); });
     return;
     $('#impFile').click();
   };
@@ -1613,7 +1748,7 @@ PAGES.users = { admin: true, async render(el) {
     if (!list.length) return toast('ไม่พบข้อมูลในไฟล์', 'warning');
     if (!await confirmBox({ title: 'ยืนยันนำเข้า', html: `เพิ่มนักเรียน <b>${list.length}</b> คน จากไฟล์ ${esc(f.name)}` })) return;
     const r = await apiMsg('กำลังนำเข้า...', 'importStudents', list);
-    await Swal.fire({ icon: 'success', title: `เพิ่มแล้ว ${r.added} คน`, html: r.skipped.length ? `<div class="text-start small">ข้าม ${r.skipped.length} รายการ:<br>${r.skipped.slice(0, 20).map(esc).join('<br>')}</div>` : '' });
+    await Sw.fire({ icon: 'success', title: `เพิ่มแล้ว ${r.added} คน`, html: r.skipped.length ? `<div class="text-start small">ข้าม ${r.skipped.length} รายการ:<br>${r.skipped.slice(0, 20).map(esc).join('<br>')}</div>` : '' });
     $('#impFile').value = ''; go('users');
   };
 } };
@@ -1643,12 +1778,12 @@ function userForm(u) {
 }
 async function roleForm(u) {
   if (u.role === 'admin') {
-    const r = await Swal.fire({ title: 'ถอดสิทธิ์ Admin', html: `เปลี่ยน <b>${esc(u.fullName)}</b> เป็นนักเรียน<br>กำหนดรหัสนักเรียน 5 หลัก:`, input: 'text', inputValue: u.studentCode || '', inputAttributes: { inputmode: 'numeric', maxlength: 5 }, icon: 'warning',
+    const r = await Sw.fire({ title: 'ถอดสิทธิ์ Admin', html: `เปลี่ยน <b>${esc(u.fullName)}</b> เป็นนักเรียน<br>กำหนดรหัสนักเรียน 5 หลัก:`, input: 'text', inputValue: u.studentCode || '', inputAttributes: { inputmode: 'numeric', maxlength: 5 }, icon: 'warning',
       showCancelButton: true, confirmButtonText: 'ยืนยัน', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#dc2626', inputValidator: v => /^\d{5}$/.test(v) ? null : 'ต้องเป็นตัวเลข 5 หลัก' });
     if (!r.isConfirmed) return;
     await api('setRole', u.id, 'student', { studentCode: r.value });
   } else {
-    const r = await Swal.fire({ title: 'ตั้งเป็น Admin(ครูผู้สอน)', html: `<div class="text-start">กำหนด Username และรหัสผ่านให้ <b>${esc(u.fullName)}</b><input id="sw1" class="form-control mt-2" placeholder="Username"><input id="sw2" type="password" class="form-control mt-2" placeholder="รหัสผ่าน (อย่างน้อย 8 ตัว)"></div>`,
+    const r = await Sw.fire({ title: 'ตั้งเป็น Admin(ครูผู้สอน)', html: `<div class="text-start">กำหนด Username และรหัสผ่านให้ <b>${esc(u.fullName)}</b><input id="sw1" class="form-control mt-2" placeholder="Username"><input id="sw2" type="password" class="form-control mt-2" placeholder="รหัสผ่าน (อย่างน้อย 8 ตัว)"></div>`,
       showCancelButton: true, confirmButtonText: 'ยืนยัน', cancelButtonText: 'ยกเลิก', preConfirm: () => { const a = $('#sw1').value.trim().toLowerCase(), b = $('#sw2').value; if (!/^[a-z0-9._]{4,20}$/.test(a)) return Swal.showValidationMessage('Username 4–20 ตัว a-z 0-9 . _'); if (b.length < 8) return Swal.showValidationMessage('รหัสผ่านอย่างน้อย 8 ตัว'); return { username: a, password: b }; } });
     if (!r.isConfirmed) return;
     await api('setRole', u.id, 'admin', r.value);
@@ -1662,7 +1797,7 @@ PAGES.classes = { admin: true, async render(el) {
   S.classes = cls;
   el.innerHTML = `<div class="page-head"><h3>ระดับชั้น / ห้องเรียน / หมวดหมู่</h3></div><div class="grid g2">
     <div class="card-x"><div class="d-flex mb-2"><h5 class="fw-bold flex-fill">ระดับชั้นและห้อง</h5><button class="btn btn-primary btn-sm" id="addC"><i class="fa-solid fa-plus"></i> เพิ่ม</button></div><div id="tc">${tableHtml(['ระดับชั้น', 'ห้อง', 'นักเรียน', ''], cls.map(c => [esc(c.grade), esc(c.room || '-'), '', actBtns(c.id)]))}</div><small class="text-muted">ใช้กำหนดให้นักเรียนเลือกตอนลงทะเบียน และกำหนดว่ารายวิชา/ประกาศแสดงกับชั้นใด</small></div>
-    <div class="card-x"><div class="d-flex mb-2"><h5 class="fw-bold flex-fill">หมวดหมู่รายวิชา</h5><button class="btn btn-primary btn-sm" id="addK"><i class="fa-solid fa-plus"></i> เพิ่ม</button></div><div id="tk">${tableHtml(['ชื่อหมวดหมู่', ''], cats.map(c => [esc(c.name), actBtns(c.id)]))}</div></div>
+    <div class="card-x"><div class="d-flex mb-2"><h5 class="fw-bold flex-fill">หมวดหมู่รายวิชา <small class="text-muted fw-normal">(รหัสวิชา / ชื่อวิชา)</small></h5><button class="btn btn-primary btn-sm" id="addK"><i class="fa-solid fa-plus"></i> เพิ่ม</button></div><div id="tk">${tableHtml(['รหัสวิชา', 'ชื่อวิชา', ''], cats.slice().sort((a, b) => natural(a.code, b.code)).map(c => [`<b>${esc(c.code || '-')}</b>`, esc(c.name), actBtns(c.id)]))}</div></div>
     <div class="card-x"><div class="d-flex mb-2"><h5 class="fw-bold flex-fill">ประเภทงานที่มอบหมาย</h5><button class="btn btn-primary btn-sm" id="addT"><i class="fa-solid fa-plus"></i> เพิ่ม</button></div>
       <div class="d-flex flex-wrap gap-2" id="tt">${aTypes().map((t, i) => `<span class="chip info" style="font-size:.9rem;padding:6px 6px 6px 12px">${esc(t)}<button class="btn btn-sm btn-icon" style="width:28px;height:28px;min-height:28px" data-deltype="${i}" aria-label="ลบประเภท ${esc(t)}"><i class="fa-solid fa-xmark"></i></button></span>`).join('')}</div>
       <small class="text-muted d-block mt-2">ไฟล์ที่ครูแนบและงานที่นักเรียนส่ง จะถูกเก็บแยกโฟลเดอร์ตามประเภทใน Google Drive อัตโนมัติ</small></div></div>`;
@@ -1685,11 +1820,13 @@ PAGES.acourses = { admin: true, async render(el) {
   const c = await lists(true);
   el.innerHTML = `<div class="page-head"><h3>รายวิชาและบทเรียน</h3></div><div id="cl"></div>`;
   const lessons = await apiC('list', 'Lessons');
-  listView($('#cl'), { items: c.courses, filters: ownerFilter() + `<select class="form-select w-auto" data-f="grade" aria-label="ระดับชั้น"><option value="">ทุกชั้น</option>${opt(grades())}</select>`,
-    onFilter: (it, r) => byOwner(it, r) && (!$('[data-f=grade]', r).value || it.grade === $('[data-f=grade]', r).value),
-    headers: ['รายวิชา', 'หมวดหมู่', 'ระดับชั้น', 'บทเรียน', 'เจ้าของข้อมูล', ''], search: x => x.name + x.code + x.category + x.teacher,
-    row: x => [`<a href="#" data-go="acourse" data-id="${esc(x.id)}"><b>${esc(x.name)}</b></a><div class="small text-muted">${esc(x.code)}</div>`, esc(x.category || '-'), esc((x.grade || 'ทุกชั้น') + (x.room ? '/' + x.room : '')),
-      lessons.filter(l => l.courseId === x.id).length, esc(ownerName(x.ownerId)), actBtns(x.id, `<button class="btn btn-sm btn-soft" data-go="acourse" data-id="${esc(x.id)}">บทเรียน</button>`)] });
+  listView($('#cl'), { items: c.courses, emptyText: 'ยังไม่มีรายวิชา กดปุ่ม + เพื่อเพิ่ม', filters: ownerFilter() + `<select class="form-select w-auto" data-f="grade" aria-label="ระดับชั้น"><option value="">ทุกชั้น</option>${opt(grades())}</select>`,
+    onFilter: (it, r) => byOwner(it, r) && (!$('[data-f=grade]', r).value || !it.grade || String(it.grade).split(',').includes($('[data-f=grade]', r).value)),
+    search: x => x.name + x.code + x.teacher,
+    card: x => `<div class="card-x ccard">${coverHtml(x)}<div class="d-flex gap-2 flex-wrap mb-1"><span class="chip info">${esc(x.code || 'วิชา')}</span><span class="chip"><i class="fa-solid fa-users"></i> ${esc(targetTxt(x.grade, x.room))}</span></div>
+      <h5 class="fw-bold mb-1"><a href="#" class="text-decoration-none" data-go="acourse" data-id="${esc(x.id)}">${esc(x.name)}</a></h5>
+      <div class="small text-muted">${esc(x.teacher || '-')} · ${lessons.filter(l => l.courseId === x.id).length} บทเรียน · เจ้าของ ${esc(ownerName(x.ownerId))}</div>
+      <div class="acts"><button class="btn btn-sm btn-primary flex-fill" data-go="acourse" data-id="${esc(x.id)}"><i class="fa-solid fa-book-open"></i> บทเรียน</button><button class="btn btn-sm btn-icon btn-soft" data-edit="${esc(x.id)}" aria-label="แก้ไข"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-icon btn-soft text-danger" data-del="${esc(x.id)}" aria-label="ลบ"><i class="fa-solid fa-trash"></i></button></div></div>` });
   bindActs($('#cl'), c.courses, 'Courses', 'บทเรียน งาน งานที่นักเรียนส่ง และความคืบหน้าทั้งหมดในวิชานี้จะถูกลบด้วย', () => go('acourses'));
   fab('เพิ่มรายวิชา', () => crudForm('Courses', {}, r => go('acourse', { id: r.id })));
 } };
@@ -1701,13 +1838,16 @@ PAGES.acourse = { admin: true, parent: 'acourses', async render(el, p) {
   const ls = lessons.filter(l => l.courseId === course.id), as = asg.filter(a => a.courseId === course.id), n = nowStr();
   const state = l => l.publishAt && l.publishAt > n ? '<span class="chip warn">รอเผยแพร่</span>' : l.closeAt && l.closeAt <= n ? '<span class="chip danger">ปิดแล้ว</span>' : '<span class="chip ok">เผยแพร่</span>';
   el.innerHTML = `<button class="btn btn-soft mb-3" data-go="acourses"><i class="fa-solid fa-arrow-left"></i> รายวิชาทั้งหมด</button>
-  <div class="card-x mb-3 d-flex gap-3 align-items-center flex-wrap"><div style="width:160px">${coverHtml(course)}</div><div class="flex-fill"><h4 class="fw-bold mb-1">${esc(course.name)}</h4><div class="text-muted small">${esc(course.code)} · ${esc(course.category || '-')} · ${esc(course.grade || 'ทุกชั้น')}${course.room ? '/' + esc(course.room) : ''} · ${esc(course.teacher)}</div></div><button class="btn btn-soft" id="eC"><i class="fa-solid fa-pen"></i> แก้ไขรายวิชา</button></div>
+  <div class="card-x mb-3 d-flex gap-3 align-items-center flex-wrap"><div style="width:200px;max-width:100%">${coverHtml(course)}</div><div class="flex-fill"><h4 class="fw-bold mb-1">${esc(course.name)}</h4><div class="text-muted small">${esc(course.code)} · ${esc(targetTxt(course.grade, course.room))} · ${esc(course.teacher)}</div></div><button class="btn btn-soft" id="eC"><i class="fa-solid fa-pen"></i> แก้ไขรายวิชา</button></div>
   <div class="card-x mb-3"><div class="d-flex mb-2 align-items-center"><h5 class="fw-bold flex-fill m-0">บทเรียน (${ls.length})</h5><button class="btn btn-primary btn-sm" id="aL"><i class="fa-solid fa-plus"></i> เพิ่มบทเรียน</button></div>
-    <div id="tl">${tableHtml(['ลำดับ', 'หน่วย / บทเรียน', 'สื่อ', 'สถานะ', ''], ls.map((l, i) => [`<div class="d-flex gap-1"><button class="btn btn-sm btn-icon btn-soft" data-up="${i}" aria-label="เลื่อนขึ้น" ${i ? '' : 'disabled'}><i class="fa-solid fa-arrow-up"></i></button><button class="btn btn-sm btn-icon btn-soft" data-down="${i}" aria-label="เลื่อนลง" ${i < ls.length - 1 ? '' : 'disabled'}><i class="fa-solid fa-arrow-down"></i></button></div>`,
-      `<div class="small text-muted">${esc(l.unit)}</div><b>${esc(l.title)}</b>`, `${l.videoUrl ? '<i class="fa-solid fa-circle-play text-danger" title="วิดีโอ"></i> ' : ''}${J(l.attachments).length ? `<i class="fa-solid fa-paperclip"></i> ${J(l.attachments).length} ` : ''}${J(l.links).length ? '<i class="fa-solid fa-link"></i>' : ''}`,
-      state(l) + (l.publishAt ? `<div class="small text-muted">${thDate(l.publishAt, true)}</div>` : ''), actBtns(l.id)]))}</div></div>
+    <div id="tl">${ls.length ? `<div class="grid g3">${ls.map((l, i) => `<div class="card-x lcard">${coverHtml(l, 'fa-book-open-reader')}
+      <div class="d-flex align-items-center gap-2"><span class="ord">${i + 1}</span><div style="min-width:0" class="flex-fill"><div class="small text-muted text-truncate">${esc(l.unit || 'บทเรียน')}</div><b>${esc(l.title)}</b></div></div>
+      <div class="d-flex flex-wrap gap-2 align-items-center">${state(l)}${l.videoUrl ? '<span class="chip"><i class="fa-solid fa-circle-play text-danger"></i> วิดีโอ</span>' : ''}${J(l.attachments).length ? `<span class="chip"><i class="fa-solid fa-paperclip"></i> ${J(l.attachments).length}</span>` : ''}${J(l.links).length ? `<span class="chip"><i class="fa-solid fa-link"></i> ${J(l.links).length}</span>` : ''}${l.duration ? `<span class="chip"><i class="fa-solid fa-clock"></i> ${esc(l.duration)} นาที</span>` : ''}</div>
+      ${l.publishAt ? `<small class="text-muted">เผยแพร่ ${thDate(l.publishAt, true)}</small>` : ''}
+      <div class="d-flex gap-1 mt-auto pt-2"><button class="btn btn-sm btn-icon btn-soft" data-up="${i}" aria-label="เลื่อนขึ้น" ${i ? '' : 'disabled'}><i class="fa-solid fa-arrow-up"></i></button><button class="btn btn-sm btn-icon btn-soft" data-down="${i}" aria-label="เลื่อนลง" ${i < ls.length - 1 ? '' : 'disabled'}><i class="fa-solid fa-arrow-down"></i></button>
+      <span class="flex-fill"></span><button class="btn btn-sm btn-icon btn-soft" data-edit="${esc(l.id)}" aria-label="แก้ไข"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-icon btn-soft text-danger" data-del="${esc(l.id)}" aria-label="ลบ"><i class="fa-solid fa-trash"></i></button></div></div>`).join('')}</div>` : empty('fa-book-open', 'ยังไม่มีบทเรียน')}</div></div>
   <div class="card-x"><div class="d-flex mb-2 align-items-center"><h5 class="fw-bold flex-fill m-0">งานที่มอบหมาย (${as.length})</h5><button class="btn btn-primary btn-sm" id="aA"><i class="fa-solid fa-plus"></i> สร้างงาน</button></div>
-    ${tableHtml(['งาน', 'กำหนดส่ง', 'คะแนนเต็ม', ''], as.map(a => [`<span class="chip info">${esc(a.type)}</span> <b>${esc(a.title)}</b>`, thDate(a.dueAt, true), esc(a.maxScore), `<button class="btn btn-sm btn-primary" data-go="grade" data-id="${esc(a.id)}">ตรวจงาน</button>`]))}</div>`;
+    ${tableHtml(['งาน', 'มอบหมายให้', 'กำหนดส่ง', 'คะแนนเต็ม', ''], as.map(a => [`<span class="chip info">${esc(a.type)}</span> <b>${esc(a.title)}</b>`, esc(targetTxt(a.grade, a.room)), thDate(a.dueAt, true), esc(a.maxScore), `<button class="btn btn-sm btn-primary" data-go="grade" data-id="${esc(a.id)}">ตรวจงาน</button>`]))}</div>`;
   const re = () => go('acourse', p);
   $('#eC').onclick = () => crudForm('Courses', course, re);
   $('#aL').onclick = () => crudForm('Lessons', { courseId: course.id, order: ls.length + 1, unit: ls.length ? ls[ls.length - 1].unit : '' }, re);
@@ -1731,8 +1871,8 @@ PAGES.aassign = { admin: true, async render(el) {
   el.innerHTML = `<div class="page-head"><h3>งานที่มอบหมาย</h3></div><div id="al"></div>`;
   listView($('#al'), { items: asg.sort((a, b) => b.dueAt.localeCompare(a.dueAt)), filters: ownerFilter() + `<select class="form-select w-auto" data-f="course" aria-label="รายวิชา"><option value="">ทุกรายวิชา</option>${opt(c.courses.map(x => [x.id, x.name]))}</select>`,
     onFilter: (it, r) => byOwner(it, r) && (!$('[data-f=course]', r).value || it.courseId === $('[data-f=course]', r).value),
-    headers: ['งาน', 'รายวิชา', 'กำหนดส่ง', 'คะแนนเต็ม', 'เจ้าของข้อมูล', ''], search: a => a.title + a.type + cn(a.courseId),
-    row: a => [`<span class="chip info">${esc(a.type)}</span><div><b>${esc(a.title)}</b></div>`, esc(cn(a.courseId)), thDate(a.dueAt, true) + (a.dueAt < nowStr() ? ' <span class="chip">ปิดรับ</span>' : ''), esc(a.maxScore), esc(ownerName(a.ownerId)),
+    headers: ['งาน', 'รายวิชา', 'มอบหมายให้', 'กำหนดส่ง', 'คะแนนเต็ม', 'เจ้าของข้อมูล', ''], search: a => a.title + a.type + cn(a.courseId),
+    row: a => [`<span class="chip info">${esc(a.type)}</span><div><b>${esc(a.title)}</b></div>`, esc(cn(a.courseId)), esc(targetTxt(a.grade, a.room)), thDate(a.dueAt, true) + (a.dueAt < nowStr() ? ' <span class="chip">ปิดรับ</span>' : ''), esc(a.maxScore), esc(ownerName(a.ownerId)),
       actBtns(a.id, `<button class="btn btn-sm btn-primary" data-go="grade" data-id="${esc(a.id)}"><i class="fa-solid fa-check-double"></i> ตรวจ</button>`)] });
   bindActs($('#al'), asg, 'Assignments', 'งานที่นักเรียนส่งทั้งหมดของงานนี้จะถูกลบด้วย', () => go('aassign'));
   fab('สร้างงาน', () => crudForm('Assignments', {}, () => go('aassign')));
@@ -1744,14 +1884,25 @@ PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
   el.innerHTML = `<button class="btn btn-soft mb-3" data-go="aassign"><i class="fa-solid fa-arrow-left"></i> งานทั้งหมด</button>
   <div class="card-x mb-3"><h4 class="fw-bold">${esc(a.title)}</h4><div class="text-muted small mb-2">${esc(d.course.name)} · กำหนดส่ง ${thDate(a.dueAt, true)} · คะแนนเต็ม ${esc(a.maxScore)}</div>
   <div class="grid g4">${statCard('fa-users', d.rows.length, 'นักเรียน')}${statCard('fa-paper-plane', sent, 'ส่งแล้ว', 'background:#dcfce7;color:#15803d')}${statCard('fa-hourglass', d.rows.length - sent, 'ยังไม่ส่ง', 'background:#fef3c7;color:#b45309')}${statCard('fa-check-double', graded, 'ตรวจแล้ว')}</div></div>
+  <div class="d-flex flex-wrap gap-2 mb-3"><input class="form-control flex-fill" style="min-width:220px;width:auto" type="search" placeholder="ค้นหาชื่อ / รหัส / เลขที่..." id="gq" aria-label="ค้นหา">
+    <select class="form-select w-auto" id="gst" aria-label="สถานะ"><option value="">ทุกสถานะ</option><option value="sent">ส่งแล้ว (รอตรวจ)</option><option value="graded">ตรวจแล้ว</option><option value="none">ยังไม่ส่ง</option></select></div>
   <div id="gl"></div>`;
-  listView($('#gl'), { items: d.rows, headers: ['เลขที่', 'ชื่อ-สกุล', 'สถานะ', 'งานที่ส่ง', 'คะแนน / ความคิดเห็น', ''], search: r => r.user.fullName + r.user.studentCode,
-    filters: `<select class="form-select w-auto" data-f="st" aria-label="สถานะ"><option value="">ทุกสถานะ</option><option value="sent">ส่งแล้ว (รอตรวจ)</option><option value="graded">ตรวจแล้ว</option><option value="none">ยังไม่ส่ง</option></select>`,
-    onFilter: (r, root) => { const v = $('[data-f=st]', root).value; return !v || (v === 'sent' && r.sub && r.status !== 'graded') || (v === 'graded' && r.status === 'graded') || (v === 'none' && !r.sub); },
-    row: r => [esc(r.user.classNo || '-'), `${esc(r.user.fullName)}<div class="small text-muted">รหัส ${esc(r.user.studentCode)}</div>`, statusChip(r.status) + (r.sub ? `<div class="small text-muted">${thDate(r.sub.submittedAt, true)}</div>` : ''),
-      r.sub ? `<div class="d-flex gap-1 flex-wrap"><button class="btn btn-sm btn-soft" data-view="${esc(r.user.id)}"><i class="fa-solid fa-eye"></i> ดูงาน</button>${subFiles(r.sub).length ? `<button class="btn btn-sm btn-success dl" data-dlsub="${esc(r.user.id)}"><i class="fa-solid fa-download"></i> ดาวน์โหลด${subFiles(r.sub).length > 1 ? ` (${subFiles(r.sub).length})` : ''}</button>` : ''}</div>` : '-',
-      r.sub ? `<div class="score-box"><div class="input-group"><input class="form-control text-center" type="number" min="0" max="${esc(a.maxScore)}" step="0.5" value="${esc(r.sub.score)}" data-score="${esc(r.sub.id)}" aria-label="คะแนนที่ได้" placeholder="0"><span class="input-group-text">/ ${esc(a.maxScore)} คะแนน</span></div><input class="form-control fb" value="${esc(r.sub.feedback)}" data-fb="${esc(r.sub.id)}" placeholder="ความคิดเห็นถึงนักเรียน" aria-label="ความคิดเห็น"></div>` : '',
-      r.sub ? `<button class="btn btn-sm btn-primary" data-grade="${esc(r.sub.id)}" data-name="${esc(r.user.fullName)}">บันทึก</button>` : ''] });
+  const stuRow = r => `<div class="stu-row"><div class="d-flex align-items-center" style="min-width:0"><span class="no">${esc(r.user.classNo || '-')}</span><div style="min-width:0"><b class="d-block text-truncate">${esc(r.user.fullName)}</b><small class="text-muted">รหัส ${esc(r.user.studentCode)}</small></div></div>
+    <div>${statusChip(r.status)}${r.sub ? `<div class="small text-muted">${thDate(r.sub.submittedAt, true)}</div>` : ''}</div>
+    <div class="d-flex gap-1 flex-wrap">${r.sub ? `<button class="btn btn-sm btn-soft" data-view="${esc(r.user.id)}"><i class="fa-solid fa-eye"></i> ดูงาน</button>${subFiles(r.sub).length ? `<button class="btn btn-sm btn-success dl" data-dlsub="${esc(r.user.id)}"><i class="fa-solid fa-download"></i> ดาวน์โหลด${subFiles(r.sub).length > 1 ? ` (${subFiles(r.sub).length})` : ''}</button>` : ''}` : '<span class="text-muted small">ยังไม่มีงาน</span>'}</div>
+    <div>${r.sub ? `<div class="score-box"><div class="input-group"><input class="form-control text-center" type="number" min="0" max="${esc(a.maxScore)}" step="0.5" value="${esc(r.sub.score)}" data-score="${esc(r.sub.id)}" aria-label="คะแนนที่ได้" placeholder="0"><span class="input-group-text">/ ${esc(a.maxScore)} คะแนน</span></div><input class="form-control fb" value="${esc(r.sub.feedback)}" data-fb="${esc(r.sub.id)}" placeholder="ความคิดเห็นถึงนักเรียน" aria-label="ความคิดเห็น"></div>` : ''}</div>
+    <div>${r.sub ? `<button class="btn btn-sm btn-primary" data-grade="${esc(r.sub.id)}" data-name="${esc(r.user.fullName)}"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>` : ''}</div></div>`;
+  const drawRooms = () => {
+    const q = $('#gq').value.trim().toLowerCase(), st = $('#gst').value;
+    const list = d.rows.filter(r => (!q || (r.user.fullName + r.user.studentCode + r.user.classNo).toLowerCase().includes(q))
+      && (!st || (st === 'sent' && r.sub && r.status !== 'graded') || (st === 'graded' && r.status === 'graded') || (st === 'none' && !r.sub)));
+    const groups = {}; list.forEach(r => { const k = (r.user.grade || '-') + '/' + (r.user.room || '-'); (groups[k] = groups[k] || []).push(r); });
+    const keys = Object.keys(groups).sort(natural);
+    $('#gl').innerHTML = keys.length ? keys.map(k => { const g = groups[k], all = d.rows.filter(r => ((r.user.grade || '-') + '/' + (r.user.room || '-')) === k), sn = all.filter(r => r.sub).length, gd = all.filter(r => r.status === 'graded').length;
+      return `<div class="card-x room-card"><div class="room-head"><h5 class="fw-bold m-0"><i class="fa-solid fa-door-open text-primary me-2"></i>ห้อง ${esc(k)}</h5><span class="chip ok">ส่งแล้ว ${sn}/${all.length}</span><span class="chip info">ตรวจแล้ว ${gd}</span>${all.length - sn ? `<span class="chip warn">ยังไม่ส่ง ${all.length - sn}</span>` : ''}
+        <div class="progress flex-fill" style="min-width:120px"><div class="progress-bar" style="width:${all.length ? Math.round(sn * 100 / all.length) : 0}%"></div></div></div>${g.map(stuRow).join('')}</div>`; }).join('') : empty('fa-users-slash', 'ไม่พบนักเรียนตามเงื่อนไข');
+  };
+  $('#gq').addEventListener('input', debounce(drawRooms, 300)); $('#gst').onchange = drawRooms; drawRooms();
   el.onclick = async e => {
     const v = e.target.closest('[data-view]'), g = e.target.closest('[data-grade]'), dl = e.target.closest('[data-dlsub]');
     if (dl) { const r = d.rows.find(x => x.user.id === dl.dataset.dlsub), fs = subFiles(r.sub);
@@ -1780,7 +1931,7 @@ PAGES.aann = { admin: true, async render(el) {
   el.innerHTML = `<div class="page-head"><h3>จัดการประกาศ</h3></div><div id="nl"></div>`;
   listView($('#nl'), { items: list.sort((a, b) => (b.pinned === 'true') - (a.pinned === 'true') || b.createdAt.localeCompare(a.createdAt)), filters: ownerFilter(), onFilter: byOwner,
     headers: ['ประกาศ', 'ประเภท', 'กลุ่มเป้าหมาย', 'วันที่', 'เจ้าของข้อมูล', ''], search: a => a.title + a.body + a.type,
-    row: a => [`${a.pinned === 'true' ? '<i class="fa-solid fa-thumbtack pin"></i> ' : ''}<b>${esc(a.title)}</b>`, `<span class="chip info">${esc(a.type)}</span>`, esc((a.grade || 'ทุกชั้น') + (a.room ? '/' + a.room : '')), thDate(a.createdAt, true), esc(ownerName(a.ownerId)), actBtns(a.id)] });
+    row: a => [`${a.pinned === 'true' ? '<i class="fa-solid fa-thumbtack pin"></i> ' : ''}<b>${esc(a.title)}</b>`, `<span class="chip info">${esc(a.type)}</span>`, esc(targetTxt(a.grade, a.room)), thDate(a.createdAt, true), esc(ownerName(a.ownerId)), actBtns(a.id)] });
   bindActs($('#nl'), list, 'Announcements', '', () => go('aann'));
   fab('โพสต์ประกาศ', () => crudForm('Announcements', {}, () => go('aann')));
 } };
@@ -1851,7 +2002,7 @@ PAGES.settings = { admin: true, async render(el, p) {
         const d = { sheetId: $('#dbS').value.trim(), driveId: $('#dbD').value.trim() };
         if (!await confirmBox({ title: 'ยืนยันเปลี่ยนแหล่งเก็บข้อมูล', html: 'ระบบจะทดสอบสิทธิ์การเข้าถึงก่อนบันทึก', danger: true })) return;
         const r = await apiMsg('กำลังทดสอบการเชื่อมต่อ...', 'saveSettings', d);
-        if (r.reloaded) { await Swal.fire({ icon: 'success', title: 'เปลี่ยนฐานข้อมูลแล้ว', text: 'กรุณาเข้าสู่ระบบใหม่' }); localLogout(); } else toast('บันทึกแล้ว');
+        if (r.reloaded) { await Sw.fire({ icon: 'success', title: 'เปลี่ยนฐานข้อมูลแล้ว', text: 'กรุณาเข้าสู่ระบบใหม่' }); localLogout(); } else toast('บันทึกแล้ว');
       };
     } else if (tab === 'backup') {
       const list = await api('listBackups');
@@ -1863,7 +2014,7 @@ PAGES.settings = { admin: true, async render(el, p) {
       $('#bkTrig').onclick = async () => { await api('installTriggers'); s.triggers = ['dailyJob']; toast('ติดตั้งงานอัตโนมัติแล้ว'); draw(); };
       $$('[data-restore]', B).forEach(b => b.onclick = async () => {
         if (!await confirmBox({ title: 'ยืนยันการกู้คืน', html: `แทนที่ข้อมูลปัจจุบันทั้งหมดด้วย <b>${esc(b.dataset.name)}</b><br><span class="text-danger small">ระบบจะสำรองข้อมูลปัจจุบันให้ก่อนอัตโนมัติ</span>`, danger: true, confirmText: 'กู้คืน' })) return;
-        await apiMsg('กำลังกู้คืนข้อมูล...', 'restoreBackup', b.dataset.restore); await Swal.fire({ icon: 'success', title: 'กู้คืนเรียบร้อย', text: 'กรุณาเข้าสู่ระบบใหม่' }); localLogout();
+        await apiMsg('กำลังกู้คืนข้อมูล...', 'restoreBackup', b.dataset.restore); await Sw.fire({ icon: 'success', title: 'กู้คืนเรียบร้อย', text: 'กรุณาเข้าสู่ระบบใหม่' }); localLogout();
       });
     } else if (tab === 'account') {
       const F = [{ k: 'username', label: 'Username', req: true, valid: v => /^[a-z0-9._]{4,20}$/.test(v) ? '' : '4–20 ตัว a-z 0-9 . _' }, { k: 'currentPassword', label: 'รหัสผ่านปัจจุบัน', type: 'password', req: true },
@@ -1929,21 +2080,31 @@ function drawLook(B, c) {
 }
 /* ---------- ตั้งค่า: เมนูฝั่งนักเรียน ---------- */
 function drawMenus(B, c) {
-  const m = J(c.studentMenus, {}); let hidden = m.hidden || [], custom = (m.custom || []).slice();
-  const ICONS = [['fa-link', 'ลิงก์'], ['fa-file-lines', 'เอกสาร'], ['fa-clipboard-list', 'แบบฟอร์ม'], ['fa-video', 'วิดีโอ'], ['fa-calendar-days', 'ปฏิทิน'], ['fa-book', 'หนังสือ'], ['fa-gamepad', 'เกม'], ['fa-star', 'ดาว'], ['fa-globe', 'เว็บไซต์']];
+  const m = J(c.studentMenus, {}); let hidden = m.hidden || [], custom = (m.custom || []).map(x => Object.assign({ icon: 'auto', mode: 'app' }, x));
   const draw = () => {
     B.innerHTML = `<h5 class="fw-bold mb-1">เมนูมาตรฐาน</h5><p class="text-muted small">เปิด/ปิดเมนูที่นักเรียนเห็นในแถบด้านซ้ายและแถบล่าง (หน้าหลัก และ โปรไฟล์ ปิดไม่ได้)</p>
       <div class="row g-2 mb-4">${NAV.student.map(n => `<div class="col-sm-6 col-lg-4"><div class="form-check form-switch file-row m-0"><input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="mn_${n[0]}" data-mn="${n[0]}" ${hidden.includes(n[0]) ? '' : 'checked'} ${['home', 'profile'].includes(n[0]) ? 'disabled' : ''}>
         <label class="form-check-label flex-fill" for="mn_${n[0]}"><i class="fa-solid ${n[2]} me-2 text-primary"></i>${n[1]}</label></div></div>`).join('')}</div>
-      <h5 class="fw-bold mb-1">เมนูเพิ่มเติม (ลิงก์)</h5><p class="text-muted small">เพิ่มเมนูลิงก์ไปยังเว็บไซต์ภายนอก เช่น Google Form, Google Classroom, เว็บโรงเรียน (เปิดในแท็บใหม่)</p>
-      <div id="cmList">${custom.map((x, i) => `<div class="row g-2 mb-2 align-items-center"><div class="col-12 col-md-3"><input class="form-control" data-cn="${i}" value="${esc(x.name)}" placeholder="ชื่อเมนู" aria-label="ชื่อเมนู"></div>
-        <div class="col-12 col-md-5"><input class="form-control" data-cu="${i}" value="${esc(x.url)}" placeholder="https://..." aria-label="ลิงก์"></div>
-        <div class="col-9 col-md-3"><select class="form-select" data-ci="${i}" aria-label="ไอคอน">${opt(ICONS, x.icon)}</select></div>
-        <div class="col-3 col-md-1 text-end"><button class="btn btn-icon btn-soft text-danger" data-cd="${i}" aria-label="ลบเมนู"><i class="fa-solid fa-trash"></i></button></div></div>`).join('') || '<div class="text-muted small mb-2">ยังไม่มีเมนูเพิ่มเติม</div>'}</div>
-      <div class="d-flex flex-wrap gap-2 mt-2"><button class="btn btn-soft" id="cmAdd"><i class="fa-solid fa-plus"></i> เพิ่มเมนูลิงก์</button><button class="btn btn-primary" id="cmSave"><i class="fa-solid fa-floppy-disk"></i> บันทึกเมนู</button></div>`;
-    const read = () => { hidden = $$('[data-mn]', B).filter(x => !x.checked).map(x => x.dataset.mn); custom = custom.map((x, i) => ({ name: $(`[data-cn="${i}"]`, B).value.trim(), url: $(`[data-cu="${i}"]`, B).value.trim(), icon: $(`[data-ci="${i}"]`, B).value })); };
-    $('#cmAdd').onclick = () => { read(); custom.push({ name: '', url: '', icon: 'fa-link' }); draw(); };
+      <h5 class="fw-bold mb-1">เมนูเพิ่มเติม (ลิงก์เว็บไซต์)</h5><p class="text-muted small">เช่น Google Form, Google Classroom, YouTube, เว็บโรงเรียน — เลือกไอคอนเอง หรือให้ระบบเลือกให้อัตโนมัติจากลิงก์ และเลือกได้ว่าจะ "แสดงในระบบ" หรือ "เปิดแท็บใหม่"</p>
+      <div id="cmList" class="d-flex flex-column gap-2">${custom.map((x, i) => `<div class="file-row flex-wrap align-items-center m-0" style="gap:8px">
+        <button class="btn btn-soft btn-icon flex-none" data-cicon="${i}" title="เลือกไอคอน" aria-label="เลือกไอคอน"><i class="${esc(menuIcon(x))}"></i></button>
+        <input class="form-control" style="flex:1 1 160px" data-cn="${i}" value="${esc(x.name)}" placeholder="ชื่อเมนู" aria-label="ชื่อเมนู">
+        <input class="form-control" style="flex:2 1 240px" data-cu="${i}" value="${esc(x.url)}" placeholder="https://..." aria-label="ลิงก์">
+        <select class="form-select" style="flex:0 1 170px" data-cm="${i}" aria-label="วิธีเปิด">${opt([['app', 'แสดงในระบบ'], ['tab', 'เปิดแท็บใหม่']], x.mode)}</select>
+        <button class="btn btn-icon btn-soft text-danger flex-none" data-cd="${i}" aria-label="ลบเมนู"><i class="fa-solid fa-trash"></i></button></div>`).join('') || '<div class="text-muted small mb-2">ยังไม่มีเมนูเพิ่มเติม</div>'}</div>
+      <div class="d-flex flex-wrap gap-2 mt-3"><button class="btn btn-soft" id="cmAdd"><i class="fa-solid fa-plus"></i> เพิ่มเมนูลิงก์</button><button class="btn btn-primary" id="cmSave"><i class="fa-solid fa-floppy-disk"></i> บันทึกเมนู</button></div>`;
+    const read = () => { hidden = $$('[data-mn]', B).filter(x => !x.checked).map(x => x.dataset.mn); custom = custom.map((x, i) => Object.assign(x, { name: $(`[data-cn="${i}"]`, B).value.trim(), url: $(`[data-cu="${i}"]`, B).value.trim(), mode: $(`[data-cm="${i}"]`, B).value })); };
+    $('#cmAdd').onclick = () => { read(); custom.push({ name: '', url: '', icon: 'auto', mode: 'app' }); draw(); };
     $$('[data-cd]', B).forEach(b => b.onclick = () => { read(); custom.splice(+b.dataset.cd, 1); draw(); });
+    $$('[data-cu]', B).forEach(inp => inp.addEventListener('input', () => { const i = +inp.dataset.cu; if (custom[i].icon === 'auto') $(`[data-cicon="${i}"] i`, B).className = autoIcon(inp.value); }));
+    $$('[data-cicon]', B).forEach(b => b.onclick = async () => {
+      read(); const i = +b.dataset.cicon, cur = custom[i].icon || 'auto';
+      let pick = null;
+      await Sw.fire({ title: 'เลือกไอคอนเมนู', showConfirmButton: false, showCancelButton: true, cancelButtonText: 'ปิด',
+        html: `<div class="icon-grid">${MENU_ICONS.map(([ic, lb]) => `<button type="button" class="${ic === cur ? 'on' : ''}" data-ic="${ic}"><i class="${ic === 'auto' ? autoIcon(custom[i].url) : ic}"></i><small>${lb}</small></button>`).join('')}</div>`,
+        didOpen: el => $$('[data-ic]', el).forEach(x => x.onclick = () => { pick = x.dataset.ic; Swal.close(); }) });
+      if (pick) { custom[i].icon = pick; draw(); }
+    });
     $('#cmSave').onclick = async () => {
       read();
       const bad = custom.find(x => !x.name || !/^https:\/\//.test(x.url));
@@ -1960,7 +2121,7 @@ function drawMenus(B, c) {
  * เริ่มต้นระบบ
  * ========================================================= */
 async function askApiUrl(msg) {
-  const r = await Swal.fire({ title: 'เชื่อมต่อระบบ', icon: 'info', html: (msg ? `<div class="text-danger small mb-2">${esc(msg)}</div>` : '') + 'วาง URL เว็บแอปของ Google Apps Script (ลงท้าย <code>/exec</code>)<br><small class="text-muted">ผู้ดูแลควรใส่ไว้ใน docs/index.html เพื่อให้ทุกคนใช้ได้ทันที</small>',
+  const r = await Sw.fire({ title: 'เชื่อมต่อระบบ', icon: 'info', html: (msg ? `<div class="text-danger small mb-2">${esc(msg)}</div>` : '') + 'วาง URL เว็บแอปของ Google Apps Script (ลงท้าย <code>/exec</code>)<br><small class="text-muted">ผู้ดูแลควรใส่ไว้ใน docs/index.html เพื่อให้ทุกคนใช้ได้ทันที</small>',
     input: 'url', inputPlaceholder: 'https://script.google.com/macros/s/.../exec', confirmButtonText: 'เชื่อมต่อ', allowOutsideClick: false,
     inputValidator: v => /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(String(v).trim()) ? null : 'URL ต้องอยู่ในรูปแบบ https://script.google.com/macros/s/.../exec' });
   store.set('cp_api', r.value.trim()); location.reload();
@@ -1980,7 +2141,7 @@ async function askApiUrl(msg) {
   } catch (e) {
     applyBrand(); renderLogin();
     if (!HAS_GAS && !window.CP_API_URL) return askApiUrl(e.message);
-    Swal.fire({ icon: 'error', title: 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ', html: esc(e.message) + '<br><small>ตรวจสอบว่าบัญชีที่ Deploy มีสิทธิ์แก้ไข Google Sheet และ Drive ที่กำหนดไว้</small>' });
+    Sw.fire({ icon: 'error', title: 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ', html: esc(e.message) + '<br><small>ตรวจสอบว่าบัญชีที่ Deploy มีสิทธิ์แก้ไข Google Sheet และ Drive ที่กำหนดไว้</small>' });
   } finally { Loader.hide(); }
 })();
 </script>
