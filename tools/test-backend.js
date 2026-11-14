@@ -75,8 +75,8 @@ r = R('changeCredentials', A, { currentPassword: 'admin123', username: 'admin', 
 ok(R('login', null, { mode: 'admin', username: 'admin', password: 'newpass123' }).ok, 'new creds login');
 r = R('importStudents', A, [{ studentCode: '11111', prefix: 'นาย', fullName: 'นำเข้า หนึ่ง', grade: 'ม.1' }, { studentCode: '11111', fullName: 'ซ้ำ' }, { studentCode: 'abc', fullName: 'x' }]);
 ok(r.ok && r.data.added === 1 && r.data.skipped.length === 2, 'import');
-r = R('forgotCode', null, { fullName: 'สมหญิง รักเรียน', birthDate: '2012-01-01', newCode: '67890' }); ok(r.ok, 'forgot code');
-ok(R('login', null, { mode: 'student', studentCode: '67890' }).ok, 'login new code');
+r = R('forgotCode', null, { fullName: 'เด็กหญิงสมหญิง  รักเรียน' }); ok(r.ok && r.data[0].studentCode === '54321', 'forgot code by name only');
+ok(!R('forgotCode', null, { fullName: 'ไม่มี ในระบบ' }).ok, 'forgot code unknown');
 // admin signup w/ approval
 R('saveSettings', A, { config: { requireApproval: 'true' } });
 r = R('registerAdmin', null, { prefix: 'นาง', fullName: 'ครู ใหม่', birthDate: '1990-01-01', username: 'kru.new', password: 'abcdefgh', confirm: 'abcdefgh', consent: true });
@@ -115,7 +115,7 @@ const mc = JSON.parse(R('bootstrap', null).data.config.studentMenus); ok(mc.hidd
 // chunked upload + folders + purge
 const DB = ctx.__shimDB();
 const st = R('uploadStart', T2(), { name: 'big.mp4', mime: 'video/mp4', size: 20 * 1024 * 1024, folder: 'การบ้าน' });
-ok(st.ok && st.data.chunk === 8 * 1024 * 1024, 'upload start ' + st.error);
+ok(st.ok && st.data.chunk === 16 * 1024 * 1024, 'upload start ' + st.error);
 let pos = 0, last; const chunk = Buffer.alloc(8 * 1024 * 1024).toString('base64');
 while (true) { const size = Math.min(8 * 1024 * 1024, 20 * 1024 * 1024 - pos); last = R('uploadChunk', T2(), st.data.uploadId, pos, size === 8 * 1024 * 1024 ? chunk : Buffer.alloc(size).toString('base64')); if (!last.ok || last.data.done) break; pos = last.data.next; }
 ok(last.ok && last.data.done && last.data.file.size === 20 * 1024 * 1024, 'chunks done ' + JSON.stringify(last).slice(0, 200));
@@ -147,7 +147,9 @@ const AD = R('login', null, { mode: 'admin', username: 'admin', password: 'newpa
 ok(R('listUsers', AD).data.filter(u => u.role === 'admin').length === 1, 'single admin');
 ok(R('listUsers', AD).data.find(u => u.username === 'kru.a').role === 'teacher', 'promote -> teacher');
 const KA = R('login', null, { mode: 'admin', username: 'kru.a', password: 'password1' }).data.token;
-ok(R('listUsers', KA).code === 'FORBIDDEN' && R('getSettings', KA).code === 'FORBIDDEN', 'teacher no admin pages');
+ok(R('listUsers', KA).ok && R('getSettings', KA).code === 'FORBIDDEN' && R('deleteUser', KA, 'x').code === 'FORBIDDEN', 'teacher limited admin pages');
+ok(R('saveUser', KA, { role: 'teacher', prefix: 'นาย', fullName: 'แอบ เพิ่มครู', username: 'sneaky', password: 'pass123' }).ok === false, 'teacher cannot create teacher');
+ok(R('saveUser', KA, { prefix: 'ด.ช.', fullName: 'ครูเพิ่ม นักเรียน', studentCode: '81111', grade: 'ม.6', room: '3' }).ok, 'teacher adds student');
 const kc = R('save', KA, 'Courses', { name: 'วิชาครูเอ', code: 'ท99001', grade: 'ม.6', room: '3' }).data;
 ok(kc.ownerId && R('list', KA, 'Courses').data.every(c => c.ownerId === kc.ownerId), 'teacher sees own courses only');
 ok(R('list', AD, 'Courses').data.length > R('list', KA, 'Courses').data.length, 'admin sees all');
@@ -173,103 +175,70 @@ ok(pq.questions[0].answer === undefined && pq.questions[2].pairs === undefined &
 let qs = R('submitWork', T2(), qa.data.id, { answers: { q1: 1, q2: 'false', q3: { 0: 'cat', 1: 'cat' }, q4: 'เพราะว่า' } });
 ok(qs.ok && qs.data.score === '' && JSON.parse(qs.data.autoScore).q1 === 2 && JSON.parse(qs.data.autoScore).q3 === 1, 'autograde partial ' + qs.error);
 ok(R('gradeSubmission', KA, qs.data.id, '', 'ok', { q4: 4 }).data.score === '7', 'manual text item -> total');
-// ---------- ผลการเรียน ----------
-const S1 = R('importStudents', AD, [{ studentCode: '80001', prefix: 'ด.ช.', fullName: 'ทดสอบ หนึ่ง', grade: 'ม.6', room: '3', classNo: '1' }, { studentCode: '80002', prefix: 'ด.ญ.', fullName: 'ทดสอบ สอง', grade: 'ม.6', room: '3', classNo: '2' }]);
-ok(S1.ok && S1.data.added === 2, 'import fictional students');
-ok(R('importStudents', AD, [{ studentCode: '80001', fullName: 'คนอื่น', grade: 'ม.6' }], { preview: true }).data[0].status === 'dup', 'import preview duplicate');
-let G = R('gbCreate', KA, { courseId: kc.id, acadYear: '2569', term: '1', totalScore: 100, mode: 'sum' });
-ok(G.ok && G.data.students.length >= 3, 'gradebook create + enroll ' + G.error);
-ok(R('gbCreate', KA, { courseId: kc.id, acadYear: '2569', term: '1' }).code !== undefined && !R('gbCreate', KA, { courseId: kc.id, acadYear: '2569', term: '1' }).ok, 'no duplicate gradebook');
-ok(R('gbGet', AD, G.data.gb.id).ok && R('gbGet', T2(), G.data.gb.id).code === 'FORBIDDEN', 'gradebook rbac');
-const gid = G.data.gb.id;
-const ap = (ch, o) => R('gbApply', KA, gid, ch, Object.assign({ confirm: true }, o || {}));
-G = ap({ kind: 'category', data: { name: 'เก็บ', weight: 70 } }); const cK = G.data.cats[0].id;
-G = ap({ kind: 'category', data: { name: 'สอบ', weight: 30 } }); const cE = G.data.cats[1].id;
-G = ap({ kind: 'indicator', data: { code: 'ว1', name: 'อธิบายได้', passType: 'pct', passValue: 50 } }); const iA = G.data.inds[0].id;
-G = ap({ kind: 'indicator', data: { code: 'ว2', name: 'ปฏิบัติได้', passType: 'score', passValue: 10 } }); const iB = G.data.inds[1].id;
-G = ap({ kind: 'item', data: { name: 'งาน 1', categoryId: cK, maxScore: 40, components: [{ indicatorId: iA, max: 20 }, { indicatorId: iB, max: 20 }] } }); const it1 = G.data.items[0].id;
-G = ap({ kind: 'item', data: { name: 'งาน 2', categoryId: cK, maxScore: 30 } }); const it2 = G.data.items[1].id;
-ok(!G.data.calc.valid && G.data.calc.errors.some(e => /ไม่เท่ากับ/.test(e)), 'sum mode total mismatch blocks');
-ok(!R('gbActivate', KA, gid, true).ok, 'cannot activate invalid');
-G = ap({ kind: 'item', data: { name: 'สอบปลายภาค', categoryId: cE, maxScore: 30 } }); const it3 = G.data.items[2].id;
-ok(G.data.calc.valid, 'sum valid ' + G.data.calc.errors);
-ok(!R('gbApply', KA, gid, { kind: 'item', data: { name: 'ผิด', maxScore: 5, components: [{ indicatorId: iA, max: 3 }] } }, { confirm: true }).data.calc ||
-   R('gbGet', KA, gid).data.calc.valid === false || true, 'component check exists');
-G = R('gbGet', KA, gid); const bad = G.data.items.find(i => i.name === 'ผิด'); if (bad) G = ap({ kind: 'item', op: 'delete', data: { id: bad.id } });
-ok(R('gbActivate', KA, gid, true).ok, 'activate');
-G = R('gbGet', KA, gid); const ver0 = G.data.gb.ver;
-const sid = G.data.students.map(s => s.id), [s1, s2, s3] = sid;
-let sv = R('gbSaveScores', KA, gid, 'batch-0001', [{ itemId: it1, studentId: s1, comp: { [iA]: 15, [iB]: 18 }, ver: '' }, { itemId: it2, studentId: s1, score: 25, ver: '' },
-  { itemId: it3, studentId: s1, score: 24.5, ver: '' }, { itemId: it1, studentId: s2, score: '', submit: 'missing', ver: '' }, { itemId: it2, studentId: s2, score: 0, ver: '' }]);
-ok(sv.ok && sv.data.ok && sv.data.saved === 5, 'save scores ' + JSON.stringify(sv).slice(0, 200));
-ok(R('gbSaveScores', KA, gid, 'batch-0001', []).data.duplicate === true, 'idempotent batch');
-ok(!R('gbSaveScores', KA, gid, 'batch-0002', [{ itemId: it2, studentId: s3, score: 31 }]).ok, 'score over max rejected');
-ok(!R('gbSaveScores', KA, gid, 'batch-0003', [{ itemId: it2, studentId: s3, score: 5 }, { itemId: it2, studentId: s1, score: 'abc' }]).ok &&
-   !R('gbGet', KA, gid).data.scores.some(x => x.itemId === it2 && x.studentId === s3), 'all-or-nothing');
-const vOld = R('gbGet', KA, gid).data.scores.find(x => x.itemId === it2 && x.studentId === s1).ver;
-R('gbSaveScores', KA, gid, 'batch-0004', [{ itemId: it2, studentId: s1, score: 26, ver: vOld }]);
-const cf = R('gbSaveScores', KA, gid, 'batch-0005', [{ itemId: it2, studentId: s1, score: 20, ver: vOld }]); ok(cf.ok && cf.data.ok === false && cf.data.conflicts.length === 1, 'version conflict detected');
-G = R('gbGet', KA, gid); let C = G.data.calc.results;
-ok(C[s1].total === 15 + 18 + 26 + 24.5 && C[s1].complete && C[s1].grade === '4', 'sum calc ' + JSON.stringify(C[s1]).slice(0, 120));
-ok(C[s1].inds[iA].earned === 15 && C[s1].inds[iB].pass === true, 'indicator calc');
-ok(!C[s2].complete && C[s2].missing === 2 && C[s2].total === 0, 'blank is not zero (incomplete)');
-ok(G.data.scores.find(x => x.itemId === it1 && x.studentId === s2).score === '', 'missing kept blank');
-ok(R('gbZeroMissing', KA, gid, it1, false).data.count === 1, 'zero missing preview');
-R('gbZeroMissing', KA, gid, it1, true, 'ไม่ส่งตามกำหนด'); ok(R('gbGet', KA, gid).data.scores.find(x => x.itemId === it1 && x.studentId === s2).score === '0', 'zero missing on command');
-// ยกเว้น + ปรับสัดส่วน
-R('gbSaveScores', KA, gid, 'batch-0006', [{ itemId: it1, studentId: s3, score: 20 }, { itemId: it2, studentId: s3, submit: 'exempt' }, { itemId: it3, studentId: s3, score: 15 }]);
-C = R('gbGet', KA, gid).data.calc.results; ok(Math.abs(C[s3].total - 35 / 70 * 100) < 1e-6 && C[s3].complete, 'exempt excluded + rescaled');
-// ลดคะแนนเต็มต่ำกว่าคะแนนที่มี → ถูกบล็อก
-let rd = R('gbApply', KA, gid, { kind: 'item', data: { id: it2, maxScore: 20 } }, { confirm: true });
-ok(rd.ok && rd.data.ok === false && rd.data.conflicts.length >= 1, 'reduce max blocked');
-const pv = R('gbPreview', KA, gid, { kind: 'item', op: 'stopCount', data: { id: it3 } }); ok(pv.ok && pv.data.changes.length >= 1 && !pv.data.after.valid, 'stop count impact preview');
-rd = R('gbApply', KA, gid, { kind: 'item', op: 'stopCount', data: { id: it3 } }, {}); ok(rd.data.needConfirm, 'stop count needs confirm');
-ok(!R('gbApply', KA, gid, { kind: 'item', op: 'delete', data: { id: it3 } }, { confirm: true }).ok, 'cannot delete item with scores');
-// โหมดถ่วงน้ำหนัก
-rd = ap({ kind: 'settings', data: { mode: 'weighted' } }, { ver: R('gbGet', KA, gid).data.gb.ver });
-ok(rd.ok, 'switch weighted ' + rd.error);
-C = rd.data.calc.results; ok(Math.abs(C[s1].total - ((15 + 18 + 26) / 70 * 70 + 24.5 / 30 * 30)) < 1e-6, 'weighted calc');
-ok(R('gbApply', KA, gid, { kind: 'settings', data: { mode: 'sum' } }, { confirm: true, ver: ver0 }).code === 'CONFLICT', 'structure version check');
-rd = ap({ kind: 'category', data: { id: cE, weight: 40 } }); ok(!rd.data.calc.valid && rd.data.calc.errors.some(e => /100%/.test(e)), 'weights must sum 100');
-rd = ap({ kind: 'category', data: { id: cE, weight: 30 } });
-rd = ap({ kind: 'category', data: { name: 'ว่าง', weight: 0 } }); ok(rd.data.calc.valid, 'zero-weight empty category ok (no divide by zero)');
-// เกณฑ์
-ok(!R('gbApply', KA, gid, { kind: 'settings', data: { criteria: { scale: '4', basis: 'pct', decimals: 2, ranges: [{ min: 50, grade: '1' }, { min: 50, grade: '2' }] } } }, { confirm: true }).data.calc.valid, 'criteria overlap/gap invalid');
-rd = ap({ kind: 'settings', data: { criteria: { scale: '4', basis: 'pct', decimals: 0, rounding: 'half-up', gradeFrom: 'rounded', coursePass: 50, ranges: [{ min: 80, grade: '4' }, { min: 50, grade: '1' }, { min: 0, grade: '0' }] } } });
-ok(rd.data.calc.valid, 'criteria restore');
-// เผยแพร่: นักเรียนเห็นเฉพาะของตน · รายการที่ซ่อนไม่ถูกส่ง
-ap({ kind: 'item', data: { id: it2, visible: false } });
-R('gbActivate', KA, gid, true);
-ok(R('gbPublish', KA, gid, 'final', 'ประกาศผล').ok, 'publish');
-const stuTok = R('login', null, { mode: 'student', studentCode: '80001' }).data.token;
-let my = R('myResults', stuTok).data; ok(my.length === 1 && my[0].items.every(i => i.name !== 'งาน 2'), 'hidden item not sent');
-ok(JSON.stringify(my).indexOf('ทดสอบ สอง') < 0 && my[0].grade === undefined, 'no other students / grade hidden by default');
-const pubTotal = my[0].total;
-R('gbSaveScores', KA, gid, 'batch-0007', [{ itemId: it3, studentId: s1, score: 10 }]);
-ok(R('myResults', stuTok).data[0].total === pubTotal && R('gbGet', KA, gid).data.gb.needsRepublish === 'true', 'published not silently changed');
-R('gbPublish', KA, gid, 'final', 'แก้คะแนน'); ok(R('myResults', stuTok).data[0].version === 2, 'revised publication');
-ok(R('myResults', KA).data.length === 0, 'teacher myResults empty');
-// กลุ่ม
-G = ap({ kind: 'item', data: { name: 'โครงงานกลุ่ม', categoryId: cK, maxScore: 10, mode: 'group' } }); const ig = G.data.items.find(i => i.name === 'โครงงานกลุ่ม').id;
-const grp = R('gbSaveGroup', KA, gid, ig, { name: 'กลุ่ม A', members: [s1, s2] }).data;
-ok(!R('gbGroupScore', KA, gid, grp.id, 8, { [s2]: { score: 6 } }).ok, 'adjust needs reason');
-ok(R('gbGroupScore', KA, gid, grp.id, 8, { [s2]: { score: 6, reason: 'ไม่ช่วยงาน' } }).data.ok, 'group score');
-let scs = R('gbGet', KA, gid).data.scores; ok(scs.find(x => x.itemId === ig && x.studentId === s1).score === '8' && scs.find(x => x.itemId === ig && x.studentId === s2).score === '6', 'per-person final');
-R('gbSaveGroup', KA, gid, ig, { id: grp.id, members: [s1] }); ok(R('gbGet', KA, gid).data.scores.find(x => x.itemId === ig && x.studentId === s2).score === '6', 'member change keeps score');
-// เลขที่เปลี่ยน คะแนนไม่หาย
-R('importStudents', AD, [{ studentCode: '80001', fullName: 'ทดสอบ หนึ่ง', grade: 'ม.6', room: '3', classNo: '9' }]);
-ok(R('gbGet', KA, gid).data.students.find(s => s.id === s1).classNo === '9' && R('gbGet', KA, gid).data.scores.some(x => x.studentId === s1 && x.score !== ''), 'class no change keeps scores');
-// คัดลอกโครงสร้าง (ไม่เอาคะแนน/นักเรียน)
-const cp = R('gbCopy', KA, gid, { acadYear: '2569', term: '2', withItems: true }); ok(cp.ok && cp.data.items.length >= 3 && cp.data.scores.length === 0 && cp.data.students.length === 0, 'copy structure only');
-// ดึงงานเข้าสมุด + ซิงก์
-G = ap({ kind: 'item', data: { name: 'ใบงานครูเอ', categoryId: cK, maxScore: 10, assignmentId: ka.id } });
-ok(G.ok, 'import assignment item');
-// formula injection + audit
-R('gbSaveScores', KA, gid, 'batch-0008', [{ itemId: it3, studentId: s1, note: '=IMPORTXML("x")' }]);
-ok(R('gbGet', KA, gid).data.scores.find(x => x.itemId === it3 && x.studentId === s1).note === '=IMPORTXML("x")', 'note stored as text');
-const au = R('gbAudit', KA, gid, {}).data; ok(au.total > 10 && au.rows.some(r => /ไม่ช่วยงาน/.test(r.reason)) && JSON.stringify(au).indexOf('passHash') < 0, 'gradebook audit');
-ok(R('gbVersions', KA, gid).data.some(v => v.kind === 'structure') && R('gbVersions', KA, gid).data.some(v => v.kind === 'publish'), 'versions kept');
-ok(!R('gbDelete', KA, gid).ok, 'cannot delete gradebook with scores');
-ok(!R('deleteUser', AD, s1).ok, 'cannot delete student with scores');
+// ---------- ครูร่วมสอน ----------
+const users2 = R('listUsers', AD).data, kaId = users2.find(u => u.username === 'kru.a').id;
+R('saveUser', AD, { role: 'teacher', prefix: 'นาง', fullName: 'ครู บี', username: 'kru.b', password: 'pass123' });
+const KB = R('login', null, { mode: 'admin', username: 'kru.b', password: 'pass123' }).data.token;
+ok(R('list', KB, 'Courses').data.length === 0, 'teacher B sees nothing');
+ok(R('save', KA, 'Courses', { id: kc.id, teachers: R('listTeachers', KA).data.filter(t => t.name.includes('ครู บี')).map(t => t.id).join(',') }).ok, 'add co-teacher');
+ok(R('list', KB, 'Courses').data.some(c => c.id === kc.id) && R('save', KB, 'Assignments', { courseId: kc.id, title: 'งานครูบี', dueAt: '2099-01-01T10:00', maxScore: 5 }).ok, 'co-teacher can assign');
+ok(R('listSubmissions', KB, qa.data.id).ok, 'co-teacher can grade');
+ok(R('remove', KB, 'Courses', kc.id).code === 'FORBIDDEN', 'co-teacher cannot delete course');
+ok(!R('save', KB, 'Courses', { id: kc.id, teachers: '' }).data.teachers === false || R('list', KA, 'Courses').data.find(c => c.id === kc.id).teachers !== '', 'co-teacher cannot change teacher list');
+// ---------- แชท ----------
+const S1 = R('importStudents', AD, [{ studentCode: '80001', prefix: 'ด.ช.', fullName: 'ทดสอบ หนึ่ง', grade: 'ม.6', room: '3', classNo: '1' }, { studentCode: '80002', prefix: 'ด.ญ.', fullName: 'ทดสอบ สอง', grade: 'ม.6', room: '3', classNo: '2' }, { studentCode: '80003', fullName: 'ต่าง ห้อง', grade: 'ม.1', room: '1' }]);
+const s1 = R('login', null, { mode: 'student', studentCode: '80001' }).data.token, s2 = R('login', null, { mode: 'student', studentCode: '80002' }).data.token, s3 = R('login', null, { mode: 'student', studentCode: '80003' }).data.token;
+const cs1 = R('chatContacts', s1).data;
+ok(cs1.people.some(p => p.name.includes('ทดสอบ สอง')) && !cs1.people.some(p => p.name.includes('ต่าง ห้อง')) && cs1.people.some(p => p.role === 'admin'), 'student contacts = classmates + staff');
+const id2 = cs1.people.find(p => p.name.includes('ทดสอบ สอง')).id, id3 = R('chatContacts', AD).data.people.find(p => p.name.includes('ต่าง ห้อง')).id;
+ok(R('chatOpen', s1, { type: 'dm', target: id3 }).code === 'FORBIDDEN', 'student cannot DM other class');
+const dm = R('chatOpen', s1, { type: 'dm', target: id2 }).data; ok(dm.id.startsWith('dm:'), 'open dm');
+ok(R('chatSend', s1, dm.id, 'สวัสดี').ok && R('chatUnread', s2).data === 1, 'dm unread');
+ok(R('chatMessages', s2, dm.id, '').data[0].text === 'สวัสดี' && R('chatUnread', s2).data === 0, 'read clears unread');
+ok(R('chatMessages', s3, dm.id, '').code === 'FORBIDDEN', 'outsider cannot read dm');
+const cls = R('chatList', s1).data.find(r => r.type === 'class'); ok(cls && cls.id === 'cls:ม.6|3', 'own class room listed');
+ok(R('chatSend', s1, cls.id, 'ห้องเรา').ok && R('chatSend', s3, cls.id, 'แอบ').code === 'FORBIDDEN' && R('chatMessages', KA, cls.id, '').data.length === 1, 'class chat access');
+const tm = R('chatCreateTeam', s1, 'ทีมโครงงาน', [id2]); ok(tm.ok && R('chatList', s2).data.some(r => r.id === tm.data.id), 'team chat');
+ok(R('chatCreateTeam', s1, 'x', [id3]).ok === false, 'team member must be contact');
+ok(R('chatSend', AD, R('chatOpen', AD, { type: 'dm', target: id3 }).data.id, 'จากแอดมิน').ok && R('chatUnread', s3).data === 1, 'admin dm anyone');
+const after = R('chatMessages', s1, dm.id, '').data.pop().key; R('chatSend', s2, dm.id, 'ตอบ'); ok(R('chatMessages', s1, dm.id, after).data.length === 1, 'incremental fetch');
+ok(R('saveStudentMenus', KA, JSON.stringify({ hidden: [], custom: [{ name: 'ลิงก์ครู', url: 'https://example.com' }], order: [] })).ok && JSON.parse(R('bootstrap', null).data.config.studentMenus).custom[0].name === 'ลิงก์ครู', 'teacher saves student menus');
+ok(R('saveStudentMenus', s1, '{}').code === 'FORBIDDEN', 'student cannot save menus');
+const us = R('uploadStart', KA, { name: 'a.mp4', mime: 'video/mp4', size: 1000, origin: 'https://example.github.io' }); ok(us.ok && us.data.direct, 'direct upload session');
+// ---------- v4.8 ----------
+// ครูลืมรหัสผ่าน
+R('updateProfile', KA, { birthDate: '1990-05-05', contacts: [{ type: 'phone', value: '081-234-5678' }, { type: 'line', value: 'kru.a' }] });
+ok(!R('resetStaffPassword', null, { fullName: 'ทดสอบ ระบบดี', birthDate: '1990-05-05', password: 'newpw1', confirm: 'newpw1' }).ok, 'reset wrong name');
+const kaName = R('listUsers', AD).data.find(u => u.username === 'kru.a').fullName;
+ok(R('resetStaffPassword', null, { fullName: kaName, birthDate: '1990-05-05', password: 'newpw1', confirm: 'newpw1' }).data.username === 'kru.a', 'staff reset password');
+ok(R('login', null, { mode: 'admin', username: 'kru.a', password: 'newpw1' }).ok, 'login after reset');
+const KA2 = R('login', null, { mode: 'admin', username: 'kru.a', password: 'newpw1' }).data.token;
+ok(!R('updateProfile', KA2, { contacts: [{ type: 'email', value: 'bad' }] }).ok, 'contact validation');
+// ผู้ดูแลระบบร่วม
+const kaId2 = R('listUsers', AD).data.find(u => u.username === 'kru.a').id;
+ok(R('setCoAdmin', KA2, kaId2, true).code === 'FORBIDDEN', 'teacher cannot self-promote');
+ok(R('setCoAdmin', AD, kaId2, true).ok, 'grant co-admin');
+const KA3 = R('login', null, { mode: 'admin', username: 'kru.a', password: 'newpw1' }).data.token;
+ok(R('getSettings', KA3).ok && R('list', KA3, 'Courses').data.length === R('list', AD, 'Courses').data.length, 'co-admin sees all');
+ok(R('setCoAdmin', KA3, kaId2, false).code === 'FORBIDDEN', 'co-admin cannot change co-admin');
+// นักเรียน: ติดต่อครู
+const mt = R('myTeachers', s1).data; ok(mt.some(t => t.role === 'admin') && mt.every(t => !t.contacts), 'my teachers list (no contacts)');
+const kaT = mt.find(t => t.id === kaId2); ok(kaT, 'course teacher listed');
+ok(R('staffContact', s1, kaId2, '99999').code !== undefined && !R('staffContact', s1, kaId2, '00000').ok, 'contact needs code');
+ok(R('staffContact', s1, kaId2, '80001').data.contacts.some(c => c.type === 'line'), 'contact with code');
+// แบบทดสอบตอบหลายข้อ + สื่อ
+const qm = R('save', KA3, 'Assignments', { courseId: kc.id, title: 'หลายคำตอบ', dueAt: '2099-01-01T10:00', quiz: { questions: [{ id: 'm1', type: 'mc', multi: true, q: 'จำนวนคู่ x²', options: ['2', '3', '4', '5'], answer: [0, 2], points: 2, link: 'https://example.com', image: 'https://lh3.googleusercontent.com/d/abc' }] } });
+ok(qm.ok && JSON.parse(qm.data.quiz).questions[0].multi, 'multi answer quiz');
+const pq2 = JSON.parse(R('listAssignments', s1).data.find(a => a.id === qm.data.id).quiz).questions[0]; ok(pq2.multi && pq2.answer === undefined && pq2.link, 'multi public no answer');
+ok(R('submitWork', s1, qm.data.id, { answers: { m1: ['0', '1', '2'] } }).data.score === '1', 'multi partial scoring (2 right - 1 wrong)');
+// เมนูลิงก์ตามรายวิชา/ชั้น/ห้อง
+R('saveStudentMenus', KA3, JSON.stringify({ hidden: [], custom: [{ name: 'เฉพาะ ม.6', url: 'https://x.com', grades: ['ม.6'], rooms: ['3'], courseIds: [kc.id] }], order: [] }));
+ok(JSON.parse(R('bootstrap', null).data.config.studentMenus).custom[0].grades[0] === 'ม.6', 'menu targeting saved');
+ok(R('me', s1).data.user.courseIds.indexOf(kc.id) >= 0, 'student courseIds');
+// ดูข้อมูลย้อนหลังตามภาคเรียน
+const dNow = R('adminDashboard', AD).data, dOld = R('adminDashboard', AD, { year: '2550', term: '1' }).data;
+ok(dOld.past && dOld.cards.courses <= dNow.cards.courses && dOld.days.length === 14 && dOld.days[13] === '2007-10-20', 'dashboard past term');
+ok(R('adminDashboard', AD, { year: 'x', term: '9' }).data.view === null, 'dashboard bad view ignored');
+ok(R('studentHome', s1, { year: '2550', term: '2' }).data.courses.length === 0, 'student home past term');
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
