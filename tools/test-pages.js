@@ -24,7 +24,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await p.fill('.swal2-input', API); await p.click('.swal2-confirm'); await p.waitForLoadState(); await idle();
   await p.click('[data-tab=admin]'); await p.fill('#lgUser', 'admin'); await p.fill('#lgPass', 'admin123'); await p.click('#loginForm button[type=submit]'); await idle();
   ok(await p.isVisible('#appView'), 'admin login via fetch');
-  await p.click('.dock [data-go=users]'); await idle(); ok(await p.isVisible('td >> text=admin'), 'users via fetch');
+  await p.click('.dock [data-go=users]'); await idle(); ok(await p.isVisible('.ucard >> text=admin'), 'users via fetch');
   await p.click('#modeSwitch'); await idle(); ok(await p.isVisible('#chCourse'), 'student home via fetch');
   ok(!errs.length, 'errors ' + errs.join('|'));
   console.log(`pages tests: ${pass} passed, ${fail} failed`); await b.close(); process.exit(fail ? 1 : 0);

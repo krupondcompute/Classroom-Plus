@@ -49,7 +49,7 @@
   }
   function Spreadsheet(id) {
     return { getId: () => id, getName: () => 'Classroom PLus DB', getUrl: () => 'https://docs.google.com/spreadsheets/d/' + id,
-      getSheetByName: n => DB.sheets[n] ? Sheet(n) : null, insertSheet: n => { DB.sheets[n] = []; persist(); return Sheet(n); } };
+      getSheetByName: n => DB.sheets[n] ? Sheet(n) : null, insertSheet: n => { DB.sheets[n] = []; persist(); return Sheet(n); }, deleteSheet: sh => { delete DB.sheets[sh.getName()]; persist(); } };
   }
   G.SpreadsheetApp = { openById: id => Spreadsheet(id) };
   G.PropertiesService = { getScriptProperties: () => ({ getProperty: k => DB.props[k] ?? null, setProperty: (k, v) => { DB.props[k] = String(v); persist(); }, setProperties: o => { Object.assign(DB.props, o); persist(); } }) };
