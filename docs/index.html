@@ -206,7 +206,7 @@ a.navlink{text-decoration:none}
   body.collapsed .sidebar{width:84px}
   body.collapsed .app-main{margin-left:84px}
   body.collapsed .side-toggle{left:64px;transform:rotate(180deg)}
-  body.collapsed .nav-side span,body.collapsed .side-brand b,body.collapsed .nav-label{opacity:0}
+  body.collapsed .nav-side span:not(.ind),body.collapsed .side-brand b,body.collapsed .nav-label{opacity:0}
   body.collapsed .side-brand .logo-circle{width:56px;height:56px}
   body.collapsed .side-user{padding:6px 0;background:none;border:0}body.collapsed .side-user .meta{display:none}body.collapsed .side-user .avatar{width:44px!important;height:44px!important}
 }
@@ -473,6 +473,39 @@ a.navlink{text-decoration:none}
 @keyframes blink{0%,45%,49%,100%{transform:scaleY(1)}47%{transform:scaleY(.1)}}
 @keyframes antGlow{50%{fill:#fff;filter:drop-shadow(0 0 6px #7dd3fc)}}
 @media (max-width:767.98px),(orientation:portrait) and (max-width:1024px){ .auth-left{gap:14px;padding-top:26px;padding-bottom:18px}.auth-left>.brand{min-height:200px}.robot{width:78px}.welcome{font-size:clamp(1.35rem,5.4vw,1.9rem)} }
+/* ---------- หน้าเข้าสู่ระบบ v4.9: เส้นแบ่งไล่สี · กรอบคำพูดเด้งออกจากหุ่นยนต์ ---------- */
+.auth-left{justify-content:center;gap:0;padding-bottom:22px}
+.auth-left>.brand{flex:none;padding:10px 0 4px}
+.brand-line{position:relative;z-index:3;width:min(78%,360px);height:3px;margin:20px auto 22px;border-radius:3px;
+  background:linear-gradient(90deg,transparent,#38bdf8,var(--c3),#a5f3fc,#38bdf8,transparent);background-size:220% 100%;animation:lineFlow 3.2s linear infinite;box-shadow:0 0 14px color-mix(in srgb,#38bdf8 70%,transparent)}
+@keyframes lineFlow{to{background-position:-220% 0}}
+.welcome-row{align-items:flex-end;justify-content:center;gap:4px;width:100%;max-width:470px;margin:0 auto}
+.bubble{position:relative;flex:1;min-width:0;margin-bottom:46px;padding:14px 18px;border-radius:20px;background:rgba(255,255,255,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.55);box-shadow:0 6px 18px rgba(2,6,23,.18);transform-origin:100% 100%;opacity:0;animation:bubblePop .7s .55s cubic-bezier(.2,1.5,.4,1) forwards}
+.bubble::after{content:"";position:absolute;right:-15px;bottom:20px;width:16px;height:22px;background:rgba(255,255,255,.55);clip-path:polygon(0 0,100% 55%,0 100%)}
+@keyframes bubblePop{0%{opacity:0;transform:translate(60px,30px) scale(.1)}70%{opacity:1}100%{opacity:1;transform:none}}
+.bubble .welcome{font-size:clamp(1.02rem,1.75vw,1.32rem);line-height:1.5;padding:0;color:#0b1b4d;font-weight:800}
+.bubble .welcome .ln{text-shadow:0 0 1px rgba(255,255,255,.6);animation:lnIn2 .55s cubic-bezier(.2,1,.4,1) forwards,lnGlow2 6s ease-in-out infinite;animation-delay:calc(1s + var(--i) * .28s),calc(2.2s + var(--i) * .5s)}
+@keyframes lnIn2{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
+@keyframes lnGlow2{0%,26%,100%{text-shadow:0 0 1px rgba(255,255,255,.6)}11%{text-shadow:0 0 10px #fff,0 0 18px color-mix(in srgb,var(--c3) 85%,transparent),0 0 30px color-mix(in srgb,#38bdf8 70%,transparent)}}
+.bubble .welcome .hl{background:linear-gradient(90deg,#1e40af,#6d28d9,#be185d,#1e40af);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:none;animation:shine 5s linear infinite,hlGlow 6s 2.4s ease-in-out infinite}
+@keyframes hlGlow{0%,26%,100%{filter:none}11%{filter:drop-shadow(0 0 6px rgba(255,255,255,.95)) drop-shadow(0 0 12px color-mix(in srgb,var(--c3) 80%,transparent))}}
+.welcome-row .robot{width:clamp(80px,9vw,112px)}
+@media (max-width:767.98px),(orientation:portrait) and (max-width:1024px){
+  .auth-wrap{padding:calc(10px + var(--sat)) 10px 10px;place-items:start center}
+  .auth-left{padding:16px 14px 10px}.auth-left>.brand{min-height:0;padding:2px 0 0}
+  .logo-wrap{width:78px;height:78px}.orbit{inset:-9px}.orbit.r2{inset:-17px}
+  .brand-name{font-size:1.75rem;margin:14px 0 0}
+  .brand-line{margin:10px auto 10px;height:2px}
+  .bubble{margin-bottom:26px;padding:9px 12px;border-radius:16px}.bubble .welcome{font-size:clamp(.86rem,3.7vw,1rem)}
+  .welcome-row .robot{width:62px}
+  .auth-right{padding:16px 18px 14px}.auth-right h2{font-size:1.35rem;margin-bottom:10px}
+  .auth-right .seg{margin-bottom:12px}.auth-right .seg button{min-height:42px;font-size:.92rem}
+  .auth-right .mb-3{margin-bottom:.6rem!important}.auth-right .form-label{margin-bottom:.2rem;font-size:.9rem}
+  .auth-right .form-control{min-height:44px;font-size:16px}.auth-right .btn-lg{min-height:46px;font-size:1rem}
+  .auth-right .mt-3{margin-top:.5rem!important}.auth-right .btn-link{font-size:.9rem;padding-top:2px;padding-bottom:2px}
+}
+@media (max-height:700px) and (max-width:767.98px){.logo-wrap{width:62px;height:62px}.brand-name{font-size:1.5rem;margin-top:10px}.welcome-row .robot{width:52px}}
 /* ---------- แถบด้านข้าง: ปุ่มพับ/ขยายทรงกลม ที่ขอบแถบด้านข้างแนวเดียวกับเส้นใต้ส่วนหัว ---------- */
 @media (min-width:992px){
   .side-toggle{top:calc(50% - 20px);width:40px;height:40px;display:grid;place-items:center;border:3px solid var(--surface)}
@@ -484,7 +517,7 @@ a.navlink{text-decoration:none}
   body.collapsed .side-brand b,body.collapsed .nav-label{display:none}
   body.collapsed .nav-side{overflow-x:hidden;align-items:stretch}
   body.collapsed .nav-side button,body.collapsed .nav-side a.navlink>button{justify-content:center;padding:0;gap:0;width:100%}
-  body.collapsed .nav-side span,body.collapsed .nav-side .ms-auto{display:none}
+  body.collapsed .nav-side span:not(.ind),body.collapsed .nav-side .ms-auto{display:none}
   body.collapsed .nav-side button i{width:auto;font-size:1.15rem}
   body.collapsed .side-user{align-items:center}
 }
@@ -618,11 +651,26 @@ a.contact-row:hover{background:var(--surface-2);color:var(--text)}
 .contact-row .ci{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;font-size:1.15rem;flex:none}
 .grade-card{border-left:6px solid var(--blue)}.grade-ic{min-width:56px;height:56px;padding:0 10px;border-radius:16px;display:grid;place-items:center;font-weight:900;font-size:1.15rem;color:#fff;background:linear-gradient(135deg,var(--blue),var(--blue-dark))}
 .help-box{margin:auto 6px 6px;padding:12px;border-radius:16px;background:linear-gradient(135deg,var(--blue-light),var(--surface));border:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
-.help-box small{font-size:.78rem;line-height:1.35;color:var(--muted)}.help-box .btn{font-size:.8rem;white-space:normal;line-height:1.3}
+.help-box small{font-size:.78rem;line-height:1.35;color:var(--muted)}.help-box .btn{font-size:.74rem;white-space:nowrap;line-height:1.2;padding:8px 6px;letter-spacing:-.1px;overflow:hidden;text-overflow:ellipsis}
 body.collapsed .help-box{display:none}
 .cls-grid>.card-x{display:flex;flex-direction:column;min-width:0}.cls-grid>.card-x>[id]{flex:1}
 @media (max-width:767.98px){.cls-grid{grid-template-columns:1fr}}
 .past-banner{background:var(--blue-light);color:var(--text)}
+.gcard{border-top:5px solid var(--blue);display:flex;flex-direction:column}.gcard .gno{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:var(--blue);color:#fff;font-weight:800;flex:none}
+.gcard .score-box{display:flex;flex-direction:column;gap:6px}
+.fp-year{appearance:auto;border:0;background:transparent;font:inherit;font-weight:700;color:inherit;padding:0 2px;margin-left:6px;cursor:pointer;height:30px}
+.flatpickr-current-month{display:flex;align-items:center;justify-content:center;gap:2px}
+/* ---------- v4.9: เงาปุ่มแบบธรรมชาติ (เงาสั้นชิดปุ่ม + เงานุ่มกระจาย สีตามปุ่ม) · หัวตารางกึ่งกลาง ---------- */
+.btn-primary{box-shadow:0 1px 2px color-mix(in srgb,var(--blue-dark) 30%,transparent),0 4px 10px -2px color-mix(in srgb,var(--blue) 35%,transparent)}
+.btn-success{box-shadow:0 1px 2px rgba(21,128,61,.3),0 4px 10px -2px rgba(22,163,74,.35)}
+.btn-danger{box-shadow:0 1px 2px rgba(185,28,28,.3),0 4px 10px -2px rgba(220,38,38,.35)}
+.btn-soft{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--blue) 10%,transparent)}
+.btn-primary:hover,.btn-success:hover,.btn-danger:hover{transform:translateY(-1px);filter:brightness(1.05)}
+.btn-primary:hover{box-shadow:0 2px 4px color-mix(in srgb,var(--blue-dark) 30%,transparent),0 8px 18px -4px color-mix(in srgb,var(--blue) 45%,transparent)}
+.btn-success:hover{box-shadow:0 2px 4px rgba(21,128,61,.3),0 8px 18px -4px rgba(22,163,74,.45)}
+.btn-danger:hover{box-shadow:0 2px 4px rgba(185,28,28,.3),0 8px 18px -4px rgba(220,38,38,.45)}
+.btn:active{transform:translateY(0) scale(.98)!important;box-shadow:0 1px 2px rgba(15,23,42,.2)!important}
+.table-x thead th,table thead th{text-align:center;vertical-align:middle}
 .code-pill{background:var(--blue);color:#fff;border-radius:12px;padding:0 12px;letter-spacing:2px}
 .add-chip{border-style:dashed!important;color:var(--blue)!important;background:transparent!important}
 
@@ -693,6 +741,9 @@ body.auth .chat-btn,body.auth .chat-panel{display:none!important}
 .tool-2col .topic-grid,.tool-2col .noise-bar,.tool-2col .color-groups,.tool-2col .color-row{width:100%}
 .tool-side{color:var(--text);position:fixed;z-index:3100;top:calc(var(--sat) + 74px);right:14px;bottom:14px;width:min(360px,calc(100vw - 28px));overflow-y:auto;margin:0;border-radius:24px;box-shadow:0 24px 60px rgba(0,0,0,.35);transform:translateX(calc(100% + 30px));transition:transform .35s cubic-bezier(.3,1.2,.5,1);text-align:left}
 #toolView.side-open .tool-side{transform:none}
+@media (min-width:992px){#toolView .tv-body{transition:padding .35s ease}#toolView.side-open .tv-body{padding-right:390px}}
+.tool-result{white-space:nowrap;overflow:hidden;line-height:1.25;padding:.1em 0}
+.swal-tool{width:min(1000px,94vw)!important;padding:28px 24px 30px!important}.swal-tool .swal2-title{font-size:1.6rem}
 .tool-side h6:first-child{display:flex;align-items:center;gap:6px}
 .swal-top{z-index:3200!important}
 .tool-result{font-size:clamp(2rem,6vw,3.6rem);font-weight:900;color:var(--blue);line-height:1.3;word-break:break-word}
@@ -715,7 +766,7 @@ body.auth .chat-btn,body.auth .chat-panel{display:none!important}
 @keyframes flash{0%{opacity:1}100%{opacity:0}}
 .spark-p{position:absolute;width:5px;height:5px;border-radius:50%;background:#fde047;box-shadow:0 0 8px #f59e0b;pointer-events:none;animation:sparkP .6s ease-out forwards}
 @keyframes sparkP{to{transform:translate(var(--sx),var(--sy));opacity:0}}
-.wheel-stage{position:relative;width:min(640px,88vw,calc(100dvh - 140px));aspect-ratio:1;margin:0 auto}
+.wheel-stage{position:relative;width:min(780px,92vw,calc(100dvh - 160px));aspect-ratio:1;margin:0 auto}
 .wheel-stage canvas{width:100%;height:100%;filter:drop-shadow(0 18px 30px rgba(0,0,0,.3))}
 .wheel-ptr{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:22px solid transparent;border-right:22px solid transparent;border-top:44px solid #fff;z-index:2;filter:drop-shadow(0 4px 6px rgba(0,0,0,.35))}
 .wheel-go{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:22%;aspect-ratio:1;border-radius:50%;border:6px solid #fff;background:#0f172a;color:#fff;font-weight:900;font-size:clamp(1rem,2.4vw,1.6rem);box-shadow:0 8px 20px rgba(0,0,0,.4)}
@@ -767,7 +818,8 @@ body.auth .chat-btn,body.auth .chat-panel{display:none!important}
       <canvas class="fx-net" id="fxNet" aria-hidden="true"></canvas>
       <div class="fx-grid" aria-hidden="true"></div>
       <div class="brand" id="brand"><div class="logo-wrap"><span class="orbit"></span><span class="orbit r2"></span><div class="logo-circle" data-logo></div></div><h1 class="brand-name" data-school>Classroom +</h1></div>
-      <div class="welcome-row"><div class="welcome" id="welcomeText">ยินดีต้อนรับ สู่ห้องเรียนออนไลน์แห่งอนาคต</div><div class="robot" id="robot" aria-hidden="true"></div></div>
+      <div class="brand-line" aria-hidden="true"></div>
+      <div class="welcome-row"><div class="bubble"><div class="welcome" id="welcomeText">ยินดีต้อนรับ สู่ห้องเรียนออนไลน์แห่งอนาคต</div></div><div class="robot" id="robot" aria-hidden="true"></div></div>
     </div>
     <div class="auth-right" id="authRight"></div>
   </section>
@@ -909,7 +961,7 @@ function call(fn, args, o = {}) {
   const run = () => new Promise((res, rej) => {
     if (!HAS_GAS) { // โหมด GitHub Pages: เรียก Apps Script /exec ผ่าน fetch (text/plain ไม่มี CORS preflight)
       if (!API_URL()) return rej(Object.assign(new Error('ยังไม่ได้ตั้งค่า URL ของ Apps Script'), { code: 'NOAPI' }));
-      return fetch(API_URL(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, token: S.token, args }), redirect: 'follow', credentials: 'omit' })
+      return fetch(API_URL(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, token: S.token, args, vt: curVt() }), redirect: 'follow', credentials: 'omit' })
         .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(r => r && r.ok ? res(r.data) : rej(Object.assign(new Error(r ? r.error : 'ไม่ได้รับการตอบกลับจากเซิร์ฟเวอร์'), { code: r && r.code })))
         .catch(e => rej(e.code ? e : Object.assign(new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบอินเทอร์เน็ตหรือ URL ของ Apps Script'), { code: 'NET' })));
@@ -917,7 +969,7 @@ function call(fn, args, o = {}) {
     google.script.run
       .withSuccessHandler(r => r && r.ok ? res(r.data) : rej(Object.assign(new Error(r ? r.error : 'ไม่ได้รับการตอบกลับจากเซิร์ฟเวอร์'), { code: r && r.code })))
       .withFailureHandler(e => rej(Object.assign(new Error(/network|NetworkError|timed? ?out/i.test(String(e && e.message)) ? 'การเชื่อมต่อขัดข้อง กรุณาตรวจสอบอินเทอร์เน็ต' : 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์: ' + (e && e.message || e)), { code: 'NET' })))
-      .rpc(fn, S.token, args);
+      .rpc(fn, S.token, args, curVt());
   });
   const attempt = n => run().catch(e => e.code === 'NET' && n > 0 ? new Promise(r => setTimeout(r, 800)).then(() => attempt(n - 1)) : Promise.reject(e));
   if (MUTATING.has(fn)) { CACHE.clear(); PC.clear(); }
@@ -929,7 +981,7 @@ function call(fn, args, o = {}) {
 const api = (fn, ...a) => call(fn, a);
 /* แคชข้อมูลฝั่งเว็บ: แสดงข้อมูลเดิมทันที แล้วอัปเดตเบื้องหลัง (เปิดหน้าเดิมซ้ำแทบไม่ต้องรอ) */
 const CACHE = new Map();
-const MUTATING = new Set(['save', 'remove', 'submitWork', 'deleteSubmission', 'saveUser', 'deleteUser', 'importStudents', 'setRole', 'gradeSubmission', 'saveSettings', 'updateProfile', 'saveProgress', 'restoreBackup', 'changeCredentials', 'markRead', 'login', 'logout', 'registerStudent', 'registerAdmin', 'addAssignmentType', 'saveStudentMenus', 'chatSend', 'chatCreateTeam']);
+const MUTATING = new Set(['save', 'remove', 'submitWork', 'deleteSubmission', 'saveUser', 'deleteUser', 'importStudents', 'setRole', 'gradeSubmission', 'saveSettings', 'updateProfile', 'saveProgress', 'restoreBackup', 'changeCredentials', 'markRead', 'login', 'logout', 'registerStudent', 'registerAdmin', 'addAssignmentType', 'saveStudentMenus', 'chatSend', 'chatCreateTeam', 'editSubmission', 'removeSubmission', 'renameClass', 'saveTermDb', 'createTermDb', 'removeTermDb']);
 let rerenderT = 0;
 function rerender() { clearTimeout(rerenderT); rerenderT = setTimeout(() => { if (S.user && !document.querySelector('.modal.show') && !document.querySelector('.swal2-container')) go(S.page, S.params, { quiet: true }); }, 250); }
 /* แคชถาวรในเครื่อง (เปิดหน้าเว็บใหม่ก็แสดงข้อมูลล่าสุดทันที แล้วอัปเดตเบื้องหลัง) */
@@ -939,8 +991,10 @@ const PC = {
   set(k, v) { try { const j = JSON.stringify({ t: v.t, d: v.d, j: v.j }); if (j.length < 600000) localStorage.setItem(this.key(k), j); } catch (e) { this.clear(); } },
   clear() { try { Object.keys(localStorage).filter(x => x.startsWith('cp_c_')).forEach(x => localStorage.removeItem(x)); } catch (e) {} }
 };
+/** ภาคเรียนที่กำลังดู → ส่งให้ server เลือกฐานข้อมูลของภาคเรียนนั้น */
+const curVt = () => S.viewTerm ? S.viewTerm.year + '/' + S.viewTerm.term : '';
 function apiC(fn, ...a) {
-  const k = fn + JSON.stringify(a), page = S.page;
+  const k = fn + JSON.stringify(a) + '@' + curVt(), page = S.page;
   let c = CACHE.get(k);
   if (!c) { const pc = PC.get(k); if (pc) { c = Object.assign(pc, { t: 0 }); CACHE.set(k, c); } }
   const fresh = () => call(fn, a, { loader: false }).then(d => { const old = CACHE.get(k), v = { t: Date.now(), d, j: JSON.stringify(d) }; CACHE.set(k, v); PC.set(k, v); return { d, changed: !old || old.j !== v.j }; });
@@ -1067,6 +1121,15 @@ function finalizeUploads(root, saved) {
   root.__up = [];
   if (drop.length) apiQ('discardUploads', drop).catch(() => {});
 }
+/** ปฏิทิน: เปลี่ยนช่องพิมพ์ปีเป็นรายการเลือกปี พ.ศ. (เหมือนเลือกเดือน) */
+function fpYearSelect(fp) {
+  const wrap = fp.calendarContainer && fp.calendarContainer.querySelector('.numInputWrapper'); if (!wrap || wrap.dataset.ys) return;
+  const now = new Date().getFullYear(), sel = document.createElement('select'); sel.className = 'fp-year'; sel.setAttribute('aria-label', 'ปี พ.ศ.');
+  for (let y = now + 5; y >= now - 90; y--) sel.insertAdjacentHTML('beforeend', `<option value="${y}">${y + 543}</option>`);
+  sel.onchange = () => fp.changeYear(+sel.value); wrap.dataset.ys = 1; wrap.style.display = 'none'; wrap.after(sel); fpYearSync(fp);
+}
+function fpYearSync(fp) { const sel = fp.calendarContainer && fp.calendarContainer.querySelector('.fp-year'); if (!sel) return;
+  if (!sel.querySelector(`option[value="${fp.currentYear}"]`)) sel.insertAdjacentHTML('beforeend', `<option value="${fp.currentYear}">${fp.currentYear + 543}</option>`); sel.value = fp.currentYear; }
 function bindForm(root, fields = []) {
   root.__up = []; root.__keep = false;
   fields.forEach(f => {
@@ -1075,7 +1138,7 @@ function bindForm(root, fields = []) {
   });
   $$('[data-fp]', root).forEach(el => flatpickr(el, Object.assign({ locale: 'th', disableMobile: true, altInput: true, altFormat: 'BE',
     formatDate: (d, fmt, l) => fmt === 'BE' ? thDate(d, el.dataset.fp === 'datetime') : flatpickr.formatDate(d, fmt, l) },
-    el.dataset.fp === 'datetime' ? { enableTime: true, time_24hr: true, dateFormat: 'Y-m-d\\TH:i' } : { dateFormat: 'Y-m-d' })));
+    el.dataset.fp === 'datetime' ? { enableTime: true, time_24hr: true, dateFormat: 'Y-m-d\\TH:i' } : { dateFormat: 'Y-m-d' }, { onReady: (sd, ds, fp) => fpYearSelect(fp), onMonthChange: (sd, ds, fp) => fpYearSync(fp), onYearChange: (sd, ds, fp) => fpYearSync(fp), onOpen: (sd, ds, fp) => fpYearSync(fp) })));
   const handleImg = async (inp, f) => {
     let dataUrl;
     if (inp.dataset.crop) { dataUrl = await cropImage(f, +inp.dataset.w || 400); if (!dataUrl) { inp.value = ''; return; } }
@@ -1378,8 +1441,11 @@ applyTheme();
 /* ---------------- Branding ---------------- */
 /** ชื่อระบบ: เครื่องหมาย + ท้ายชื่อแสดงเป็นป้ายมีมิติ */
 const brandHtml = n => { n = String(n || 'Classroom +'); const m = n.match(/^(.*?)\s*\+\s*$/); return m ? esc(m[1]) + '<span class="plus">+</span>' : esc(n); };
+/** ค่าที่ใช้แสดงผล: ค่าระบบ + ค่าส่วนตัวของครู/แอดมิน (สี ชื่อระบบ โลโก้) — ไม่กระทบผู้อื่น */
+const myPrefs = () => S.user && S.user.role !== 'student' ? J(S.user.prefs, {}) : {};
+const effCfg = () => Object.assign({}, S.config, myPrefs());
 function applyBrand() {
-  const c = S.config, logo = c.logo ? `<img src="${safeUrl(c.logo)}" alt="โลโก้">` : DEFAULT_LOGO;
+  const c = effCfg(), logo = c.logo ? `<img src="${safeUrl(c.logo)}" alt="โลโก้">` : DEFAULT_LOGO;
   $$('[data-logo]').forEach(el => el.innerHTML = logo);
   $$('[data-school]').forEach(el => el.innerHTML = brandHtml(c.schoolName));
   const text = String(c.welcome || 'ยินดีต้อนรับ สู่ห้องเรียนออนไลน์แห่งอนาคต').replace(/^(ยินดีต้อนรับ)\s*/, '$1\n').replace(/\s*(แห่งอนาคต)/, '\n$1'); // 3 บรรทัด ตัวใหญ่ขึ้น
@@ -1393,8 +1459,8 @@ function applyBrand() {
 /** ให้บรรทัดข้อความต้อนรับพอดีกรอบ (ใหญ่ที่สุดเท่าที่ไม่ล้น) */
 function fitWelcome() {
   const el = $('#welcomeText'); if (!el || !el.offsetWidth) return;
-  let fs = Math.min(46, Math.max(22, el.offsetWidth / 6.5)); el.style.fontSize = fs + 'px';
-  const over = () => [...el.querySelectorAll('.ln')].some(l => l.offsetWidth * 1.12 > el.clientWidth); // เผื่อจังหวะขยาย 7% ไม่ให้ล้นกรอบ
+  el.style.fontSize = ''; let fs = parseFloat(getComputedStyle(el).fontSize);
+  const over = () => [...el.querySelectorAll('.ln')].some(l => l.offsetWidth > el.clientWidth + 1); // ย่อเฉพาะเมื่อยาวเกินกรอบคำพูด
   while (over() && fs > 16) { fs -= 1; el.style.fontSize = fs + 'px'; }
 }
 addEventListener('resize', () => setTimeout(fitWelcome, 100));
@@ -1682,7 +1748,7 @@ function enterApp() {
   const isAdmin = isStaff();
   S.mode = isAdmin ? (store.get('cp_mode') || 'admin') : 'student';
   $('#modeSwitch').classList.toggle('hidden', !isAdmin);
-  renderMe(); renderShell();
+  applyBrand(); renderMe(); renderShell();
   go(S.mode === 'admin' ? 'dash' : 'home');
   refreshNotifs();
   setTimeout(prefetch, 1500);
@@ -1738,14 +1804,18 @@ async function contactStaff() {
   const m = modal('ติดต่อผู้ดูแลระบบ / คุณครู', list.length ? `<p class="text-muted small mb-3">เลือกคุณครูหรือผู้ดูแลระบบที่ต้องการติดต่อ แล้วกด "ดูช่องทางการติดต่อ"</p><div class="grid g3">${list.map(t => `<div class="card-x text-center staff-card">${avatarHtml({ fullName: t.name, avatar: t.avatar }, 72)}
       <b class="d-block mt-2">${esc(t.name)}</b><small class="text-muted d-block mb-2">${t.role === 'admin' ? 'ผู้ดูแลระบบ' : 'ครูผู้สอน'}${t.subjects && t.subjects.length ? ' · ' + esc(t.subjects.slice(0, 2).join(', ')) : ''}</small>
       <button class="btn btn-sm btn-soft w-100" data-sc="${esc(t.id)}"><i class="fa-solid fa-address-book"></i> ดูช่องทางการติดต่อ</button></div>`).join('')}</div>` : empty('fa-user-slash', 'ยังไม่มีรายชื่อครูในรายวิชาของนักเรียน'), '', 'modal-lg');
+  // ใส่รหัสนักเรียนในการ์ดโดยตรง (ไม่ใช้หน้าต่างซ้อน เพื่อให้พิมพ์ได้แน่นอนบนทุกอุปกรณ์)
   m.body.onclick = async e => {
-    const b = e.target.closest('[data-sc]'); if (!b) return; const t = list.find(x => x.id === b.dataset.sc);
-    const r = await Sw.fire({ title: 'ยืนยันตัวตน', html: `<p class="small text-muted mb-2">กรอกรหัสนักเรียนของตนเองอีกครั้ง เพื่อดูช่องทางการติดต่อของ<br><b>${esc(t.name)}</b></p>`, input: 'text',
-      inputAttributes: { inputmode: 'numeric', maxlength: 5, autocomplete: 'off', 'aria-label': 'รหัสนักเรียน' }, inputPlaceholder: 'รหัสนักเรียน 5 หลัก', showCancelButton: true, confirmButtonText: 'ยืนยัน', cancelButtonText: 'ยกเลิก',
-      preConfirm: v => /^\d{5}$/.test(v) ? v : Swal.showValidationMessage('กรอกรหัสนักเรียน 5 หลัก') });
-    if (!r.isConfirmed) return;
-    const c = await api('staffContact', t.id, r.value);
-    Sw.fire({ title: esc(c.name), html: `<div class="text-start">${contactListHtml(c.contacts, c.email)}</div>`, showConfirmButton: false, showCloseButton: true, width: 520 });
+    const b = e.target.closest('[data-sc]');
+    if (b) { const card = b.closest('.staff-card'); b.outerHTML = `<form class="sc-form" data-scid="${esc(b.dataset.sc)}"><small class="d-block text-muted mb-1">กรอกรหัสนักเรียนของตนเองอีกครั้ง</small>
+        <div class="input-group input-group-sm"><input class="form-control text-center" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="รหัส 5 หลัก" aria-label="รหัสนักเรียน"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-unlock"></i> ยืนยัน</button></div><div class="sc-out mt-2"></div></form>`;
+      setTimeout(() => $('.sc-form input', card)?.focus(), 30); }
+  };
+  m.body.onsubmit = async e => {
+    const f = e.target.closest('.sc-form'); if (!f) return; e.preventDefault();
+    const v = $('input', f).value.trim(); if (!/^\d{5}$/.test(v)) return toast('กรอกรหัสนักเรียน 5 หลัก', 'warning');
+    const c = await api('staffContact', f.dataset.scid, v);
+    f.outerHTML = `<div class="text-start mt-1">${contactListHtml(c.contacts, c.email)}</div>`;
   };
 }
 document.addEventListener('click', e => { if (e.target.closest('[data-helpbox]')) contactStaff(); });
@@ -1796,7 +1866,7 @@ async function doLogout() {
 }
 function localLogout() {
   chatStop(); CHAT.room = null; CHAT.contacts = null; $('#chatPanel').classList.add('hidden'); closeTool();
-  S.token = null; S.user = null; store.del('cp_token'); store.del('cp_exp');
+  S.token = null; S.user = null; store.del('cp_token'); store.del('cp_exp'); S.viewTerm = null; S.viewAll = false; try { applyBrand(); } catch (e) {}
   stopTimers();
   document.body.className = 'auth';
   $('#appView').classList.add('hidden'); $('#authView').classList.remove('hidden');
@@ -1849,6 +1919,9 @@ function placeInd(box, instant) {
   if (ind.classList.contains('no-anim')) requestAnimationFrame(() => requestAnimationFrame(() => ind.classList.remove('no-anim')));
 }
 let IND_RAF = 0;
+/* แถบด้านข้างพับ/ขยาย หรือขนาดจอเปลี่ยน → วางแถบไฮไลต์ใหม่ (กันไฮไลต์หลุดตำแหน่งจนเห็นเป็นช่องสีขาว) */
+if (window.ResizeObserver) { const ro = new ResizeObserver(() => updateInds(true)); addEventListener('DOMContentLoaded', () => ['#sideNav', '#dock', '#sidebar'].forEach(q => $(q) && ro.observe($(q)))); setTimeout(() => ['#sideNav', '#dock', '#sidebar'].forEach(q => $(q) && ro.observe($(q))), 0); }
+document.addEventListener('transitionend', e => { if (e.target.id === 'sidebar' || e.target.closest?.('#sidebar')) updateInds(true); });
 function updateInds(instant) { cancelAnimationFrame(IND_RAF); IND_RAF = requestAnimationFrame(() => $$(IND_SEL).forEach(b => placeInd(b, instant))); }
 new MutationObserver(ms => { if (ms.some(m => m.type === 'attributes' ? /active/.test(m.target.className + ' ' + (m.oldValue || '')) : m.addedNodes.length && [...m.addedNodes].some(n => n.nodeType === 1))) updateInds(); })
   .observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'], attributeOldValue: true, childList: true });
@@ -2071,10 +2144,11 @@ function submitModal(a, after) {
   const key = 'cp_draft_' + S.user.id + '_' + a.id, draft = J(store.get(key), null);
   const s = a.sub || {}, init = draft || { text: s.text || '', files: J(s.files), driveLink: s.driveLink || '' };
   let members = (s.memberList || []).map(m => ({ id: m.id, name: m.name, classNo: m.classNo }));
+  const gMax = +a.groupMax >= 2 ? +a.groupMax : 16; // จำนวนสมาชิกสูงสุด (รวมตัวแทน)
   const QZ = a.quiz ? J(a.quiz, null) : null;
   const F = [{ k: 'text', label: QZ ? 'ข้อความเพิ่มเติม (ถ้ามี)' : 'ข้อความ / คำตอบ', type: 'textarea', rows: QZ ? 2 : 5 }, { k: 'files', label: 'แนบไฟล์', type: 'files', folder: (a.type || 'งาน') + '/งานที่นักเรียนส่ง' },
     { k: 'driveLink', label: 'ลิงก์ Google Drive (ไฟล์ใหญ่ให้แนบเป็นลิงก์)', valid: v => v && !/^https:\/\/(drive|docs)\.google\.com\//.test(v) ? 'ต้องเป็นลิงก์ Google Drive/Docs' : '' }];
-  const groupBox = a.isGroup ? `<div class="card-x mb-3" style="background:var(--surface-2)"><h6 class="fw-bold mb-1"><i class="fa-solid fa-people-group text-primary"></i> สมาชิกในกลุ่ม</h6>
+  const groupBox = a.isGroup ? `<div class="card-x mb-3" style="background:var(--surface-2)"><h6 class="fw-bold mb-1"><i class="fa-solid fa-people-group text-primary"></i> สมาชิกในกลุ่ม <span class="chip info" id="gCount"></span></h6>
     <p class="small text-muted mb-2">คุณเป็นตัวแทนกลุ่ม เลือกชั้น/ห้อง แล้วเพิ่มเพื่อนเข้ากลุ่ม — สมาชิกทุกคนจะเห็นงานนี้และได้คะแนนเท่ากัน</p>
     <div id="gMembers" class="d-flex flex-wrap gap-2 mb-2"></div>
     <div class="row g-2"><div class="col-6 col-md-4"><select class="form-select" id="gGrade" aria-label="ชั้น">${opt([['', 'ทุกชั้น']].concat(grades()), S.user.grade)}</select></div>
@@ -2087,13 +2161,16 @@ function submitModal(a, after) {
   bindForm(m.body, F); m.body.__keep = true; // ไฟล์ในฉบับร่างเก็บไว้ใช้ต่อ
   if (a.isGroup) {
     const drawM = () => { $('#gMembers').innerHTML = `<span class="chip info"><i class="fa-solid fa-crown"></i> ${esc(S.user.prefix + S.user.fullName)} (ตัวแทน)</span>` + members.map((x, i) => `<span class="chip ok">${esc(x.name)}${x.classNo ? ' · เลขที่ ' + esc(x.classNo) : ''}<button type="button" class="btn btn-sm p-0 ms-1" data-gx="${i}" aria-label="นำออก ${esc(x.name)}"><i class="fa-solid fa-xmark"></i></button></span>`).join('');
-      $$('[data-gx]', m.body).forEach(b => b.onclick = () => { members.splice(+b.dataset.gx, 1); drawM(); }); };
+      $$('[data-gx]', m.body).forEach(b => b.onclick = () => { members.splice(+b.dataset.gx, 1); drawM(); });
+      $('#gCount').textContent = `${members.length + 1}/${gMax} คน`; $('#gLoad').disabled = members.length + 1 >= gMax; };
     drawM();
     $('#gLoad').onclick = async () => {
       const list = (await api('groupCandidates', a.id, $('#gGrade').value, $('#gRoom').value)).filter(x => !members.some(y => y.id === x.id));
       $('#gList').innerHTML = list.length ? `<div class="d-flex flex-column gap-1" style="max-height:260px;overflow:auto">${list.map(x => `<label class="file-row m-0" style="cursor:pointer"><input type="checkbox" class="form-check-input m-0" value="${esc(x.id)}" data-gn="${esc(x.name)}" data-gc="${esc(x.classNo || '')}"><span class="flex-fill">${esc(x.name)}</span><small class="text-muted">${esc(x.grade)}/${esc(x.room)} · เลขที่ ${esc(x.classNo || '-')}</small></label>`).join('')}</div>
         <button type="button" class="btn btn-success btn-sm mt-2" id="gAdd"><i class="fa-solid fa-check"></i> เพิ่มที่เลือกเข้ากลุ่ม</button>` : '<div class="small text-muted">ไม่พบนักเรียนที่เพิ่มได้ (อาจอยู่ในกลุ่มอื่นหรือส่งงานแล้ว)</div>';
-      $('#gAdd') && ($('#gAdd').onclick = () => { $$('#gList input:checked').forEach(c => members.push({ id: c.value, name: c.dataset.gn, classNo: c.dataset.gc })); $('#gList').innerHTML = ''; drawM(); });
+      $('#gAdd') && ($('#gAdd').onclick = () => { const pick = $$('#gList input:checked'), room = gMax - 1 - members.length;
+        if (pick.length > room) return toast(`เพิ่มได้อีก ${room} คน (กลุ่มละไม่เกิน ${gMax} คน รวมตัวแทน)`, 'warning');
+        pick.forEach(c => members.push({ id: c.value, name: c.dataset.gn, classNo: c.dataset.gc })); $('#gList').innerHTML = ''; drawM(); });
     };
   }
   const autosave = debounce(() => { if (!$('#dSaved')) return; store.set(key, JSON.stringify(Object.assign(readForm(m.body, F), QZ ? { answers: readQuiz(m.body) } : {}))); $('#dSaved').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกฉบับร่างอัตโนมัติแล้ว ' + new Date().toLocaleTimeString('th-TH'); }, 800);
@@ -2210,7 +2287,7 @@ const byOwner = (it, root) => { const v = $('[data-f="owner"]', root)?.value; re
 const gradeOpts = () => [['', 'ทุกระดับชั้น']].concat(grades());
 const roomOpts = () => [['', 'ทุกห้อง']].concat(rooms());
 const FIELDS = {
-  Courses: () => [{ k: 'subject', label: 'รหัสวิชา / ชื่อวิชา', type: 'select', req: true, opts: subjectOpts, help: 'ดึงจาก "หมวดหมู่รายวิชา" — เพิ่มรายวิชาใหม่ได้ที่เมนู ชั้นเรียน/ประเภทงาน' },
+  Courses: (row = {}) => [row.id ? { k: 'subject', label: 'รหัสวิชา / ชื่อวิชา', type: 'select', req: true, opts: subjectOpts, help: 'ดึงจาก "หมวดหมู่รายวิชา" — เพิ่มรายวิชาใหม่ได้ที่เมนู ชั้นเรียน/ประเภทงาน' } : { k: 'subject', label: 'รหัสวิชา / ชื่อวิชา — ติ๊กเลือกได้หลายวิชา (สร้างรายวิชาแยกให้ทีละวิชา)', type: 'multi', req: true, noAll: true, noAdd: true, opts: () => subjectOpts().filter(o => o[0]), help: 'ดึงจาก "หมวดหมู่รายวิชา" — เพิ่มรายวิชาใหม่ได้ที่เมนู ชั้นเรียน/ประเภทงาน' },
     { k: 'grade', label: 'ระดับชั้น (เลือกได้หลายชั้น)', type: 'multi', opts: grades }, { k: 'room', label: 'ห้องเรียน (เลือกได้หลายห้อง)', type: 'multi', opts: () => rooms(), prefix: 'ห้อง ' },
     { k: 'teacher', label: 'ชื่อครูผู้สอน (แสดงบนการ์ดรายวิชา)', def: S.user.prefix + S.user.fullName },
     { k: 'acadYear', label: 'ปีการศึกษา', type: 'select', col: 'col-md-6', def: termOf().year, opts: () => { const y = +termOf().year; return [['', '— ไม่ระบุ —']].concat([y + 1, y, y - 1, y - 2, y - 3].map(v => [String(v), String(v)])); } },
@@ -2231,10 +2308,11 @@ const FIELDS = {
     { k: 'description', label: 'รายละเอียด / คำสั่ง', type: 'textarea', rows: 5 }, { k: 'attachments', label: 'ไฟล์แนบ', type: 'files', folder: '{type}/ไฟล์จากครู' },
     { k: 'quiz', label: 'แบบฝึกหัด / แบบทดสอบ', type: 'quiz', valid: () => document.querySelector('#modal [data-quiz]')?.__validate?.() || '' },
     { k: 'dueAt', label: 'วันและเวลาส่ง', type: 'datetime', req: true, col: 'col-md-6' }, { k: 'maxScore', label: 'คะแนนเต็ม', type: 'number', req: true, def: 10, col: 'col-md-6', valid: v => +v > 0 ? '' : 'ต้องมากกว่า 0' },
-    { k: 'group', label: 'งานกลุ่ม — นักเรียนเพิ่มเพื่อนเข้ากลุ่มได้ และสมาชิกได้คะแนนเท่ากัน', type: 'check', help: 'ประเภทที่มีคำว่า "กลุ่ม" (เช่น งานกลุ่ม) จะเป็นงานกลุ่มอัตโนมัติ' }],
+    { k: 'group', label: 'งานกลุ่ม — นักเรียนเพิ่มเพื่อนเข้ากลุ่มได้ และสมาชิกได้คะแนนเท่ากัน', type: 'check', col: 'col-md-7', help: 'ประเภทที่มีคำว่า "กลุ่ม" (เช่น งานกลุ่ม) จะเป็นงานกลุ่มอัตโนมัติ' },
+    { k: 'groupMax', label: 'สมาชิกสูงสุดต่อกลุ่ม (รวมตัวแทน)', type: 'number', col: 'col-md-5', attrs: 'min="2" max="50" placeholder="เช่น 5"', help: 'ไม่ครบได้ แต่ห้ามเกิน · เว้นว่าง = ไม่จำกัด (สูงสุด 16)', valid: v => v && !(+v >= 2 && +v <= 50) ? 'ระหว่าง 2–50 คน' : '' }],
   Announcements: () => [{ k: 'type', label: 'ประเภท', type: 'select', opts: ['ข่าวสาร', 'แจ้งกำหนดส่ง', 'แจ้งเปลี่ยนแปลง', 'แจ้งสอบ'], col: 'col-md-4' }, { k: 'title', label: 'หัวข้อ', req: true, col: 'col-md-8' },
     { k: 'body', label: 'รายละเอียด', type: 'textarea', rows: 5 }, { k: 'image', label: 'รูปภาพ', type: 'image', w: 1600, h: 1200, folder: 'รูปภาพ/ประกาศ' }, { k: 'attachments', label: 'ไฟล์แนบ', type: 'files', folder: 'ประกาศ' },
-    { k: 'courseId', label: 'รายวิชา', type: 'select', opts: () => [['', 'ทุกรายวิชา']].concat(S.cache.courses.map(c => [c.id, (c.code ? c.code + ' ' : '') + c.name])) },
+    { k: 'courseId', label: 'รายวิชา — ติ๊กเลือกได้หลายวิชา ("ทั้งหมด" = ทุกรายวิชา)', type: 'multi', noAdd: true, opts: () => S.cache.courses.map(c => [c.id, (c.code ? c.code + ' ' : '') + c.name]) },
     { k: 'grade', label: 'ระดับชั้น', type: 'multi', opts: grades }, { k: 'room', label: 'ห้อง', type: 'multi', opts: () => rooms(), prefix: 'ห้อง ' },
     { k: 'pinned', label: 'ปักหมุดประกาศ', type: 'check' }],
   Classes: () => [{ k: 'grade', label: 'ระดับชั้น', req: true, col: 'col-md-5', attrs: 'placeholder="เช่น ม.1"' }, { k: 'room', label: 'ห้อง', col: 'col-md-4', attrs: 'placeholder="เช่น 1"' }, { k: 'order', label: 'ลำดับ', type: 'number', col: 'col-md-3' }],
@@ -2266,12 +2344,22 @@ const PREP = { Courses: d => { if (d.subject !== undefined) { const [code, ...n]
 async function crudForm(entity, row = {}, after) {
   await lists();
   if (entity === 'Courses') { CUR_SUBJECT = row.id ? (row.code || '') + '|' + row.name : ''; row = Object.assign({}, row, { subject: CUR_SUBJECT }); }
-  const F = FIELDS[entity](), isNew = !row.id;
+  const F = FIELDS[entity](row), isNew = !row.id;
   const m = modal((isNew ? 'เพิ่ม' : 'แก้ไข') + LABEL[entity], formHtml(F, row), `<button class="btn btn-soft" data-bs-dismiss="modal">ยกเลิก</button><button class="btn btn-primary" id="crudSave"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>`);
   bindForm(m.body, F);
   $('#crudSave').onclick = async () => {
     const d = validate(m.body, F);
     if (!d) return toast('กรุณาตรวจสอบข้อมูลที่ไม่ถูกต้อง', 'warning');
+    // เพิ่มหลายรายวิชาพร้อมกัน: 1 วิชาที่ติ๊ก = 1 รายวิชา
+    if (entity === 'Courses' && isNew) {
+      const subs = String(d.subject || '').split(',').filter(Boolean);
+      if (!subs.length) return toast('กรุณาเลือกรายวิชาอย่างน้อย 1 วิชา', 'warning');
+      if (subs.length > 1) {
+        if (!await confirmBox({ title: 'ยืนยันการเพิ่ม ' + subs.length + ' รายวิชา', html: subs.map(x => '<b>' + esc(x.replace('|', ' ')) + '</b>').join('<br>') })) return;
+        let last = null; for (const sub of subs) { const x = Object.assign({}, d, { subject: sub }); PREP.Courses(x); last = await apiMsg('กำลังบันทึก ' + x.name + '...', 'save', 'Courses', x); }
+        finalizeUploads(m.body, d); m.hide(); toast('เพิ่ม ' + subs.length + ' รายวิชาแล้ว'); S.cache.at = 0; go('acourses'); return;
+      }
+    }
     if (PREP[entity]) PREP[entity](d);
     if (!await confirmBox({ title: (isNew ? 'ยืนยันการเพิ่ม' : 'ยืนยันการแก้ไข') + LABEL[entity], html: `<b>${esc(nameOf(entity, d))}</b>` + (isNew && ['Lessons', 'Assignments', 'Announcements'].includes(entity) ? '<br><small class="text-muted">ระบบจะแจ้งเตือนนักเรียนที่เกี่ยวข้อง</small>' : '') })) return;
     if (row.id) d.id = row.id;
@@ -2359,21 +2447,25 @@ PAGES.users = { admin: true, async render(el, p = {}) {
   <h5 class="fw-bold mb-2"><i class="fa-solid fa-chalkboard-user text-primary me-2"></i>ครูผู้สอน <span class="chip info">${teachers.length} คน</span></h5>
   <div class="grid g3 mb-4">${teachers.map(personCard).join('') || '<div class="text-muted">ยังไม่มีครูผู้สอน</div>'}</div>
   <div class="d-flex flex-wrap gap-2 align-items-center mb-2"><h5 class="fw-bold m-0 flex-fill"><i class="fa-solid fa-user-graduate text-success me-2"></i>นักเรียน</h5>
-    <input class="form-control" style="max-width:280px" type="search" id="uq" placeholder="ค้นหาชื่อ / รหัส / ชื่อเล่น..." aria-label="ค้นหานักเรียน"></div>
+    <select class="form-select w-auto" id="uG" aria-label="กรองระดับชั้น"><option value="">ทุกชั้น</option>${opt([...new Set(allStuds.map(u => u.grade).filter(Boolean))].sort((a, b) => (GRADES.includes(a) ? GRADES.indexOf(a) : 99) - (GRADES.includes(b) ? GRADES.indexOf(b) : 99) || natural(a, b)))}</select>
+    <select class="form-select w-auto" id="uR" aria-label="กรองห้อง"><option value="">ทุกห้อง</option>${opt([...new Set(allStuds.map(u => u.room).filter(Boolean))].sort(natural))}</select>
+    <input class="form-control" style="max-width:260px" type="search" id="uq" placeholder="ค้นหาชื่อ / รหัส / ชื่อเล่น..." aria-label="ค้นหานักเรียน"></div>
   <div id="ul"></div>`;
-  const stuTable = arr => tableHtml(['เลขที่', 'ชื่อ-สกุล', 'รหัสนักเรียน', 'สถานะ', ''], arr.slice().sort((a, b) => (Number(a.classNo) || 999) - (Number(b.classNo) || 999)).map(u => [esc(u.classNo || '-'), who(u), esc(u.studentCode), stChip(u), acts(u)]));
+  const stuTable = (arr, withRoom) => tableHtml(['เลขที่', 'รหัสนักเรียน', 'ชื่อ-สกุล'].concat(withRoom ? ['ชั้น/ห้อง'] : [], ['สถานะ', '']), arr.slice().sort((a, b) => (withRoom ? natural((a.grade || '') + '/' + (a.room || ''), (b.grade || '') + '/' + (b.room || '')) : 0) || (Number(a.classNo) || 999) - (Number(b.classNo) || 999))
+    .map(u => [esc(u.classNo || '-'), `<b>${esc(u.studentCode)}</b>`, who(u)].concat(withRoom ? [`<span class="chip info">${esc(u.grade || '-')}/${esc(u.room || '-')}</span>`] : [], [stChip(u), acts(u)])));
   const byGrade = {}; studs.forEach(u => { const g = u.grade || '-', r = u.room || '-'; ((byGrade[g] = byGrade[g] || {})[r] = byGrade[g][r] || []).push(u); });
   const gOrder = g => { const i = GRADES.indexOf(g); return i < 0 ? 99 : i; };
   const draw = () => {
-    const q = $('#uq').value.trim().toLowerCase();
-    if (q) { const f = allStuds.filter(u => (u.fullName + (u.nickname || '') + u.studentCode + u.classNo).toLowerCase().includes(q)); $('#ul').innerHTML = f.length ? `<div class="card-x">${stuTable(f)}</div>` : empty('fa-users-slash', 'ไม่พบนักเรียน'); return; }
+    const q = $('#uq').value.trim().toLowerCase(), fg = $('#uG').value, fr = $('#uR').value;
+    if (q || fg || fr) { const f = (q ? allStuds : studs).filter(u => (!fg || u.grade === fg) && (!fr || u.room === fr) && (!q || (u.fullName + (u.nickname || '') + u.studentCode + u.classNo + u.grade + '/' + u.room).toLowerCase().includes(q)));
+      $('#ul').innerHTML = f.length ? `<div class="card-x"><div class="small text-muted mb-2">พบ ${f.length} คน</div>${stuTable(f, true)}</div>` : empty('fa-users-slash', 'ไม่พบนักเรียน'); return; }
     const gs = Object.keys(byGrade).sort((a, b) => gOrder(a) - gOrder(b) || natural(a, b));
     $('#ul').innerHTML = gs.length ? gs.map(g => { const rs = Object.keys(byGrade[g]).sort(natural), n = rs.reduce((t, r) => t + byGrade[g][r].length, 0);
       return `<div class="card-x grade-card mb-3"><div class="d-flex align-items-center gap-2 mb-3"><span class="grade-ic">${esc(g)}</span><div class="flex-fill"><b class="fs-5">ระดับชั้น ${esc(g)}</b><div class="small text-muted">${rs.length} ห้อง · ${n} คน</div></div></div>
         <div class="grid g4">${rs.map(r => `<button type="button" class="card-x stat link room-tile" data-room="${esc(g)}|${esc(r)}"><div class="ic" style="background:#dcfce7;color:#15803d"><i class="fa-solid fa-door-open"></i></div><div><b>${esc(g)}/${esc(r)}</b><small>${byGrade[g][r].length} คน${byGrade[g][r].some(u => u.status === 'pending') ? ' · <span class="text-warning">มีรออนุมัติ</span>' : ''}</small></div><i class="fa-solid fa-chevron-right go"></i></button>`).join('')}</div></div>`; }).join('')
       : empty('fa-users-slash', 'ไม่มีนักเรียนในปีการศึกษานี้');
   };
-  $('#uq').addEventListener('input', debounce(draw, 250)); draw();
+  $('#uq').addEventListener('input', debounce(draw, 250)); $('#uG').onchange = draw; $('#uR').onchange = draw; draw();
   fab(adm ? 'เพิ่มผู้ใช้' : 'เพิ่มนักเรียน', () => userForm({}));
   const find = id => users.find(u => u.id === id);
   const openRoom = (g, r) => { const arr = (byGrade[g] || {})[r] || allStuds.filter(u => u.grade === g && u.room === r); const m = modal(`นักเรียนห้อง ${g}/${r} (${arr.length} คน)`, arr.length ? stuTable(arr) : empty('fa-users-slash', 'ไม่มีนักเรียนในห้องนี้'), '', 'modal-xl'); m.body.onclick = handle; };
@@ -2390,7 +2482,8 @@ PAGES.users = { admin: true, async render(el, p = {}) {
       await api('setCoAdmin', u.id, on); toast(on ? 'ตั้งเป็นผู้ดูแลระบบร่วมแล้ว' : 'ถอนสิทธิ์แล้ว'); go('users'); }
   };
   el.onclick = handle;
-  if (p.grade) setTimeout(() => openRoom(p.grade, p.room || '-'), 50);
+  if (p.grade && p.room) setTimeout(() => openRoom(p.grade, p.room), 50);
+  else if (p.grade) { $('#uG').value = p.grade; draw(); setTimeout(() => $('#ul').scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); }
   $('#expBtn') && ($('#expBtn').onclick = () => exportXlsx('ผู้ใช้งาน', ['บทบาท', 'รหัสนักเรียน', 'Username', 'คำนำหน้า', 'ชื่อ-สกุล', 'ชื่อเล่น', 'วันเกิด', 'ชั้น', 'ห้อง', 'เลขที่', 'ปีการศึกษา', 'อีเมล', 'สถานะ'], users.map(u => [roleTh(u), u.studentCode, u.username, u.prefix, u.fullName, u.nickname, u.birthDate, u.grade, u.room, u.classNo, u.acadYear, u.email, u.status].map(csvSafe))));
   $('#impBtn').onclick = () => importDialog({ title: 'นำเข้านักเรียน', preview: rows => api('importStudents', rows, { preview: true }), commit: rows => api('importStudents', rows, {}), done: () => go('users') });
   $('#tplBtn').onclick = () => exportXlsx('ตัวอย่างนำเข้านักเรียน', IMPORT_COLS.map(c => c[1]), [['10001', 'เด็กชาย', 'ทดลอง ตัวอย่าง', 'แดง', 'ม.1', '1', '1', termOf().year], ['10002', 'เด็กหญิง', 'สมมุติ ใจดี', 'ฟ้า', 'ม.1', '1', '2', termOf().year]]);
@@ -2498,7 +2591,8 @@ PAGES.classes = { admin: true, async render(el) {
   listView($('#tc'), { items: gradeRows, size: 10, headers: ['ระดับชั้น', 'จำนวนห้อง', 'จำนวนนักเรียน', ''], search: g => g.grade,
     filters: `<select class="form-select w-auto" data-f="lvl" aria-label="ช่วงชั้น"><option value="">ทุกช่วงชั้น</option><option value="pri">ประถมศึกษา</option><option value="low">ม.ต้น (ม.1–3)</option><option value="high">ม.ปลาย (ม.4–6)</option><option value="other">อื่น ๆ</option></select><select class="form-select w-auto" data-f="has" aria-label="นักเรียน"><option value="">ทั้งหมด</option><option value="1">มีนักเรียน</option><option value="0">ยังไม่มีนักเรียน</option></select>`,
     onFilter: (g, r) => (!$('[data-f=lvl]', r).value || lvl(g.grade) === $('[data-f=lvl]', r).value) && (!$('[data-f=has]', r).value || (g.students > 0) === ($('[data-f=has]', r).value === '1')),
-    row: g => [`<b>${esc(g.grade)}</b>`, `${g.rooms.length} ห้อง`, `<span class="chip ${g.students ? 'ok' : ''}">${g.students} คน</span>`, `<div class="d-flex justify-content-end"><button class="btn btn-sm btn-soft" data-grade-detail="${esc(g.grade)}"><i class="fa-solid fa-eye"></i> รายละเอียด</button></div>`] });
+    row: g => [`<b>${esc(g.grade)}</b>`, `${g.rooms.length} ห้อง`, `<button class="btn btn-sm btn-soft" data-gusers="${esc(g.grade)}" title="ดูรายชื่อนักเรียนชั้นนี้"><i class="fa-solid fa-users"></i> ${g.students} คน <i class="fa-solid fa-arrow-right small"></i></button>`,
+      `<div class="d-flex gap-1 justify-content-end"><button class="btn btn-sm btn-soft" data-grade-detail="${esc(g.grade)}"><i class="fa-solid fa-eye"></i> รายละเอียด</button>${isAdm() ? `<button class="btn btn-sm btn-icon btn-soft" data-grename="${esc(g.grade)}" title="แก้ไขชื่อระดับชั้น" aria-label="แก้ไขชื่อระดับชั้น ${esc(g.grade)}"><i class="fa-solid fa-pen"></i></button>` : ''}</div>`] });
   const SG = { 'ท': 'ภาษาไทย', 'ค': 'คณิตศาสตร์', 'ว': 'วิทยาศาสตร์และเทคโนโลยี', 'ส': 'สังคมศึกษาฯ', 'พ': 'สุขศึกษาและพลศึกษา', 'ศ': 'ศิลปะ', 'ง': 'การงานอาชีพ', 'อ': 'ภาษาต่างประเทศ', 'จ': 'ภาษาจีน', 'ญ': 'ภาษาญี่ปุ่น', 'ก': 'กิจกรรม' };
   const sg = c => String(c.code || '').trim().charAt(0), sgs = [...new Set(cats.map(sg).filter(Boolean))].sort();
   listView($('#tk'), { items: cats.slice().sort((a, b) => natural(a.code, b.code)), size: 10, headers: ['รหัสวิชา', 'ชื่อวิชา', ''], search: c => (c.code || '') + c.name,
@@ -2514,11 +2608,22 @@ PAGES.classes = { admin: true, async render(el) {
     await saveTypes(list.filter(x => x !== t)); toast('ลบประเภทแล้ว'); go('classes'); };
   $('#addC') && ($('#addC').onclick = () => crudForm('Classes', {}, re)); $('#addK').onclick = () => crudForm('Categories', {}, re);
   bindActs($('#tk'), cats, 'Categories', '', re);
-  $('#tc').onclick = e => { const b = e.target.closest('[data-grade-detail]'); if (!b) return;
+  const renameCls = async (grade, room) => { const isRoom = room !== undefined;
+    const F = [{ k: 'newGrade', label: 'ระดับชั้น', req: true, col: isRoom ? 'col-md-6' : 'col-12', def: grade }].concat(isRoom ? [{ k: 'newRoom', label: 'ห้อง', col: 'col-md-6', def: room }] : []);
+    const mm = modal(isRoom ? `แก้ไขชั้น/ห้อง ${grade}${room ? '/' + room : ''}` : 'แก้ไขชื่อระดับชั้น ' + grade, `<div class="gb-alert info mb-3"><i class="fa-solid fa-circle-info"></i><div>นักเรียนที่อยู่ใน${isRoom ? 'ห้อง' : 'ชั้น'}นี้จะถูกย้ายไปชื่อใหม่ให้อัตโนมัติ</div></div>${formHtml(F, {})}`,
+      '<button class="btn btn-soft" data-bs-dismiss="modal">ยกเลิก</button><button class="btn btn-primary" id="rnOk"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>', 'modal-md');
+    bindForm(mm.body, F);
+    $('#rnOk').onclick = async () => { const v = validate(mm.body, F); if (!v) return;
+      if (!await confirmBox({ title: 'ยืนยันการแก้ไข', html: `<b>${esc(grade)}${isRoom && room ? '/' + esc(room) : ''}</b> → <b>${esc(v.newGrade)}${isRoom && v.newRoom ? '/' + esc(v.newRoom) : ''}</b>` })) return;
+      const r = await api('renameClass', Object.assign({ grade, newGrade: v.newGrade }, isRoom ? { room, newRoom: v.newRoom } : {})); mm.hide(); toast(`แก้ไขแล้ว — ย้ายนักเรียน ${r.students} คน`); go('classes'); }; };
+  $('#tc').onclick = e => { const gu = e.target.closest('[data-gusers]'); if (gu) return go('users', { grade: gu.dataset.gusers });
+    const gr = e.target.closest('[data-grename]'); if (gr) return renameCls(gr.dataset.grename);
+    const b = e.target.closest('[data-grade-detail]'); if (!b) return;
     const g = gradeRows.find(x => x.grade === b.dataset.gradeDetail), list = g.all.slice().sort((a, b2) => natural(a.room, b2.room));
     const m = modal('ระดับชั้น ' + g.grade, `<div class="grid g3 mb-3">${statCard('fa-door-open', g.rooms.length, 'ห้องเรียน')}${statCard('fa-user-graduate', g.students, 'นักเรียน', 'background:#dcfce7;color:#15803d')}${statCard('fa-calculator', g.rooms.length ? Math.round(g.students / g.rooms.length) : '-', 'เฉลี่ยต่อห้อง', 'background:#e0f2fe;color:#0369a1')}</div>
-      ${tableHtml(['ห้อง', 'จำนวนนักเรียน', ''], list.map(c => [c.room ? 'ห้อง ' + esc(c.room) : 'ทุกห้อง (ชั้นนี้ทั้งหมด)', c.room ? `<button class="btn btn-sm btn-soft" data-roster="${esc(c.room)}" title="ดูรายชื่อนักเรียนห้องนี้"><i class="fa-solid fa-users"></i> ${c.students || 0} คน <i class="fa-solid fa-arrow-right small"></i></button>` : `<span class="chip ${c.students ? 'ok' : ''}">${c.students || 0} คน</span>`, isAdm() && c.id ? actBtns(c.id) : '']))}`, '', 'modal-lg');
+      ${tableHtml(['ห้อง', 'จำนวนนักเรียน', ''], list.map(c => [c.room ? 'ห้อง ' + esc(c.room) : 'ทุกห้อง (ชั้นนี้ทั้งหมด)', c.room ? `<button class="btn btn-sm btn-soft" data-roster="${esc(c.room)}" title="ดูรายชื่อนักเรียนห้องนี้"><i class="fa-solid fa-users"></i> ${c.students || 0} คน <i class="fa-solid fa-arrow-right small"></i></button>` : `<span class="chip ${c.students ? 'ok' : ''}">${c.students || 0} คน</span>`, isAdm() ? `<div class="d-flex gap-1 justify-content-end"><button class="btn btn-sm btn-icon btn-soft" data-rrename="${esc(c.room || '')}" title="แก้ไขชั้น/ห้อง" aria-label="แก้ไขชั้น/ห้อง"><i class="fa-solid fa-pen"></i></button>${c.id ? `<button class="btn btn-sm btn-icon btn-soft text-danger" data-del="${esc(c.id)}" aria-label="ลบ"><i class="fa-solid fa-trash"></i></button>` : ''}</div>` : '']))}`, '', 'modal-lg');
     m.body.onclick = e2 => { const ro = e2.target.closest('[data-roster]'); if (ro) { m.hide(); return go('users', { grade: g.grade, room: ro.dataset.roster }); }
+      const rr = e2.target.closest('[data-rrename]'); if (rr) { m.hide(); return renameCls(g.grade, rr.dataset.rrename); }
       const ed = e2.target.closest('[data-edit]'), de = e2.target.closest('[data-del]'); if (!ed && !de) return; m.hide();
       setTimeout(() => ed ? crudForm('Classes', cls.find(x => x.id === ed.dataset.edit), re) : crudDelete('Classes', cls.find(x => x.id === de.dataset.del), 'นักเรียนในชั้นนี้จะยังอยู่ แต่ต้องแก้ไขชั้นเรียนให้ใหม่', re), 300); }; };
 } };
@@ -2608,10 +2713,26 @@ PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
     <div>${statusChip(r.status)}${QZ && r.sub && r.sub.answers && r.sub.score === '' ? ' <span class="chip warn">ข้อเขียนรอตรวจ</span>' : ''}${r.sub ? `<div class="small text-muted">${thDate(r.sub.submittedAt, true)}</div>` : ''}</div>
     <div class="d-flex gap-1 flex-wrap">${r.sub ? `<button class="btn btn-sm btn-soft" data-view="${esc(r.user.id)}"><i class="fa-solid fa-eye"></i> ดูงาน</button>${subFiles(r.sub).length ? `<button class="btn btn-sm btn-success dl" data-dlsub="${esc(r.user.id)}"><i class="fa-solid fa-download"></i> ดาวน์โหลด${subFiles(r.sub).length > 1 ? ` (${subFiles(r.sub).length})` : ''}</button>` : ''}` : '<span class="text-muted small">ยังไม่มีงาน</span>'}</div>
     <div>${r.sub ? `<div class="score-box"><div class="input-group"><input class="form-control text-center" type="number" min="0" max="${esc(a.maxScore)}" step="0.5" value="${esc(r.sub.score)}" data-score="${esc(r.sub.id)}" aria-label="คะแนนที่ได้" placeholder="0"><span class="input-group-text">/ ${esc(a.maxScore)} คะแนน</span></div><input class="form-control fb" value="${esc(r.sub.feedback)}" data-fb="${esc(r.sub.id)}" placeholder="ความคิดเห็นถึงนักเรียน" aria-label="ความคิดเห็น"></div>` : ''}</div>
-    <div>${r.sub ? `<button class="btn btn-sm btn-primary" data-grade="${esc(r.sub.id)}" data-name="${esc(r.user.fullName)}"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>` : ''}</div>
+    <div>${r.sub ? subActs(r.sub.id, r.user.fullName, r.group === 'member') : ''}</div>
     </div>`;
-  let OPEN = '';
+  const isGrp = a.group === 'true' || /กลุ่ม/.test(a.type || '');
+  /** การ์ดงานกลุ่ม: 1 การ์ด = 1 กลุ่ม (ตัวแทน + สมาชิก + การส่ง + คะแนน + ความคิดเห็น) */
+  const groupCard = (r, i) => { const s2 = r.sub, mem = d.rows.filter(x => x.sub && x.sub.id === s2.id && x.user.id !== r.user.id);
+    return `<div class="card-x gcard"><div class="d-flex align-items-center gap-2 mb-2"><span class="gno">${i + 1}</span><div class="flex-fill" style="min-width:0"><b class="d-block">กลุ่มของ ${esc(r.user.fullName)}</b><small class="text-muted">${mem.length + 1} คน · ส่งเมื่อ ${thDate(s2.submittedAt, true)}</small></div>${statusChip(r.status)}</div>
+      <div class="d-flex flex-wrap gap-1 mb-2"><span class="chip info"><i class="fa-solid fa-crown"></i> ${esc(r.user.fullName)} <small>(${esc(r.user.grade || '')}/${esc(r.user.room || '')} เลขที่ ${esc(r.user.classNo || '-')})</small></span>${mem.map(x => `<span class="chip">${esc(x.user.fullName)} <small>(${esc(x.user.grade || '')}/${esc(x.user.room || '')} เลขที่ ${esc(x.user.classNo || '-')})</small></span>`).join('')}</div>
+      ${s2.text ? `<div class="small text-muted mb-2 text-truncate"><i class="fa-solid fa-message"></i> ${esc(String(s2.text).slice(0, 140))}</div>` : ''}
+      <div class="d-flex flex-wrap gap-1 mb-2"><button class="btn btn-sm btn-soft" data-view="${esc(r.user.id)}"><i class="fa-solid fa-eye"></i> ดูงาน</button>${subFiles(s2).length ? `<button class="btn btn-sm btn-success" data-dlsub="${esc(r.user.id)}"><i class="fa-solid fa-download"></i> ดาวน์โหลด (${subFiles(s2).length})</button>` : ''}</div>
+      <div class="score-box mb-2"><div class="input-group"><input class="form-control text-center" type="number" min="0" max="${esc(a.maxScore)}" step="0.5" value="${esc(s2.score)}" data-score="${esc(s2.id)}" aria-label="คะแนนที่ได้" placeholder="0"><span class="input-group-text">/ ${esc(a.maxScore)} คะแนน</span></div>
+        <input class="form-control fb" value="${esc(s2.feedback || '')}" data-fb="${esc(s2.id)}" placeholder="ความคิดเห็นถึงกลุ่ม" aria-label="ความคิดเห็น"></div>
+      ${subActs(s2.id, 'กลุ่มของ ' + r.user.fullName, false)}</div>`; };
+  let OPEN = '', GVIEW = isGrp;
+  if (isGrp) $('#gl').insertAdjacentHTML('beforebegin', `<div class="d-flex gap-2 mb-3 flex-wrap"><div class="btn-group" role="group" aria-label="มุมมอง"><button class="btn btn-sm btn-primary" data-gview="1"><i class="fa-solid fa-people-group"></i> แยกตามกลุ่ม</button><button class="btn btn-sm btn-soft" data-gview="0"><i class="fa-solid fa-door-open"></i> แยกตามห้อง</button></div></div>`);
   const drawRooms = () => {
+    if (GVIEW) { const q2 = $('#gq').value.trim().toLowerCase(), leaders = d.rows.filter(r => r.sub && r.group !== 'member' && (!q2 || d.rows.some(x => x.sub && x.sub.id === r.sub.id && (x.user.fullName + x.user.studentCode).toLowerCase().includes(q2))))
+        .sort((x, y) => String(x.sub.submittedAt).localeCompare(String(y.sub.submittedAt))), none = d.rows.filter(r => !r.sub);
+      $('#gl').innerHTML = (leaders.length ? `<div class="grid g3">${leaders.map(groupCard).join('')}</div>` : empty('fa-people-group', 'ยังไม่มีกลุ่มที่ส่งงาน'))
+        + (none.length ? `<details class="card-x mt-3"><summary class="fw-bold">ยังไม่ได้ส่ง / ยังไม่มีกลุ่ม (${none.length} คน)</summary><div class="d-flex flex-wrap gap-1 mt-2">${none.map(r => `<span class="chip">${esc(r.user.fullName)} · ${esc(r.user.grade || '')}/${esc(r.user.room || '')}</span>`).join('')}</div></details>` : '');
+      return; }
     const q = $('#gq').value.trim().toLowerCase(), st = $('#gst').value, fg = $('#gG').value, fr = $('#gR').value;
     const list = d.rows.filter(r => (!fg || r.user.grade === fg) && (!fr || r.user.room === fr) && (!q || (r.user.fullName + r.user.studentCode + r.user.classNo).toLowerCase().includes(q))
       && (!st || (st === 'sent' && r.sub && r.status !== 'graded') || (st === 'graded' && r.status === 'graded') || (st === 'none' && !r.sub)));
@@ -2631,6 +2752,21 @@ PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
   };
   $('#gq').addEventListener('input', debounce(drawRooms, 300)); ['#gst', '#gG', '#gR'].forEach(x => $(x).onchange = drawRooms); drawRooms();
   el.onclick = async e => {
+    const gv = e.target.closest('[data-gview]'); if (gv) { GVIEW = gv.dataset.gview === '1'; $$('[data-gview]', el).forEach(b => { b.classList.toggle('btn-primary', b === gv); b.classList.toggle('btn-soft', b !== gv); }); drawRooms(); return; }
+    const se = e.target.closest('[data-sedit]'), sd = e.target.closest('[data-sdel]');
+    if (sd) { const r = d.rows.find(x => x.sub && x.sub.id === sd.dataset.sdel);
+      if (!await confirmBox({ title: 'ลบงานที่นักเรียนส่ง', html: `<b>${esc(sd.dataset.name)}</b><br><small class="text-danger">ไฟล์ที่ส่งจะถูกลบจาก Google Drive ด้วย — นักเรียนส่งใหม่ได้</small>`, danger: true, confirmText: 'ลบ' })) return;
+      await api('removeSubmission', r.sub.id); toast('ลบงานที่ส่งแล้ว — แจ้งนักเรียนแล้ว'); go('grade', p, { quiet: true }); return; }
+    if (se) { const r = d.rows.find(x => x.sub && x.sub.id === se.dataset.sedit), s2 = r.sub, mem = d.rows.filter(x => x.sub && x.sub.id === s2.id && x.user.id !== s2.ownerId);
+      const F = [{ k: 'text', label: 'ข้อความ / คำตอบ', type: 'textarea', rows: 4 }, { k: 'files', label: 'ไฟล์ที่ส่ง (ลบหรือเพิ่มได้)', type: 'files', folder: (a.type || 'งาน') + '/งานที่นักเรียนส่ง' }, { k: 'driveLink', label: 'ลิงก์ Google Drive' },
+        { k: 'status', label: 'สถานะการส่ง', type: 'select', opts: [['ontime', 'ส่งตรงเวลา'], ['late', 'ส่งช้า']] }];
+      const mm = modal('แก้ไขงานที่ส่ง: ' + se.dataset.name, formHtml(F, { text: s2.text, files: J(s2.files), driveLink: s2.driveLink, status: s2.status })
+        + (isGrp && mem.length ? `<div class="mb-2"><div class="form-label">สมาชิกในกลุ่ม (เอาติ๊กออกเพื่อนำออกจากกลุ่ม)</div><div class="d-flex flex-wrap gap-2">${mem.map(x => `<label class="mchip"><input type="checkbox" data-mem="${esc(x.user.id)}" checked> ${esc(x.user.fullName)}</label>`).join('')}</div></div>` : ''),
+        '<button class="btn btn-soft" data-bs-dismiss="modal">ยกเลิก</button><button class="btn btn-primary" id="seOk"><i class="fa-solid fa-floppy-disk"></i> บันทึกการแก้ไข</button>', 'modal-lg');
+      bindForm(mm.body, F);
+      $('#seOk').onclick = async () => { const v = validate(mm.body, F); if (!v) return; if (isGrp && mem.length) v.members = $$('[data-mem]:checked', mm.body).map(x => x.dataset.mem);
+        await api('editSubmission', s2.id, v); finalizeUploads(mm.body, v); mm.hide(); toast('บันทึกการแก้ไขแล้ว'); go('grade', p, { quiet: true }); };
+      return; }
     const orb = e.target.closest('[data-openroom]'); if (orb) { OPEN = orb.dataset.openroom; drawRooms(); window.scrollTo({ top: $('#gl').offsetTop - 90, behavior: 'smooth' }); return; }
     const v = e.target.closest('[data-view]'), g = e.target.closest('[data-grade]'), dl = e.target.closest('[data-dlsub]');
     if (dl) { const r = d.rows.find(x => x.user.id === dl.dataset.dlsub), fs = subFiles(r.sub);
@@ -2659,6 +2795,7 @@ PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
   };
 } };
 
+const subActs = (id, name, member) => member ? '<small class="text-muted">สมาชิกกลุ่ม</small>' : `<div class="d-flex gap-1 flex-wrap justify-content-end"><button class="btn btn-sm btn-primary" data-grade="${esc(id)}" data-name="${esc(name)}"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button><button class="btn btn-sm btn-icon btn-soft" data-sedit="${esc(id)}" data-name="${esc(name)}" title="แก้ไขงานที่ส่ง" aria-label="แก้ไขงานที่ส่ง"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-icon btn-soft text-danger" data-sdel="${esc(id)}" data-name="${esc(name)}" title="ลบงานที่ส่ง" aria-label="ลบงานที่ส่ง"><i class="fa-solid fa-trash"></i></button></div>`;
 const subFiles = sub => J(sub.files).concat(sub.driveLink ? [{ name: 'Google Drive', url: sub.driveLink }] : []);
 const dlUrl = f => 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(f.id || driveId(f.url));
 
@@ -2669,7 +2806,7 @@ PAGES.aann = { admin: true, async render(el) {
   el.innerHTML = `<div class="page-head"><h3>จัดการประกาศ</h3></div><div id="nl"></div>`;
   listView($('#nl'), { items: list.sort((a, b) => (b.pinned === 'true') - (a.pinned === 'true') || b.createdAt.localeCompare(a.createdAt)), filters: ownerFilter(), onFilter: byOwner,
     headers: ['ประกาศ', 'ประเภท', 'กลุ่มเป้าหมาย', 'วันที่', 'เจ้าของข้อมูล', ''], search: a => a.title + a.body + a.type,
-    row: a => [`${a.pinned === 'true' ? '<i class="fa-solid fa-thumbtack pin"></i> ' : ''}<b>${esc(a.title)}</b>`, `<span class="chip info">${esc(a.type)}</span>`, esc(targetTxt(a.grade, a.room)), thDate(a.createdAt, true), esc(ownerName(a.ownerId)), actBtns(a.id)] });
+    row: a => [`${a.pinned === 'true' ? '<i class="fa-solid fa-thumbtack pin"></i> ' : ''}<b>${esc(a.title)}</b>`, `<span class="chip info">${esc(a.type)}</span>`, (a.courseId ? `<div class="small">${a.courseId.split(',').map(id => `<span class="chip">${esc((S.cache.courses.find(c => c.id === id) || {}).name || 'รายวิชา')}</span>`).join(' ')}</div>` : '<div class="small text-muted">ทุกรายวิชา</div>') + esc(targetTxt(a.grade, a.room)), thDate(a.createdAt, true), esc(ownerName(a.ownerId)), actBtns(a.id)] });
   bindActs($('#nl'), list, 'Announcements', '', () => go('aann'));
   fab('โพสต์ประกาศ', () => crudForm('Announcements', {}, () => go('aann')));
 } };
@@ -2710,9 +2847,9 @@ function printTable(title, headers, rows) {
 
 /* ---------------- ตั้งค่าระบบ ---------------- */
 PAGES.settings = { admin: true, async render(el, p) {
-  if (!isAdm() && !['menus', 'account'].includes(p.tab)) p = Object.assign({}, p, { tab: 'menus' });
+  if (!isAdm() && !['general', 'look', 'menus', 'account'].includes(p.tab)) p = Object.assign({}, p, { tab: 'general' });
   const s = isAdm() ? await apiQ('getSettings') : { config: Object.assign({}, S.config) }, c = s.config;
-  const tabs = !isAdm() ? [['menus', 'เมนูนักเรียน', 'fa-bars'], ['account', 'บัญชีของฉัน', 'fa-key']] : [['general', 'ทั่วไป', 'fa-school'], ['look', 'สีระบบ', 'fa-palette'], ['menus', 'เมนูนักเรียน', 'fa-bars'], ['system', 'ระบบ/ความปลอดภัย', 'fa-shield-halved'], ['notify', 'การแจ้งเตือน', 'fa-bell'], ['db', 'ฐานข้อมูล', 'fa-database'], ['backup', 'สำรอง/กู้คืน', 'fa-cloud-arrow-up'], ['account', 'บัญชีของฉัน', 'fa-key'], ['audit', 'Audit Log', 'fa-clipboard-list']];
+  const tabs = !isAdm() ? [['general', 'ทั่วไป', 'fa-school'], ['look', 'สีระบบ', 'fa-palette'], ['menus', 'เมนูนักเรียน', 'fa-bars'], ['account', 'บัญชีของฉัน', 'fa-key']] : [['general', 'ทั่วไป', 'fa-school'], ['look', 'สีระบบ', 'fa-palette'], ['menus', 'เมนูนักเรียน', 'fa-bars'], ['system', 'ระบบ/ความปลอดภัย', 'fa-shield-halved'], ['notify', 'การแจ้งเตือน', 'fa-bell'], ['db', 'ฐานข้อมูล', 'fa-database'], ['backup', 'สำรอง/กู้คืน', 'fa-cloud-arrow-up'], ['account', 'บัญชีของฉัน', 'fa-key'], ['audit', 'Audit Log', 'fa-clipboard-list']];
   let tab = p.tab || 'general';
   el.innerHTML = `<div class="page-head"><h3>ตั้งค่าระบบ</h3></div><ul class="nav nav-pills gap-2 mb-3 flex-nowrap overflow-auto pb-1">${tabs.map(t => `<li class="nav-item"><button class="nav-link text-nowrap" data-st="${t[0]}"><i class="fa-solid ${t[2]}"></i> ${t[1]}</button></li>`).join('')}</ul><div class="card-x" id="sBody"></div>`;
   const GF = {
@@ -2728,7 +2865,16 @@ PAGES.settings = { admin: true, async render(el, p) {
     if (!B) return;
     if (tab === 'look') return drawLook(B, c);
     if (tab === 'menus') return drawMenus(B, c);
-    applyColor(c.themeColor); // ยกเลิกสีที่ลองดูแต่ยังไม่บันทึก
+    applyColor(effCfg().themeColor); // ยกเลิกสีที่ลองดูแต่ยังไม่บันทึก
+    if (tab === 'general' && !isAdm()) { // ครู: ชื่อระบบ/โลโก้ที่แสดงเฉพาะบัญชีตนเอง
+      const F = [{ k: 'schoolName', label: 'ชื่อระบบ / ชื่อห้องเรียนที่แสดงในบัญชีของฉัน', help: 'เว้นว่าง = ใช้ชื่อของระบบ' }, GF.general.find(f => f.k === 'logo')];
+      B.innerHTML = `<div class="gb-alert info mb-3"><i class="fa-solid fa-user-gear"></i><div>การตั้งค่านี้มีผลเฉพาะบัญชีของคุณ ไม่กระทบผู้ดูแลระบบหรือครูคนอื่น</div></div><form id="sf">${formHtml(F, myPrefs())}<button class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button></form>`;
+      bindForm(B, F); S.onLeave.push(() => finalizeUploads(B, null));
+      $('#sf').onsubmit = async e => { e.preventDefault(); const d = validate($('#sf'), F); if (!d) return;
+        const pr = Object.assign(myPrefs(), d); Object.keys(pr).forEach(k => { if (!pr[k]) delete pr[k]; });
+        S.user = await api('updateProfile', { prefs: pr }); finalizeUploads(B, d); applyBrand(); renderMe(); toast('บันทึกแล้ว — มีผลเฉพาะบัญชีของคุณ'); };
+      return;
+    }
     if (GF[tab]) {
       const F = GF[tab];
       B.innerHTML = `<form id="sf">${formHtml(F, c)}<button class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่า</button></form>`;
@@ -2749,6 +2895,7 @@ PAGES.settings = { admin: true, async render(el, p) {
         const r = await apiMsg('กำลังทดสอบการเชื่อมต่อ...', 'saveSettings', d);
         if (r.reloaded) { await Sw.fire({ icon: 'success', title: 'เปลี่ยนฐานข้อมูลแล้ว', text: 'กรุณาเข้าสู่ระบบใหม่' }); localLogout(); } else toast('บันทึกแล้ว');
       };
+      drawTermDbs(B, s);
     } else if (tab === 'backup') {
       const list = await api('listBackups');
       if (tab !== 'backup' || !$('#sBody')) return;
@@ -2787,8 +2934,38 @@ PAGES.settings = { admin: true, async render(el, p) {
   draw();
 } };
 
+/* ---------- ตั้งค่า: ฐานข้อมูลแยกตามภาคเรียน/ปีการศึกษา ---------- */
+function drawTermDbs(B, s) {
+  const nextT = (() => { const t = termOf(); return t.term === '1' ? { year: t.year, term: '2' } : { year: String(+t.year + 1), term: '1' }; })();
+  const terms = [nextT].concat(termList(6)), lab = k => 'ภาคเรียนที่ ' + k.split('/')[1] + '/' + k.split('/')[0];
+  const box = document.createElement('div'); box.id = 'tdb'; B.appendChild(box);
+  const draw = list => { box.innerHTML = `<hr class="my-4"><h5 class="fw-bold mb-1"><i class="fa-solid fa-layer-group text-primary me-2"></i>ฐานข้อมูลแยกตามภาคเรียน / ปีการศึกษา</h5>
+    <p class="small text-muted">ข้อมูลการเรียน (รายวิชา บทเรียน งาน งานที่ส่ง ความคืบหน้า ประกาศ) ของแต่ละภาคเรียนเก็บในไฟล์ Google Sheet และโฟลเดอร์ Drive แยกกัน · ผู้ใช้ ชั้นเรียน แชท และการตั้งค่าอยู่ในฐานข้อมูลหลักเสมอ ·
+      ระบบสลับไปใช้ไฟล์ของภาคเรียนปัจจุบันให้อัตโนมัติ และเมื่อเลือกดูภาคเรียนย้อนหลังจะอ่านจากไฟล์ของภาคเรียนนั้น · ภาคเรียนที่ไม่ได้ตั้งไว้ใช้ฐานข้อมูลหลัก · URL เว็บแอปไม่เปลี่ยน</p>
+    ${list.length ? tableHtml(['ภาคเรียน', 'Google Sheet', 'Google Drive', 'สถานะ', ''], list.map(t => [`<b>${lab(t.key)}</b>`, `<a href="${safeUrl(t.sheetUrl)}" target="_blank" rel="noopener"><i class="fa-solid fa-table"></i> เปิดชีต</a>`,
+      t.driveUrl ? `<a href="${safeUrl(t.driveUrl)}" target="_blank" rel="noopener"><i class="fa-brands fa-google-drive"></i> เปิดโฟลเดอร์</a>` : '<span class="text-muted">ใช้โฟลเดอร์หลัก</span>', t.current ? '<span class="chip ok">ใช้งานอยู่ (ภาคปัจจุบัน)</span>' : '<span class="chip">พร้อมใช้</span>',
+      `<div class="d-flex gap-1 justify-content-end"><button class="btn btn-sm btn-icon btn-soft" data-tdedit="${esc(t.key)}" aria-label="แก้ไข"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-icon btn-soft text-danger" data-tddel="${esc(t.key)}" aria-label="ลบ"><i class="fa-solid fa-trash"></i></button></div>`])) : '<div class="text-muted small mb-2">ยังไม่ได้แยกฐานข้อมูล — ทุกภาคเรียนใช้ฐานข้อมูลหลัก</div>'}
+    <div class="card-x mt-3" style="background:var(--surface-2)"><h6 class="fw-bold">เพิ่ม / แก้ไขฐานข้อมูลของภาคเรียน</h6><div class="row g-2">
+      <div class="col-md-3"><label class="form-label small" for="tdK">ภาคเรียน</label><select class="form-select" id="tdK">${terms.map(t => `<option value="${tk(t)}">${lab(tk(t))}</option>`).join('')}</select></div>
+      <div class="col-md-4"><label class="form-label small" for="tdS">Google Sheet ID หรือ URL</label><input class="form-control" id="tdS" placeholder="https://docs.google.com/spreadsheets/d/..."></div>
+      <div class="col-md-5"><label class="form-label small" for="tdD">Google Drive Folder ID หรือ URL (เก็บไฟล์/รูป) — เว้นว่างได้</label><input class="form-control" id="tdD" placeholder="https://drive.google.com/drive/folders/..."></div></div>
+      <div class="d-flex flex-wrap gap-2 mt-3"><button class="btn btn-primary" id="tdSave"><i class="fa-solid fa-plug"></i> ทดสอบและบันทึก</button><button class="btn btn-success" id="tdNew"><i class="fa-solid fa-wand-magic-sparkles"></i> สร้างไฟล์ชีต + โฟลเดอร์ใหม่ให้อัตโนมัติ</button></div></div>`;
+    $('#tdSave', box).onclick = async () => { const d = { key: $('#tdK').value, sheetId: $('#tdS').value.trim(), driveId: $('#tdD').value.trim() };
+      if (!d.sheetId) return toast('กรุณาใส่ Google Sheet ID หรือ URL', 'warning');
+      if (!await confirmBox({ title: 'บันทึกฐานข้อมูล ' + lab(d.key), html: 'ระบบจะทดสอบสิทธิ์และสร้างแผ่นงานที่จำเป็นให้ในไฟล์นี้' })) return;
+      draw(await apiMsg('กำลังทดสอบการเชื่อมต่อ...', 'saveTermDb', d)); toast('บันทึกแล้ว'); };
+    $('#tdNew', box).onclick = async () => { const k = $('#tdK').value;
+      if (!await confirmBox({ title: 'สร้างฐานข้อมูล ' + lab(k), html: 'สร้างไฟล์ Google Sheet และโฟลเดอร์ใหม่ไว้ในโฟลเดอร์หลักของระบบ<br><small class="text-muted">' + (k === s.curTerm ? 'นี่คือภาคเรียนปัจจุบัน — หลังสร้าง ข้อมูลการเรียนใหม่จะเริ่มบันทึกที่ไฟล์นี้ทันที (ข้อมูลเดิมยังอยู่ในฐานข้อมูลหลัก)' : 'จะเริ่มใช้เมื่อถึงภาคเรียนนี้ หรือเมื่อเลือกดูภาคเรียนนี้') + '</small>' })) return;
+      draw(await apiMsg('กำลังสร้างไฟล์...', 'createTermDb', k)); toast('สร้างฐานข้อมูลแล้ว'); };
+    box.onclick = async e => { const ed = e.target.closest('[data-tdedit]'), de = e.target.closest('[data-tddel]');
+      if (ed) { const t = list.find(x => x.key === ed.dataset.tdedit); if (!$(`#tdK option[value="${t.key}"]`)) $('#tdK').insertAdjacentHTML('beforeend', `<option value="${t.key}">${lab(t.key)}</option>`); $('#tdK').value = t.key; $('#tdS').value = t.sheetUrl; $('#tdD').value = t.driveUrl; $('#tdS').focus(); }
+      if (de) { if (!await confirmBox({ title: 'นำฐานข้อมูล ' + lab(de.dataset.tddel) + ' ออก', html: 'ภาคเรียนนี้จะกลับไปใช้ฐานข้อมูลหลัก<br><small class="text-muted">ไฟล์ชีตและโฟลเดอร์เดิมไม่ถูกลบ ผูกกลับได้ภายหลัง</small>', danger: true, confirmText: 'นำออก' })) return;
+        draw(await api('removeTermDb', de.dataset.tddel)); toast('นำออกแล้ว'); } }; };
+  draw(s.termDbs || []);
+}
 /* ---------- ตั้งค่า: สีระบบ (ล้อสี) ---------- */
-function drawLook(B, c) {
+function drawLook(B, c0) {
+  const c = Object.assign({}, c0, myPrefs());
   const PRESET = ['#2563eb', '#1e40af', '#0891b2', '#0d9488', '#16a34a', '#65a30d', '#ca8a04', '#ea580c', '#dc2626', '#db2777', '#9333ea', '#475569'];
   let hex = c.themeColor || '#2563eb', [h, sa, l] = hexToHsl(hex);
   B.innerHTML = `<h5 class="fw-bold mb-1">สีหลักของระบบ</h5><p class="text-muted small">หมุนเลือกสีบนวงล้อ ปรับความสว่าง แล้วกดบันทึก — สีจะใช้ทั้งหน้าเข้าสู่ระบบ เมนู ปุ่ม ตาราง และกราฟ</p>
@@ -2798,6 +2975,7 @@ function drawLook(B, c) {
       <label class="form-label" for="wHex">รหัสสี</label><div class="input-group mb-3" style="max-width:260px"><span class="input-group-text" id="wDot" style="width:48px"></span><input class="form-control" id="wHex" value="${esc(hex)}" maxlength="7"></div>
       <div class="form-label">สีแนะนำ</div><div class="d-flex flex-wrap gap-2 mb-3">${PRESET.map(p => `<button class="swatch" data-sw="${p}" style="background:${p}" aria-label="สี ${p}"></button>`).join('')}</div>
       <div class="d-flex flex-wrap gap-2 mb-3 align-items-center"><span class="btn btn-primary">ตัวอย่างปุ่ม</span><span class="chip info">ตัวอย่างป้าย</span><span class="avatar">ก</span></div>
+      ${isAdm() ? '<div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" id="wSys"><label class="form-check-label" for="wSys">ใช้เป็นสีเริ่มต้นของระบบด้วย (หน้าเข้าสู่ระบบ นักเรียน และครูที่ยังไม่ได้ตั้งสีเอง)</label></div>' : ''}
       <div class="d-flex gap-2"><button class="btn btn-primary" id="wSave"><i class="fa-solid fa-floppy-disk"></i> บันทึกสี</button><button class="btn btn-soft" id="wReset">คืนค่าเริ่มต้น</button></div></div></div>`;
   const wheel = $('#wheel'), knob = $('#wKnob');
   const set = (nh, ns, nl, from) => {
@@ -2822,10 +3000,13 @@ function drawLook(B, c) {
   $('#wReset').onclick = () => { const x = hexToHsl('#2563eb'); $('#wLight').value = Math.round(x[2]); set(x[0], x[1], x[2]); };
   $('#wSave').onclick = async () => {
     if (!await confirmBox({ title: 'ยืนยันเปลี่ยนสีระบบ', html: `ใช้สี <b style="color:${hex}">${hex}</b> กับทุกหน้า?` })) return;
-    await api('saveSettings', { config: { themeColor: hex } }); c.themeColor = S.config.themeColor = hex; toast('บันทึกสีระบบแล้ว');
+    const sys = isAdm() && $('#wSys') && $('#wSys').checked;
+    S.user = await api('updateProfile', { prefs: Object.assign(myPrefs(), { themeColor: hex }) });
+    if (sys) { await api('saveSettings', { config: { themeColor: hex } }); S.config.themeColor = hex; }
+    c.themeColor = hex; applyBrand(); toast(sys ? 'บันทึกสีแล้ว (บัญชีของคุณ + ค่าเริ่มต้นของระบบ)' : 'บันทึกสีของบัญชีคุณแล้ว — ไม่กระทบผู้ใช้อื่น');
   };
   requestAnimationFrame(() => set(h, sa, l));
-  S.onLeave.push(() => applyColor(S.config.themeColor));
+  S.onLeave.push(() => applyColor(effCfg().themeColor));
 }
 /* ---------- ตั้งค่า: เมนูฝั่งนักเรียน ---------- */
 function drawMenus(B, c) {
@@ -3324,7 +3505,8 @@ function openTool(id) {
   document.body.appendChild(v); document.body.style.overflow = 'hidden';
   v.addEventListener('click', e => { if (e.target.closest('[data-tvclose]')) closeTool(); if (e.target.closest('[data-tvfull]')) { document.fullscreenElement ? document.exitFullscreen() : v.requestFullscreen?.().catch(() => {}); }
     const sd = e.target.closest('[data-tvside]'); if (sd) { const o = v.classList.toggle('side-open'); sd.setAttribute('aria-expanded', o); }
-    else if (v.classList.contains('side-open') && !e.target.closest('.tool-side') && !e.target.closest('.swal2-container') && e.target.closest('.tv-body')) v.classList.remove('side-open'); });
+    else if (innerWidth < 992 && v.classList.contains('side-open') && !e.target.closest('.tool-side') && !e.target.closest('.swal2-container') && e.target.closest('.tv-body')) v.classList.remove('side-open'); });
+  v.classList.add('side-open'); $('[data-tvside]', v).setAttribute('aria-expanded', 'true'); // เปิดแผงตั้งค่ารอไว้เสมอ
   TOOL_CLEAN = ({ wheel: toolWheel, topic: toolTopic, color: toolColor, noise: toolNoise, letter: toolLetter, bomb: toolBomb }[id])($('#tvBody')) || null;
 }
 function closeTool() { try { TOOL_CLEAN && TOOL_CLEAN(); } catch (e) {} TOOL_CLEAN = null; if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); $('#toolView')?.remove(); document.body.style.overflow = ''; }
@@ -3341,13 +3523,15 @@ async function pickStudentNames() {
   return studs.filter(p => p.grade + '/' + p.room === r.value).sort((a, b) => (Number(a.classNo) || 999) - (Number(b.classNo) || 999)).map(p => (p.classNo ? p.classNo + '. ' : '') + (p.nickname || p.name.replace(/^(เด็กชาย|เด็กหญิง|นาย|นางสาว|นาง|ด\.ช\.|ด\.ญ\.)/, '')));
 }
 function toolResult(title, big, sub = '') {
-  return Sw.fire({ title, html: `<div class="tool-result">${big}</div>${sub}`, confirmButtonText: 'ตกลง', customClass: Object.assign({}, SW_CLASS(false), { container: 'swal-top' }), showClass: { popup: 'swal2-show tool-pop' } });
+  return Sw.fire({ title, html: `<div class="tool-result">${big}</div>${sub}`, confirmButtonText: 'ตกลง', customClass: Object.assign({}, SW_CLASS(false), { container: 'swal-top', popup: 'cp-swal swal-tool' }), showClass: { popup: 'swal2-show tool-pop' },
+    didOpen: el => { const r = $('.tool-result', el); if (!r) return; let fs = Math.min(140, innerWidth / 6); r.style.fontSize = fs + 'px'; while (r.scrollWidth > r.clientWidth + 1 && fs > 18) { fs -= 2; r.style.fontSize = fs + 'px'; } } });
 }
 /* ---------- 1) วงล้อมหัศจรรย์ ---------- */
+const shade = (hex, p) => { const n = parseInt(hex.slice(1), 16), f = v => Math.max(0, Math.min(255, Math.round(v + 255 * p / 100))); return '#' + [n >> 16, n >> 8 & 255, n & 255].map(f).map(v => v.toString(16).padStart(2, '0')).join(''); };
 function toolWheel(B) {
   let items = (toolStore('wheel') || 'แดง\nส้ม\nเหลือง\nเขียว\nฟ้า\nม่วง').split('\n').filter(Boolean), angle = 0, spinning = false;
   const COLS = ['#f43f5e', '#f59e0b', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
-  B.innerHTML = `<div class="tool-2col"><div><div class="wheel-stage"><div class="wheel-ptr"></div><canvas id="wCv" width="720" height="720"></canvas><button class="wheel-go" id="wGo">หมุน!</button></div><div class="small mt-3 opacity-75"><i class="fa-solid fa-sliders"></i> แก้ไขรายการได้ที่ปุ่ม "ตั้งค่า" มุมขวาบน</div></div>
+  B.innerHTML = `<div class="tool-2col"><div><div class="wheel-stage"><div class="wheel-ptr"></div><canvas id="wCv" width="1000" height="1000"></canvas><button class="wheel-go" id="wGo">หมุน!</button></div><div class="small mt-3 opacity-75"><i class="fa-solid fa-sliders"></i> แก้ไขรายการได้ที่ปุ่ม "ตั้งค่า" มุมขวาบน</div></div>
     <div class="tool-side card-x"><h6 class="fw-bold">รายการบนวงล้อ <span class="chip info" id="wN"></span></h6><textarea class="form-control mb-2" id="wTxt" rows="10" placeholder="พิมพ์บรรทัดละ 1 รายการ">${esc(items.join('\n'))}</textarea>
       <div class="d-flex flex-wrap gap-2 mb-2"><button class="btn btn-sm btn-soft" id="wStu"><i class="fa-solid fa-users"></i> ดึงรายชื่อนักเรียน</button><button class="btn btn-sm btn-soft" id="wMix"><i class="fa-solid fa-shuffle"></i> สลับลำดับ</button></div>
       <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="wRm"><label class="form-check-label" for="wRm">นำรายการที่ถูกสุ่มออกจากวงล้อ</label></div>
@@ -3356,18 +3540,24 @@ function toolWheel(B) {
       <div class="small text-muted mt-2">ผลที่ได้:</div><div id="wHist" class="d-flex flex-wrap gap-1"></div></div></div>`;
   const cv = $('#wCv'), ctx = cv.getContext('2d');
   const draw = () => {
-    const n = Math.max(items.length, 1), R = 350, a0 = angle; ctx.clearRect(0, 0, 720, 720); ctx.save(); ctx.translate(360, 360);
-    for (let i = 0; i < n; i++) { const a = a0 + i * 2 * Math.PI / n; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, a, a + 2 * Math.PI / n); ctx.closePath(); ctx.fillStyle = items.length ? COLS[i % COLS.length] : '#cbd5e1'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
-      if (items[i]) { ctx.save(); ctx.rotate(a + Math.PI / n); ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff'; const fs = Math.max(14, Math.min(40, 520 / n + 8)); ctx.font = `800 ${fs}px Sarabun, sans-serif`;
-        ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 4; let t = items[i]; while (ctx.measureText(t).width > R - 80 && t.length > 2) t = t.slice(0, -2) + '…'; ctx.fillText(t, R - 24, 0); ctx.restore(); } }
+    const n = Math.max(items.length, 1), R = 476, a0 = angle; ctx.clearRect(0, 0, 1000, 1000); ctx.save(); ctx.translate(500, 500);
+    // ขนาดตัวอักษรเท่ากันทุกช่อง: พอดีความกว้างช่องและความยาวรัศมี
+    let fs = Math.max(16, Math.min(62, (2 * Math.PI * R * .62 / n) * .55)); ctx.font = `800 ${fs}px Sarabun, sans-serif`;
+    const maxW = R * .66, widest = Math.max(1, ...items.map(t => ctx.measureText(t).width)); if (widest > maxW) fs = Math.max(16, fs * maxW / widest);
+    for (let i = 0; i < n; i++) { const a = a0 + i * 2 * Math.PI / n; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, a, a + 2 * Math.PI / n); ctx.closePath();
+      const col = items.length ? COLS[i % COLS.length] : '#cbd5e1', g = ctx.createRadialGradient(0, 0, R * .15, 0, 0, R); g.addColorStop(0, col); g.addColorStop(1, shade(col, -14));
+      ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 3; ctx.stroke();
+      if (items[i]) { ctx.save(); ctx.rotate(a + Math.PI / n); ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.font = `800 ${fs}px Sarabun, sans-serif`;
+        let t = items[i]; while (ctx.measureText(t).width > maxW && t.length > 2) t = t.slice(0, -2) + '…';
+        ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, fs / 7); ctx.strokeStyle = 'rgba(15,23,42,.35)'; ctx.strokeText(t, R - 30, 0); ctx.fillStyle = '#fff'; ctx.fillText(t, R - 30, 0); ctx.restore(); } }
     // เงาภายในให้มีมิติ
     const sh = ctx.createRadialGradient(0, 0, R * .2, 0, 0, R); sh.addColorStop(0, 'rgba(255,255,255,.18)'); sh.addColorStop(.7, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(0,0,0,.22)');
     ctx.beginPath(); ctx.arc(0, 0, R, 0, 7); ctx.fillStyle = sh; ctx.fill();
     // ขอบวงล้อทอง + หมุด/ไฟประดับ
     const rim = ctx.createLinearGradient(-R, -R, R, R); rim.addColorStop(0, '#fde68a'); rim.addColorStop(.5, '#d97706'); rim.addColorStop(1, '#fef3c7');
-    ctx.beginPath(); ctx.arc(0, 0, R + 2, 0, 7); ctx.lineWidth = 16; ctx.strokeStyle = rim; ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, R + 2, 0, 7); ctx.lineWidth = 20; ctx.strokeStyle = rim; ctx.stroke();
     const pegs = Math.max(n, 12) <= 40 ? Math.max(n, 12) : n;
-    for (let i = 0; i < pegs; i++) { const a = a0 + i * 2 * Math.PI / pegs; ctx.beginPath(); ctx.arc(Math.cos(a) * (R + 2), Math.sin(a) * (R + 2), 5.5, 0, 7); ctx.fillStyle = i % 2 ? '#fff' : '#fef08a'; ctx.shadowColor = '#fde047'; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0; }
+    for (let i = 0; i < pegs; i++) { const a = a0 + i * 2 * Math.PI / pegs; ctx.beginPath(); ctx.arc(Math.cos(a) * (R + 2), Math.sin(a) * (R + 2), 7, 0, 7); ctx.fillStyle = i % 2 ? '#fff' : '#fef08a'; ctx.shadowColor = '#fde047'; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0; }
     ctx.restore();
     $('#wN').textContent = items.length + ' รายการ';
   };

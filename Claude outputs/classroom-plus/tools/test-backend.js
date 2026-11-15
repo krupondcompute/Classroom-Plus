@@ -240,5 +240,42 @@ const dNow = R('adminDashboard', AD).data, dOld = R('adminDashboard', AD, { year
 ok(dOld.past && dOld.cards.courses <= dNow.cards.courses && dOld.days.length === 14 && dOld.days[13] === '2007-10-20', 'dashboard past term');
 ok(R('adminDashboard', AD, { year: 'x', term: '9' }).data.view === null, 'dashboard bad view ignored');
 ok(R('studentHome', s1, { year: '2550', term: '2' }).data.courses.length === 0, 'student home past term');
+// ---------- v4.9 ----------
+// งานกลุ่ม: จำกัดจำนวนสมาชิก
+const g9 = R('save', KA3, 'Assignments', { courseId: kc.id, title: 'งานกลุ่ม 2 คน', dueAt: '2099-01-01T10:00', group: 'true', groupMax: '2' }).data;
+ok(!R('save', KA3, 'Assignments', { courseId: kc.id, title: 'x', dueAt: '2099-01-01T10:00', groupMax: '99' }).ok, 'groupMax range');
+const s2id = R('me', s2).data.user.id, s3id = R('me', s3).data.user.id;
+ok(/ไม่เกิน 2/.test(R('submitWork', s1, g9.id, { text: 'ok', members: [s2id, s3id] }).error || ''), 'group max enforced');
+const gsub = R('submitWork', s1, g9.id, { text: 'งานกลุ่ม', members: [s2id] }); ok(gsub.ok, 'group within limit');
+// ครูแก้ไข / ลบงานที่ส่ง
+const subRow = R('listSubmissions', KA3, g9.id).data.rows.find(x => x.sub).sub;
+ok(R('editSubmission', KA3, subRow.id, { text: 'ครูแก้ไข' }).data.text === 'ครูแก้ไข', 'teacher edit submission');
+ok(R('editSubmission', s1, subRow.id, { text: 'x' }).code === 'FORBIDDEN', 'student cannot use teacher edit');
+ok(R('removeSubmission', KA3, subRow.id).ok && !R('listSubmissions', KA3, g9.id).data.rows.some(x => x.sub), 'teacher remove submission');
+// ประกาศหลายรายวิชา
+const kc2 = R('save', KA3, 'Courses', { name: 'วิชาที่สอง', code: 'ท99002', grade: 'ม.6', room: '3' }).data;
+const an2 = R('save', KA3, 'Announcements', { title: 'ประกาศสองวิชา', courseId: kc.id + ',' + kc2.id + ',' + kc.id });
+ok(an2.ok && an2.data.courseId.split(',').length === 2 && R('listAnnouncements', s1).data.some(a => a.title === 'ประกาศสองวิชา'), 'announcement multi course');
+// ตั้งค่าส่วนตัว
+ok(JSON.parse(R('updateProfile', KA3, { prefs: { themeColor: '#9333ea', schoolName: 'ห้องครูเอ' } }).data.prefs).themeColor === '#9333ea', 'personal prefs');
+ok(R('bootstrap', null).data.config.themeColor !== '#9333ea', 'prefs do not change system');
+ok(!R('updateProfile', KA3, { prefs: { themeColor: 'red' } }).ok, 'prefs validated');
+// เปลี่ยนชื่อชั้น/ห้อง
+ok(R('renameClass', AD, { grade: 'ม.6', room: '3', newGrade: 'ม.6', newRoom: '9' }).data.students >= 1 && R('me', s1).data.user.room === '9', 'rename room updates students');
+R('renameClass', AD, { grade: 'ม.6', room: '9', newGrade: 'ม.6', newRoom: '3' });
+ok(R('renameClass', s1, { grade: 'ม.6', newGrade: 'ม.7' }).code === 'FORBIDDEN', 'rename class admin only');
+// ฐานข้อมูลแยกภาคเรียน
+const nowCourses = R('list', AD, 'Courses').data.length;
+const tkey = R('getSettings', AD).data.curTerm, pastK = '2550/1';
+ok(R('createTermDb', AD, pastK).ok, 'create past term db');
+ok(!R('saveTermDb', AD, { key: '2550/3', sheetId: 'x' }).ok, 'term key validated');
+const VR = (vt, fn, tok, ...a) => ctx.rpc(fn, tok, a, vt);
+ok(VR(pastK, 'list', AD, 'Courses').data.length === 0, 'past term db empty');
+const pc = VR(pastK, 'save', AD, 'Courses', { name: 'วิชาในอดีต', code: 'ค00001' }); ok(pc.ok, 'save into past term db');
+ok(VR(pastK, 'list', AD, 'Courses').data.length === 1 && R('list', AD, 'Courses').data.length === nowCourses, 'term data isolated');
+ok(VR(pastK, 'me', AD).ok && VR(pastK, 'listUsers', AD).data.length === R('listUsers', AD).data.length, 'core tables shared');
+ok(R('createTermDb', AD, tkey).ok && R('list', AD, 'Courses').data.length === 0, 'current term uses its new db');
+ok(R('removeTermDb', AD, tkey).ok && R('list', AD, 'Courses').data.length === nowCourses, 'remove mapping restores main db');
+ok(R('getSettings', AD).data.termDbs.length === 1 && R('createTermDb', s1, '2551/1').code === 'FORBIDDEN', 'term db list + admin only');
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

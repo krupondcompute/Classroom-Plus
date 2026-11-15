@@ -68,7 +68,8 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.fill('[name=code]', 'ว21102'); await page.fill('[name=name]', 'วิทยาการคำนวณ 2'); await page.click('#crudSave'); await confirm(); await idle();
   ok(await page.isVisible('#tk >> text=ว21102'), 'category with subject code');
   await page.click('.dock [data-go=acourses]'); await idle(); ok(await page.$$eval('#cl .ccard', x => x.length) >= 1, 'course cards');
-  await page.click('#fab'); await page.waitForSelector('#modal.show'); await page.selectOption('[name=subject]', 'ว21102|วิทยาการคำนวณ 2');
+  await page.click('#fab'); await page.waitForSelector('#modal.show'); await page.click('[data-multi=subject] label:has-text("ว21102")');
+  ok(await page.inputValue('[name=subject]') === 'ว21102|วิทยาการคำนวณ 2', 'subject checkbox');
   await page.click('[data-multi=grade] label:has-text("ม.2")'); await page.click('[data-multi=room] label:has-text("ห้อง 3")');
   ok(await page.inputValue('[name=grade]') === 'ม.2' && await page.inputValue('[name=room]') === '3', 'multi checkbox values');
   await page.screenshot({ path: SHOT + '/06c-course-form.png' });
@@ -152,6 +153,18 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   // v4.8: ผู้ใช้ตามระดับชั้น + ข้อมูลการติดต่อ + ภาคเรียนย้อนหลัง
   ok(await page.isVisible('.grade-card') && await page.isVisible('[data-termsel]'), 'users grade cards + term filter');
   await page.click('[data-contact] >> nth=0'); await page.waitForSelector('#modal.show'); ok(await page.isVisible('#modal:has-text("ข้อมูลการติดต่อ")'), 'contact modal'); await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  // v4.9: ตัวกรองชั้น/ห้อง + คอลัมน์รหัสนักเรียนต่อจากเลขที่
+  await page.selectOption('#uG', 'ม.1'); await page.waitForTimeout(300);
+  ok(await page.evaluate(() => [...document.querySelectorAll('#ul thead th')].map(t => t.textContent.trim()).slice(0, 4).join('|')) === 'เลขที่|รหัสนักเรียน|ชื่อ-สกุล|ชั้น/ห้อง', 'student filter table columns');
+  ok(await page.evaluate(() => getComputedStyle(document.querySelector('#ul thead th')).textAlign) === 'center', 'table header centered');
+  await page.selectOption('#uG', ''); await page.waitForTimeout(200);
+  await page.click('#fab'); await page.waitForSelector('#modal.show'); await page.click('#modal [name=birthDate] + input, #modal input.flatpickr-input.form-control:not([type=hidden])').catch(() => {}); await page.waitForTimeout(300);
+  ok(await page.$('.flatpickr-calendar.open .fp-year') !== null, 'birth year dropdown'); await page.keyboard.press('Escape'); await page.click('#modal .btn-close').catch(() => {}); await page.waitForTimeout(400);
+  await page.click('#sideNav [data-go=classes]'); await idle(); ok(await page.$('[data-grename]') !== null, 'grade rename button');
+  await page.click('[data-gusers] >> nth=0'); await idle(); await page.waitForTimeout(300); ok(await page.evaluate(() => S.page === 'users' && document.querySelector('#uG').value !== ''), 'grade students → users filter');
+  await page.click('#sideToggle'); await page.waitForTimeout(700);
+  ok(await page.evaluate(() => { const a = document.querySelector('#sideNav button.active'), i = document.querySelector('#sideNav > .ind'); if (!a || !i) return false; const r1 = a.getBoundingClientRect(), r2 = i.getBoundingClientRect(); return Math.abs(r1.left - r2.left) < 3 && Math.abs(r1.width - r2.width) < 3; }), 'collapsed highlight aligned');
+  await page.screenshot({ path: SHOT + '/24-collapsed.png' }); await page.click('#sideToggle'); await page.waitForTimeout(600);
   await page.click('#sideNav [data-go=aassign]'); await idle(); const nA = await page.$$eval('#al tbody tr', x => x.length);
   const pastV = await page.$eval('[data-termsel]', s => s.options[2].value); await page.selectOption('[data-termsel]', pastV); await idle(); await page.waitForTimeout(400);
   ok(nA > 0 && !(await page.$('#al tbody tr:has-text("แบบทดสอบบทที่ 1")')), 'past term hides current assignments');
@@ -166,14 +179,15 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   ok(await page.isVisible('#modal .stat'), 'grade detail'); await page.click('#modal .btn-close'); await page.waitForTimeout(400);
   await page.click('#sideNav [data-go=acourses]'); await idle(); ok(await page.isVisible('[data-f=room]'), 'course room filter');
   await page.click('#fab'); await page.waitForSelector('#modal.show'); ok(await page.$('[data-multi=teachers]') !== null && !(await page.$('#modal [name=order]')), 'co-teacher field, no order');
+  ok(await page.$('#modal [data-multi=subject]') !== null, 'multi subject picker');
   await page.click('#modal .btn-close'); await page.waitForTimeout(400);
   ok(await page.evaluate(() => { const t = document.querySelector('#sideToggle').getBoundingClientRect(), h = document.querySelector('.topbar').getBoundingClientRect(); return Math.abs((t.top + t.height / 2) - innerHeight / 2) < 4; }), 'round toggle vertically centered');
   ok(await page.isVisible('#sideNav > .ind.on'), 'sliding indicator');
   await page.click('#sideNav [data-go=tools]'); await idle(); ok(await page.$$eval('.tool-card', x => x.length) === 6, '6 teacher tools');
   await page.screenshot({ path: SHOT + '/15-tools.png' });
   await page.click('[data-tool=wheel]'); await page.waitForSelector('#wCv');
-  ok(await page.evaluate(() => { const r = document.querySelector('.wheel-stage').getBoundingClientRect(); return Math.abs(r.left + r.width / 2 - innerWidth / 2) < 6; }), 'wheel centered');
-  await page.click('[data-tvside]'); await page.waitForTimeout(450); ok(await page.evaluate(() => document.querySelector('.tool-side').getBoundingClientRect().right <= innerWidth), 'settings drawer opens');
+  ok(await page.evaluate(() => { const r = document.querySelector('.wheel-stage').getBoundingClientRect(), b = document.querySelector('#tvBody'), cs = getComputedStyle(b), bl = b.getBoundingClientRect(), mid = bl.left + parseFloat(cs.paddingLeft) + (b.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)) / 2; return Math.abs(r.left + r.width / 2 - mid) < 8; }), 'wheel centered');
+  await page.waitForTimeout(450); ok(await page.evaluate(() => document.querySelector('.tool-side').getBoundingClientRect().right <= innerWidth), 'settings drawer open by default');
   await page.fill('#wDur', '2'); await page.dispatchEvent('#wDur', 'input'); await page.uncheck('#wSnd'); await page.click('[data-tvside]'); await page.waitForTimeout(400);
   await page.click('#wGo'); await page.waitForSelector('.tool-result', { timeout: 8000 }); ok(true, 'wheel spin result');
   await page.screenshot({ path: SHOT + '/16-wheel.png' }); await page.click('.swal2-confirm'); await page.click('[data-tvclose] >> nth=0');
@@ -181,7 +195,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('[data-tvclose] >> nth=0');
   await page.click('[data-tool=topic]'); await page.click('#tGo'); await page.waitForSelector('.tool-result', { timeout: 8000 }); ok(await page.$$eval('.tcard.flip', x => x.length) === 1, 'topic flip'); await page.click('.swal2-confirm'); await page.click('[data-tvclose] >> nth=0');
   await page.click('[data-tool=color]'); await page.click('#cGo'); await page.waitForTimeout(3600); ok(await page.isVisible('#cBig.pop'), 'color card'); await page.click('[data-tvclose] >> nth=0');
-  await page.click('[data-tool=bomb]'); await page.click('[data-tvside]'); await page.waitForTimeout(450); await page.fill('#bMin', '0'); await page.fill('#bSec', '2'); await page.dispatchEvent('#bSec', 'change'); await page.uncheck('#bTick'); await page.click('#bGo'); await page.waitForTimeout(3300);
+  await page.click('[data-tool=bomb]'); await page.waitForTimeout(450); await page.fill('#bMin', '0'); await page.fill('#bSec', '2'); await page.dispatchEvent('#bSec', 'change'); await page.uncheck('#bTick'); await page.click('#bGo'); await page.waitForTimeout(3300);
   ok((await page.textContent('#bTime')) === 'บึ้ม!', 'time bomb explodes'); await page.screenshot({ path: SHOT + '/17-bomb.png' }); await page.click('[data-tvclose] >> nth=0');
   await page.click('[data-tool=noise]'); ok(await page.isVisible('#nGo'), 'noise meter opens'); await page.click('[data-tvclose] >> nth=0'); ok(!(await page.$('#toolView')), 'tool closed');
   // แชท + แจ้งเตือน: นักเรียนส่งข้อความหาผู้ดูแลระบบ
@@ -191,8 +205,9 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   ok(await page.inputValue('#lgCode') === '24680', 'use found code');
   await page.click('#loginForm button[type=submit]'); await idle();
   ok(await page.isVisible('[data-helpbox]'), 'student help box'); await page.click('[data-helpbox]'); await idle(); await page.waitForSelector('[data-sc]');
-  await page.click('[data-sc] >> nth=0'); await page.waitForSelector('.swal2-input'); await page.fill('.swal2-input', '24680'); await page.click('.swal2-confirm'); await idle(); await page.waitForTimeout(300);
-  ok(await page.isVisible('.swal2-popup .contact-row'), 'student sees staff contacts after code'); await page.screenshot({ path: SHOT + '/19-contact.png' }); await page.click('.swal2-close'); await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  await page.click('[data-sc] >> nth=0'); await page.waitForSelector('.sc-form input'); await page.fill('.sc-form input', '24680'); await page.click('.sc-form button'); await idle(); await page.waitForTimeout(300);
+  ok(await page.isVisible('#modal .contact-row'), 'student sees staff contacts after code'); await page.screenshot({ path: SHOT + '/19-contact.png' }); await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  ok(await page.evaluate(() => { const b = document.querySelector('[data-helpbox]'); return b.scrollHeight <= b.clientHeight + 2 && getComputedStyle(b).whiteSpace === 'nowrap'; }), 'help button one line');
   await page.click('#bellBtn'); await page.waitForTimeout(400);
   const un0 = await page.$$eval('#notifList .unread', x => x.length); if (un0) { await page.click('#notifList .unread >> nth=0'); await idle(); await page.waitForTimeout(500); }
   ok(!un0 || (await page.$$eval('#notifList .unread', x => x.length)) === un0 - 1, 'notification marked read (' + un0 + ')');
@@ -213,6 +228,8 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   const mp = await m.newPage(); mp.on('pageerror', e => errs.push('m: ' + e.message));
   await mp.goto(url); await mp.waitForFunction(() => !document.querySelector('#loader.show')); await mp.waitForTimeout(400);
   await mp.screenshot({ path: SHOT + '/09-mobile-login.png', fullPage: true });
+  ok(await mp.evaluate(() => document.querySelector('#loginForm button[type=submit]').getBoundingClientRect().bottom <= innerHeight), 'mobile login fits without scrolling');
+  ok(await mp.isVisible('.bubble') && await mp.isVisible('.brand-line'), 'login bubble + line');
   await mp.click('[data-tab=admin]'); await mp.fill('#lgUser', 'admin'); await mp.fill('#lgPass', 'admin123'); await mp.click('#loginForm button[type=submit]');
   await mp.waitForSelector('#appView:not(.hidden)'); await mp.waitForFunction(() => !document.querySelector('#loader.show')); await mp.waitForTimeout(600);
   await mp.evaluate(() => { localStorage.setItem('cp_theme', 'dark'); document.documentElement.dataset.theme = 'dark'; document.documentElement.setAttribute('data-bs-theme', 'dark'); });

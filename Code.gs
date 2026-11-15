@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '4.8.0';
+const APP_VERSION = '4.9.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -26,7 +26,7 @@ const PRIVATE_CONFIG = ['lineToken'];
 const SCHEMA = {
   Config: ['key','value','updatedAt'],
   Users: ['id','role','username','studentCode','passSalt','passHash','prefix','fullName','birthDate','grade','room',
-    'email','avatar','status','mustChangePassword','createdAt','updatedAt','lastLoginAt','classNo','acadYear','nickname','contacts','coAdmin'],
+    'email','avatar','status','mustChangePassword','createdAt','updatedAt','lastLoginAt','classNo','acadYear','nickname','contacts','coAdmin','prefs'],
   Sessions: ['id','userId','tokenHash','expiresAt','createdAt'],
   Classes: ['id','grade','room','order','createdAt'],
   Categories: ['id','name','createdAt','code'],
@@ -34,7 +34,7 @@ const SCHEMA = {
   Lessons: ['id','courseId','unit','title','description','cover','videoUrl','videoDuration','attachments','links',
     'duration','order','publishAt','closeAt','ownerId','createdAt','updatedAt'],
   Progress: ['id','ownerId','lessonId','courseId','completed','videoPos','videoDone','views','updatedAt'],
-  Assignments: ['id','courseId','type','title','description','attachments','dueAt','maxScore','ownerId','createdAt','updatedAt','grade','room','group','quiz'],
+  Assignments: ['id','courseId','type','title','description','attachments','dueAt','maxScore','ownerId','createdAt','updatedAt','grade','room','group','quiz','groupMax'],
   Submissions: ['id','assignmentId','ownerId','text','files','driveLink','status','submittedAt','score','feedback',
     'gradedBy','gradedAt','history','updatedAt','members','answers','autoScore'],
   Announcements: ['id','type','title','body','attachments','image','pinned','courseId','grade','room','ownerId','createdAt','updatedAt'],
@@ -51,7 +51,7 @@ const EDITABLE = {
   Categories: ['code','name'],
   Courses: ['code','name','description','category','grade','room','cover','teacher','order','ownerId','teachers','acadYear','term'],
   Lessons: ['courseId','unit','title','description','cover','videoUrl','videoDuration','attachments','links','duration','order','publishAt','closeAt','ownerId'],
-  Assignments: ['courseId','type','title','description','attachments','dueAt','maxScore','ownerId','grade','room','group','quiz'],
+  Assignments: ['courseId','type','title','description','attachments','dueAt','maxScore','ownerId','grade','room','group','quiz','groupMax'],
   Announcements: ['type','title','body','attachments','image','pinned','courseId','grade','room','ownerId']
 };
 const REQUIRED = { Classes: ['grade'], Categories: ['name'], Courses: ['name'], Lessons: ['courseId','title'],
@@ -71,13 +71,14 @@ function doGet() {
 function doPost(e) {
   let req = {};
   try { req = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (x) {}
-  const out = rpc(String(req.fn || ''), req.token || null, Array.isArray(req.args) ? req.args : []);
+  const out = rpc(String(req.fn || ''), req.token || null, Array.isArray(req.args) ? req.args : [], String(req.vt || ''));
   return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
 }
 
 /** จุดเข้าเดียวจากหน้าเว็บ: google.script.run.rpc(fn, token, args) */
-function rpc(fn, token, args) {
+function rpc(fn, token, args, vt) {
   try {
+    useTerm_(String(vt || ''));
     const route = ROUTES[fn];
     if (!route) throw err_('ไม่พบคำสั่ง ' + fn);
     const ctx = { token: token, user: null };
@@ -120,7 +121,8 @@ const ROUTES = {
   deleteUser: ['admin', deleteUser_], setCoAdmin: ['admin', setCoAdmin_],
   setRole: ['admin', setRole_], getSettings: ['admin', getSettings_], saveSettings: ['admin', saveSettings_],
   auditLog: ['admin', auditLog_], backupNow: ['admin', function () { return backup_(); }],
-  listBackups: ['admin', listBackups_], restoreBackup: ['admin', restoreBackup_], installTriggers: ['admin', installTriggers_]
+  listBackups: ['admin', listBackups_], saveTermDb: ['admin', saveTermDb_], createTermDb: ['admin', createTermDb_], removeTermDb: ['admin', removeTermDb_],
+  editSubmission: ['staff', editSubmission_], removeSubmission: ['staff', removeSubmission_], renameClass: ['admin', renameClass_], restoreBackup: ['admin', restoreBackup_], installTriggers: ['admin', installTriggers_]
 };
 
 /** ผู้ดูแลระบบ = admin หลัก หรือครูที่ได้รับสิทธิ์ผู้ดูแลระบบร่วม (coAdmin) */
@@ -146,11 +148,35 @@ const MEM_ = {};
 let SS_ = null;
 function props_() { return PropertiesService.getScriptProperties(); }
 function sheetId_() { return props_().getProperty('SHEET_ID') || DEFAULTS.SHEET_ID; }
-function driveId_() { return props_().getProperty('DRIVE_ID') || DEFAULTS.DRIVE_ID; }
+function coreDriveId_() { return props_().getProperty('DRIVE_ID') || DEFAULTS.DRIVE_ID; }
+/** โฟลเดอร์เก็บไฟล์: ใช้โฟลเดอร์ของภาคเรียน (ถ้าตั้งไว้) ไม่งั้นใช้โฟลเดอร์หลัก */
+function driveId_() { return termDb_().driveId || coreDriveId_(); }
 function ss_() { return SS_ || (SS_ = SpreadsheetApp.openById(sheetId_())); }
+/* ---------- ฐานข้อมูลแยกตามภาคเรียน/ปีการศึกษา ----------
+ * ตารางหลัก (ผู้ใช้ เซสชัน ตั้งค่า ชั้นเรียน หมวดหมู่ แชท แจ้งเตือน Log) อยู่ในไฟล์หลักเสมอ
+ * ตารางการเรียน (รายวิชา บทเรียน ความคืบหน้า งาน งานที่ส่ง ประกาศ) อยู่ในไฟล์ของภาคเรียนนั้น (ถ้าแอดมินตั้งไว้) */
+const TERM_TABLES = { Courses: 1, Lessons: 1, Progress: 1, Assignments: 1, Submissions: 1, Announcements: 1 };
+let TERM_ = null, TSS_ = null;
+function dbMap_() { const m = json_(props_().getProperty('DB_MAP'), {}); return m && typeof m === 'object' ? m : {}; }
+function curTermKey_() { const t = term_(); return t.year + '/' + t.term; }
+function resolveTerm_(vt) {
+  const m = dbMap_(), k = vt && /^25\d\d\/[12]$/.test(vt) ? vt : curTermKey_(), e = m[k];
+  return e && e.sheetId ? { key: k, sheetId: e.sheetId, driveId: e.driveId || '' } : { key: k, sheetId: '', driveId: '' };
+}
+function termDb_() { return TERM_ || (TERM_ = resolveTerm_('')); }
+/** เลือกฐานข้อมูลภาคเรียนสำหรับคำขอนี้ (vt = 'ปี/ภาค' ที่หน้าเว็บกำลังดู) */
+function useTerm_(vt) {
+  const t = resolveTerm_(vt), old = termDb_();
+  TERM_ = t;
+  if (old.sheetId !== t.sheetId) { TSS_ = null; Object.keys(TERM_TABLES).forEach(n => { delete MEM_[n]; delete MEM_['_h_' + n]; }); }
+}
+function ssFor_(name) { const t = termDb_(); return TERM_TABLES[name] && t.sheetId ? (TSS_ || (TSS_ = SpreadsheetApp.openById(t.sheetId))) : ss_(); }
+/** คีย์แคชแยกตามไฟล์ฐานข้อมูล */
+function ck_(name) { const t = termDb_(); return TERM_TABLES[name] && t.sheetId ? t.sheetId.slice(-10) + ':' + name : name; }
 function sheet_(name) {
-  let sh = ss_().getSheetByName(name);
-  if (!sh) { ensureSheet_(ss_(), name); sh = ss_().getSheetByName(name); }
+  const ss = ssFor_(name);
+  let sh = ss.getSheetByName(name);
+  if (!sh) { ensureSheet_(ss, name); sh = ss.getSheetByName(name); }
   return sh;
 }
 function ensureSheet_(ss, name) {
@@ -170,14 +196,14 @@ function ensureSheet_(ss, name) {
 /* แคชข้อมูลชีตใน CacheService (เร็วกว่าอ่านชีตทุกครั้งมาก) — เปลี่ยนเวอร์ชันทุกครั้งที่เขียน */
 const NO_CACHE = { Sessions: 1 };
 function cache_() { return CacheService.getScriptCache(); }
-function ver_(name) { let v = cache_().get('v_' + name); if (!v) { v = id_(); cache_().put('v_' + name, v, 21600); } return v; }
-function bump_(name) { try { cache_().put('v_' + name, id_(), 21600); } catch (e) {} }
+function ver_(name) { const k = 'v_' + ck_(name); let v = cache_().get(k); if (!v) { v = id_(); cache_().put(k, v, 21600); } return v; }
+function bump_(name) { try { cache_().put('v_' + ck_(name), id_(), 21600); } catch (e) {} }
 function cacheGet_(name) {
   if (NO_CACHE[name]) return null;
   try {
-    const c = cache_(), v = ver_(name), n = Number(c.get('n_' + name + v) || 0);
+    const c = cache_(), v = ver_(name), q = ck_(name), n = Number(c.get('n_' + q + v) || 0);
     if (!n) return null;
-    const keys = []; for (let i = 0; i < n; i++) keys.push('c_' + name + v + '_' + i);
+    const keys = []; for (let i = 0; i < n; i++) keys.push('c_' + q + v + '_' + i);
     const got = c.getAll(keys);
     if (keys.some(k => got[k] == null)) return null;
     return JSON.parse(keys.map(k => got[k]).join(''));
@@ -188,10 +214,10 @@ function cachePut_(name, list) {
   try {
     const s = JSON.stringify(list), size = 30000;
     if (s.length > 3000000) return;
-    const c = cache_(), v = ver_(name), obj = {}; let n = 0;
-    for (let i = 0; i < s.length; i += size) obj['c_' + name + v + '_' + (n++)] = s.slice(i, i + size);
-    if (!n) obj['c_' + name + v + '_' + (n++)] = '[]';
-    c.putAll(obj, 21600); c.put('n_' + name + v, String(n), 21600);
+    const c = cache_(), v = ver_(name), q = ck_(name), obj = {}; let n = 0;
+    for (let i = 0; i < s.length; i += size) obj['c_' + q + v + '_' + (n++)] = s.slice(i, i + size);
+    if (!n) obj['c_' + q + v + '_' + (n++)] = '[]';
+    c.putAll(obj, 21600); c.put('n_' + q + v, String(n), 21600);
   } catch (e) {}
 }
 function headers_(name) {
@@ -516,6 +542,14 @@ function contacts_(v) {
   });
   return list;
 }
+/** ค่าตั้งค่าส่วนตัวของครู/แอดมิน (ไม่กระทบผู้อื่น): สีระบบ ชื่อระบบ โลโก้ */
+function prefs_(v) {
+  const o = typeof v === 'string' ? json_(v, {}) : (v || {}), out = {};
+  if (o.themeColor) { if (!/^#[0-9a-f]{6}$/i.test(o.themeColor)) throw err_('รหัสสีไม่ถูกต้อง'); out.themeColor = o.themeColor; }
+  if (o.schoolName) out.schoolName = str_(o.schoolName, 100);
+  if (o.logo) { const l = str_(o.logo, 48000); if (!(imgOk_(l) || /^data:image\/svg\+xml;base64,/.test(l))) throw err_('โลโก้ไม่ถูกต้อง'); out.logo = l; }
+  return JSON.stringify(out);
+}
 function myCourseIds_(u) { return u && u.role === 'student' ? rows_('Courses').filter(c => courseOk_(u, c)).map(c => c.id) : []; }
 function updateProfile_(ctx, d) {
   d = d || {};
@@ -528,6 +562,7 @@ function updateProfile_(ctx, d) {
   if (d.contacts !== undefined) patch.contacts = contacts_(d.contacts);
   if (d.birthDate !== undefined) { const b = str_(d.birthDate, 10); if (b && !/^\d{4}-\d{2}-\d{2}$/.test(b)) throw err_('วันเกิดไม่ถูกต้อง'); patch.birthDate = b; }
   if (d.nickname !== undefined) patch.nickname = str_(d.nickname, 40);
+  if (d.prefs !== undefined && staff_(u)) patch.prefs = prefs_(d.prefs);
   return lock_(() => {
     if (u.role === 'student' && d.studentCode !== undefined && d.studentCode !== u.studentCode) {
       const code = str_(d.studentCode, 5);
@@ -558,7 +593,7 @@ function lessonOk_(u, l) {
   const n = now_();
   return (!l.publishAt || dt_(l.publishAt) <= n) && (!l.closeAt || dt_(l.closeAt) > n);
 }
-function annOk_(u, a) { return match_(u, a.grade, a.room) && (!a.courseId || courseOk_(u, find_('Courses', a.courseId))); }
+function annOk_(u, a) { return match_(u, a.grade, a.room) && (!a.courseId || String(a.courseId).split(',').some(c => courseOk_(u, find_('Courses', c)))); }
 function byOrder_(a, b) { return (Number(a.order) || 0) - (Number(b.order) || 0) || String(a.createdAt).localeCompare(String(b.createdAt)); }
 function subStatus_(a, s) {
   if (s && s.score !== '') return 'graded';
@@ -639,6 +674,8 @@ function saveProgress_(ctx, lessonId, d) {
   return pub_(upsertProgress_(ctx.user, l, d || {}));
 }
 /* ---------- งานกลุ่ม ---------- */
+/** จำนวนสมาชิกสูงสุดของกลุ่ม (รวมตัวแทน) — ครูกำหนดได้ 2–50 · ไม่กำหนด = 16 */
+const groupMax_ = a => { const n = Math.floor(Number(a && a.groupMax)); return n >= 2 && n <= 50 ? n : 16; };
 const isGroup_ = a => a.group === 'true' || /กลุ่ม/.test(a.type || '');
 const members_ = s => json_(s && s.members, []);
 const inSub_ = (s, uid) => s.ownerId === uid || members_(s).indexOf(uid) >= 0;
@@ -772,7 +809,8 @@ function submitWork_(ctx, assignmentId, d) {
     let members = [];
     if (isGroup_(a) && Array.isArray(d.members)) {
       const ok = {}; groupCandidates_(ctx, a.id, '', '').forEach(x => ok[x.id] = 1);
-      members = d.members.map(String).filter((m, i, arr) => arr.indexOf(m) === i && m !== u.id).slice(0, 15);
+      members = d.members.map(String).filter((m, i, arr) => arr.indexOf(m) === i && m !== u.id);
+      const gmax = groupMax_(a); if (members.length + 1 > gmax) throw err_('กลุ่มนี้มีสมาชิกได้ไม่เกิน ' + gmax + ' คน (รวมตัวแทนกลุ่ม)');
       const bad = members.find(m => !ok[m] && !(s && members_(s).indexOf(m) >= 0));
       if (bad) throw err_(nameOf_(bad) + ' อยู่ในกลุ่มอื่นหรือส่งงานนี้แล้ว');
     }
@@ -809,6 +847,62 @@ function deleteSubmission_(ctx, assignmentId) {
     deleteWhere_('Submissions', x => x.id === s.id);
     log_(ctx.user.id, 'unsubmit', assignmentId);
     return true;
+  });
+}
+/** ครู: แก้ไขรายละเอียดงานที่นักเรียนส่ง (ข้อความ ลิงก์ ไฟล์ สมาชิกกลุ่ม) */
+function editSubmission_(ctx, subId, d) {
+  d = d || {};
+  return lock_(() => {
+    delete MEM_.Submissions;
+    const s = find_('Submissions', subId); if (!s) throw err_('ไม่พบงานที่ส่ง');
+    const a = find_('Assignments', s.assignmentId);
+    if (!a || !ownCourse_(ctx.user, a.courseId)) throw err_('คุณไม่มีสิทธิ์แก้ไขงานของรายวิชานี้', 'FORBIDDEN');
+    const patch = { updatedAt: now_() };
+    if (d.text !== undefined) patch.text = str_(d.text, 20000);
+    if (d.driveLink !== undefined) { const l = str_(d.driveLink, 500); if (l && !/^https?:\/\//.test(l)) throw err_('ลิงก์ไม่ถูกต้อง'); patch.driveLink = l; }
+    if (d.files !== undefined) { const f = cleanFiles_(d.files); purge_(fileIds_({ files: s.files }).filter(id => fileIds_({ files: f }).indexOf(id) < 0)); patch.files = f; }
+    if (d.members !== undefined && isGroup_(a)) {
+      const m = (Array.isArray(d.members) ? d.members : []).map(String).filter((x, i, l) => x && x !== s.ownerId && l.indexOf(x) === i);
+      if (m.length + 1 > groupMax_(a)) throw err_('กลุ่มนี้มีสมาชิกได้ไม่เกิน ' + groupMax_(a) + ' คน');
+      const other = rows_('Submissions').find(x => x.assignmentId === a.id && x.id !== s.id && m.some(id => inSub_(x, id)));
+      if (other) throw err_('มีสมาชิกที่อยู่ในกลุ่มอื่นแล้ว');
+      patch.members = m;
+    }
+    if (d.status !== undefined && ['ontime', 'late'].indexOf(d.status) >= 0) patch.status = d.status;
+    const hist = json_(s.history, []); hist.push({ at: s.updatedAt || s.submittedAt, text: s.text, files: json_(s.files, []).length, link: s.driveLink, by: 'teacher' }); patch.history = hist.slice(-20);
+    updateRow_('Submissions', s, patch);
+    log_(ctx.user.id, 'teacher_edit_submission', s.id);
+    return pub_(s);
+  });
+}
+/** ครู: ลบงานที่นักเรียนส่ง (ไฟล์ใน Drive ถูกลบด้วย) — นักเรียนส่งใหม่ได้ */
+function removeSubmission_(ctx, subId) {
+  return lock_(() => {
+    delete MEM_.Submissions;
+    const s = find_('Submissions', subId); if (!s) throw err_('ไม่พบงานที่ส่ง');
+    const a = find_('Assignments', s.assignmentId);
+    if (!a || !ownCourse_(ctx.user, a.courseId)) throw err_('คุณไม่มีสิทธิ์ลบงานของรายวิชานี้', 'FORBIDDEN');
+    purge_(fileIds_(s));
+    deleteWhere_('Submissions', x => x.id === s.id);
+    notifyUsers_([s.ownerId].concat(members_(s)), 'ครูลบงานที่ส่ง', 'งาน "' + a.title + '" ถูกลบ กรุณาส่งใหม่', 'assignment:' + a.id);
+    log_(ctx.user.id, 'teacher_remove_submission', s.id);
+    return true;
+  });
+}
+/** แอดมิน: เปลี่ยนชื่อระดับชั้น/ห้อง — อัปเดตนักเรียนในชั้น/ห้องนั้นให้ด้วย */
+function renameClass_(ctx, d) {
+  d = d || {};
+  const og = str_(d.grade, 30), orr = str_(d.room, 30), ng = cleanSeg_(str_(d.newGrade, 30)), nr = cleanSeg_(str_(d.newRoom, 30));
+  if (!og || !ng) throw err_('กรุณาระบุระดับชั้น');
+  return lock_(() => {
+    delete MEM_.Users; delete MEM_.Classes;
+    let nu = 0;
+    rows_('Users').forEach(u => { if (u.role === 'student' && u.grade === og && (d.room === undefined || u.room === orr)) { updateRow_('Users', u, d.room === undefined ? { grade: ng } : { grade: ng, room: nr }); nu++; } });
+    rows_('Classes').forEach(c => { if (c.grade === og && (d.room === undefined || (c.room || '') === orr)) updateRow_('Classes', c, d.room === undefined ? { grade: ng } : { grade: ng, room: nr }); });
+    // รวมรายการซ้ำหลังเปลี่ยนชื่อ
+    const seen = {}; deleteWhere_('Classes', c => { const k = c.grade + '|' + (c.room || ''); if (seen[k]) return true; seen[k] = 1; return false; });
+    log_(ctx.user.id, 'rename_class', og + '/' + orr + ' → ' + ng + '/' + nr);
+    return { students: nu };
   });
 }
 function listAnnouncements_(ctx) {
@@ -875,9 +969,10 @@ function folderFor_(user, path) {
     segs = segs[0] === 'รูปภาพ' ? ['รูปภาพ', 'โปรไฟล์'] : [types.indexOf(segs[0]) >= 0 ? segs[0] : 'งานอื่น ๆ', 'งานที่นักเรียนส่ง'];
   }
   if (!segs.length) segs = ['ไฟล์ทั่วไป'];
-  const key = 'fd_' + driveId_() + '_' + segs.join('/'), cached = cache_().get(key);
+  const root = segs[0] === 'Backups' || (segs[0] === 'รูปภาพ' && /โปรไฟล์|โลโก้/.test(segs[1] || '')) ? coreDriveId_() : driveId_(); // ไฟล์ส่วนกลางอยู่โฟลเดอร์หลักเสมอ
+  const key = 'fd_' + root + '_' + segs.join('/'), cached = cache_().get(key);
   if (cached) { try { return DriveApp.getFolderById(cached); } catch (e) {} }
-  let f = DriveApp.getFolderById(driveId_());
+  let f = DriveApp.getFolderById(root);
   segs.forEach(s => { const it = f.getFoldersByName(s); f = it.hasNext() ? it.next() : f.createFolder(s); });
   cache_().put(key, f.getId(), 21600);
   return f;
@@ -1013,7 +1108,7 @@ function rowOwned_(u, entity, r) {
   if (isAdmin_(u)) return true;
   if (entity === 'Classes' || entity === 'Categories') return true;
   if (entity === 'Courses') return teaches_(u, r);
-  if (entity === 'Announcements') return r.courseId ? ownCourse_(u, r.courseId) : r.ownerId === u.id;
+  if (entity === 'Announcements') return r.courseId ? String(r.courseId).split(',').every(c => ownCourse_(u, c)) : r.ownerId === u.id;
   return ownCourse_(u, r.courseId);
 }
 function list_(ctx, entity) {
@@ -1044,10 +1139,12 @@ function save_(ctx, entity, obj) {
   if (entity === 'Classes' && !isAdmin_(me)) throw err_('เฉพาะผู้ดูแลระบบจัดการชั้นเรียนได้', 'FORBIDDEN');
   const data = {};
   EDITABLE[entity].forEach(k => { if (obj[k] !== undefined) data[k] = typeof obj[k] === 'object' ? obj[k] : str_(obj[k], k === 'description' || k === 'body' ? 20000 : (k === 'cover' || k === 'image' ? 48000 : k === 'quiz' ? 45000 : 2000)); });
+  if (data.groupMax !== undefined) { const n = Math.floor(Number(data.groupMax)); if (data.groupMax !== '' && !(n >= 2 && n <= 50)) throw err_('จำนวนสมาชิกต่อกลุ่มต้องอยู่ระหว่าง 2–50 คน'); data.groupMax = data.groupMax === '' ? '' : String(n); }
+  if (entity === 'Announcements' && data.courseId !== undefined) data.courseId = String(data.courseId).split(',').map(x => x.trim()).filter((x, i, l) => x && l.indexOf(x) === i).slice(0, 30).join(',');
   if (data.quiz !== undefined) { const q = quiz_(data.quiz); data.quiz = q ? JSON.stringify(q) : ''; if (q && q.total > 0) data.maxScore = String(q.total); }
   if (!isAdmin_(me)) {
     delete data.ownerId;
-    if (data.courseId && !ownCourse_(me, data.courseId)) throw err_('คุณไม่ใช่ครูผู้สอนของรายวิชานี้', 'FORBIDDEN');
+    if (data.courseId && String(data.courseId).split(',').some(c => !ownCourse_(me, c))) throw err_('คุณไม่ใช่ครูผู้สอนของรายวิชานี้', 'FORBIDDEN');
     if (obj.id) { const old = find_(entity, obj.id); if (old && !rowOwned_(me, entity, old)) throw err_('คุณไม่มีสิทธิ์แก้ไขข้อมูลนี้', 'FORBIDDEN'); }
     if (entity === 'Courses' && obj.id) { const old = find_('Courses', obj.id); if (old && old.ownerId !== me.id) delete data.teachers; } // ครูร่วมสอนแก้รายชื่อครูไม่ได้
   } else if (entity === 'Courses' && data.ownerId === '') delete data.ownerId;
@@ -1059,7 +1156,7 @@ function save_(ctx, entity, obj) {
   if (data.maxScore !== undefined && !(Number(data.maxScore) > 0)) throw err_('คะแนนเต็มต้องมากกว่า 0');
   ['dueAt', 'publishAt', 'closeAt'].forEach(k => { if (data[k]) data[k] = dt_(data[k]); });
   if (data.publishAt && data.closeAt && data.closeAt <= data.publishAt) throw err_('วันปิดการเข้าถึงต้องหลังวันเผยแพร่');
-  if (data.courseId && !find_('Courses', data.courseId)) throw err_('ไม่พบรายวิชา');
+  if (data.courseId && String(data.courseId).split(',').some(c => !find_('Courses', c))) throw err_('ไม่พบรายวิชา');
   if (entity === 'Courses' && data.teachers !== undefined) {
     data.teachers = String(Array.isArray(data.teachers) ? data.teachers.join(',') : data.teachers).split(',').map(x => x.trim())
       .filter((x, i, a) => x && a.indexOf(x) === i && staff_(find_('Users', x) || {})).slice(0, 20).join(',');
@@ -1080,7 +1177,7 @@ function save_(ctx, entity, obj) {
       log_(ctx.user.id, 'create_' + entity, row.id);
       if (entity === 'Lessons' && !(row.publishAt && row.publishAt > now_())) broadcast_(studentsFor_('', '', row.courseId), 'บทเรียนใหม่: ' + row.title, find_('Courses', row.courseId).name, 'lesson:' + row.id);
       if (entity === 'Assignments') broadcast_(studentsFor_(row.grade, row.room, row.courseId), row.type + 'ใหม่: ' + row.title, 'กำหนดส่ง ' + row.dueAt.replace('T', ' ').slice(0, 16), 'assignment:' + row.id);
-      if (entity === 'Announcements') broadcast_(studentsFor_(row.grade, row.room, row.courseId), (row.type || 'ประกาศ') + ': ' + row.title, str_(row.body, 200), 'announcement:' + row.id);
+      if (entity === 'Announcements') broadcast_(row.courseId ? (() => { const seen = {}, out = []; row.courseId.split(',').forEach(c => studentsFor_(row.grade, row.room, c).forEach(x => { if (!seen[x.id]) { seen[x.id] = 1; out.push(x); } })); return out; })() : studentsFor_(row.grade, row.room, ''), (row.type || 'ประกาศ') + ': ' + row.title, str_(row.body, 200), 'announcement:' + row.id);
     }
     return pub_(row);
   });
@@ -1564,15 +1661,15 @@ function saveStudentMenus_(ctx, v) {
   return out;
 }
 function getSettings_() {
-  return { config: cfg_(), sheetId: sheetId_(), driveId: driveId_(), sheetUrl: 'https://docs.google.com/spreadsheets/d/' + sheetId_(),
-    driveUrl: 'https://drive.google.com/drive/folders/' + driveId_(), webAppUrl: ScriptApp.getService().getUrl(),
+  return { config: cfg_(), sheetId: sheetId_(), driveId: coreDriveId_(), sheetUrl: 'https://docs.google.com/spreadsheets/d/' + sheetId_(),
+    driveUrl: 'https://drive.google.com/drive/folders/' + coreDriveId_(), termDbs: termDbList_(), curTerm: curTermKey_(), webAppUrl: ScriptApp.getService().getUrl(),
     triggers: ScriptApp.getProjectTriggers().map(t => t.getHandlerFunction()) };
 }
 function extractId_(s) { s = str_(s, 300); const m = s.match(/[-\w]{25,}/); return m ? m[0] : ''; }
 function saveSettings_(ctx, d) {
   d = d || {};
   const res = { reloaded: false };
-  if (d.driveId !== undefined && extractId_(d.driveId) !== driveId_()) {
+  if (d.driveId !== undefined && extractId_(d.driveId) !== coreDriveId_()) {
     const id = extractId_(d.driveId);
     try { DriveApp.getFolderById(id).getName(); } catch (e) { throw err_('เปิดโฟลเดอร์ Google Drive นี้ไม่ได้ ตรวจสอบ ID และสิทธิ์'); }
     props_().setProperty('DRIVE_ID', id);
@@ -1601,6 +1698,42 @@ function saveSettings_(ctx, d) {
   }
   log_(ctx.user.id, 'save_settings', Object.keys(d.config || {}).join(','));
   return res;
+}
+/* ---------- จัดการฐานข้อมูลรายภาคเรียน (แอดมิน) ---------- */
+function termDbList_() {
+  const m = dbMap_(), cur = curTermKey_();
+  return Object.keys(m).sort().reverse().map(k => ({ key: k, sheetId: m[k].sheetId || '', driveId: m[k].driveId || '', current: k === cur,
+    sheetUrl: m[k].sheetId ? 'https://docs.google.com/spreadsheets/d/' + m[k].sheetId : '', driveUrl: m[k].driveId ? 'https://drive.google.com/drive/folders/' + m[k].driveId : '', createdAt: m[k].createdAt || '' }));
+}
+function termKeyOk_(k) { k = str_(k, 7); if (!/^25\d\d\/[12]$/.test(k)) throw err_('ภาคเรียนไม่ถูกต้อง (เช่น 2569/2)'); return k; }
+/** เตรียมตารางการเรียนในไฟล์ภาคเรียน */
+function setupTermSheets_(sheetId) { const ss = SpreadsheetApp.openById(sheetId); Object.keys(TERM_TABLES).forEach(n => ensureSheet_(ss, n)); }
+function saveTermDb_(ctx, d) {
+  d = d || {}; const k = termKeyOk_(d.key), sid = extractId_(d.sheetId), did = extractId_(d.driveId);
+  if (!sid) throw err_('กรุณาใส่ Google Sheet ID หรือ URL');
+  if (sid === sheetId_()) throw err_('ใช้ไฟล์เดียวกับฐานข้อมูลหลักไม่ได้ — ถ้าต้องการเก็บรวมกัน ให้ลบรายการภาคเรียนนี้แทน');
+  try { SpreadsheetApp.openById(sid).getName(); } catch (e) { throw err_('เปิด Google Sheet นี้ไม่ได้ ตรวจสอบ ID และสิทธิ์'); }
+  if (did) { try { DriveApp.getFolderById(did).getName(); } catch (e) { throw err_('เปิดโฟลเดอร์ Google Drive นี้ไม่ได้ ตรวจสอบ ID และสิทธิ์'); } }
+  return lock_(() => {
+    const m = dbMap_(); m[k] = { sheetId: sid, driveId: did, createdAt: (m[k] && m[k].createdAt) || now_() };
+    props_().setProperty('DB_MAP', JSON.stringify(m)); setupTermSheets_(sid);
+    log_(ctx.user.id, 'term_db', k + ' ' + sid);
+    return termDbList_();
+  });
+}
+/** สร้างไฟล์ Google Sheet + โฟลเดอร์ Drive ใหม่ให้ภาคเรียนนั้นอัตโนมัติ */
+function createTermDb_(ctx, key) {
+  const k = termKeyOk_(key), m = dbMap_();
+  if (m[k] && m[k].sheetId) throw err_('ภาคเรียนนี้มีฐานข้อมูลแล้ว');
+  const label = 'ภาคเรียนที่ ' + k.split('/')[1] + '-' + k.split('/')[0], name = (cfg_().schoolName || 'Classroom +') + ' — ข้อมูล' + label;
+  const book = SpreadsheetApp.create(name), root = DriveApp.getFolderById(coreDriveId_()), it = root.getFoldersByName('ข้อมูล' + label);
+  const fd = it.hasNext() ? it.next() : root.createFolder('ข้อมูล' + label);
+  try { DriveApp.getFileById(book.getId()).moveTo(fd); } catch (e) {}
+  return saveTermDb_(ctx, { key: k, sheetId: book.getId(), driveId: fd.getId() });
+}
+function removeTermDb_(ctx, key) {
+  const k = termKeyOk_(key);
+  return lock_(() => { const m = dbMap_(); delete m[k]; props_().setProperty('DB_MAP', JSON.stringify(m)); log_(ctx.user.id, 'term_db_remove', k); return termDbList_(); });
 }
 function backup_() {
   const name = 'Backup ' + cfg_().schoolName + ' ' + Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HHmm');

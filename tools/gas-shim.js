@@ -23,8 +23,9 @@
   const persist = () => { try { G.localStorage && G.localStorage.setItem(KEY, JSON.stringify(DB)); } catch (e) {} };
   G.__resetShim = () => { DB = { sheets: {}, props: {}, files: {} }; persist(); };
   G.__shimDB = () => DB;
-  function Range(sh, r, c, nr, nc) {
-    const data = () => DB.sheets[sh];
+  const BK = bid => (DB.books && DB.books[bid]) || DB.sheets;
+  function Range(sh, r, c, nr, nc, bid) {
+    const data = () => BK(bid)[sh];
     const self = {
       getValues() { const d = data(), out = []; for (let i = 0; i < nr; i++) { const row = []; for (let j = 0; j < nc; j++) row.push(((d[r-1+i]||[])[c-1+j]) ?? ''); out.push(row); } return out; },
       setValues(v) { const d = data(); for (let i = 0; i < nr; i++) { d[r-1+i] = d[r-1+i] || []; for (let j = 0; j < nc; j++) { let x = v[i][j]; if (typeof x === 'string' && x[0] === "'") x = x.slice(1); d[r-1+i][c-1+j] = x; } } persist(); return self; },
@@ -33,25 +34,26 @@
     };
     return self;
   }
-  function Sheet(name) {
-    const d = () => DB.sheets[name];
+  function Sheet(name, bid) {
+    const d = () => BK(bid)[name];
     const lastRow = () => { const a = d(); let n = a.length; while (n && !(a[n-1]||[]).some(x => x !== '' && x != null)) n--; return n; };
     return {
       getName: () => name, getLastRow: lastRow,
       getLastColumn: () => d().reduce((m, r) => { let n = (r||[]).length; while (n && (r[n-1] === '' || r[n-1] == null)) n--; return Math.max(m, n); }, 0),
       getMaxRows: () => Math.max(1000, d().length), getMaxColumns: () => 26,
-      getRange: (r, c, nr = 1, nc = 1) => Range(name, r, c, nr, nc),
-      getDataRange() { return Range(name, 1, 1, Math.max(lastRow(), 1), Math.max(this.getLastColumn(), 1)); },
+      getRange: (r, c, nr = 1, nc = 1) => Range(name, r, c, nr, nc, bid),
+      getDataRange() { return Range(name, 1, 1, Math.max(lastRow(), 1), Math.max(this.getLastColumn(), 1), bid); },
       appendRow(row) { const a = d(), n = lastRow(); a[n] = row.map(x => typeof x === 'string' && x[0] === "'" ? x.slice(1) : x); a.length = n + 1; persist(); },
       deleteRow(r) { d().splice(r - 1, 1); persist(); },
-      setFrozenRows() {}, clearContents() { DB.sheets[name] = []; persist(); }
+      setFrozenRows() {}, clearContents() { BK(bid)[name] = []; persist(); }
     };
   }
   function Spreadsheet(id) {
     return { getId: () => id, getName: () => 'Classroom PLus DB', getUrl: () => 'https://docs.google.com/spreadsheets/d/' + id,
-      getSheetByName: n => DB.sheets[n] ? Sheet(n) : null, insertSheet: n => { DB.sheets[n] = []; persist(); return Sheet(n); }, deleteSheet: sh => { delete DB.sheets[sh.getName()]; persist(); } };
+      getSheetByName: n => BK(id)[n] ? Sheet(n, id) : null, insertSheet: n => { BK(id)[n] = []; persist(); return Sheet(n, id); }, deleteSheet: sh => { delete BK(id)[sh.getName()]; persist(); } };
   }
-  G.SpreadsheetApp = { openById: id => Spreadsheet(id) };
+  G.SpreadsheetApp = { openById: id => { if (/^bad/.test(id)) throw new Error('not found'); return Spreadsheet(id); },
+    create: n => { const id = 'book' + Math.random().toString(36).slice(2, 12) + 'xxxxxxxxxxxxxxxxxx'; DB.books = DB.books || {}; DB.books[id] = {}; persist(); return Spreadsheet(id); } };
   G.PropertiesService = { getScriptProperties: () => ({ getProperty: k => DB.props[k] ?? null, setProperty: (k, v) => { DB.props[k] = String(v); persist(); }, setProperties: o => { Object.assign(DB.props, o); persist(); } }) };
   const cache = {};
   G.CacheService = { getScriptCache: () => ({ get: k => cache[k] && cache[k].e > Date.now() ? cache[k].v : null, put: (k, v, s) => { if (String(v).length > 100000) throw new Error('cache value too large'); cache[k] = { v: String(v), e: Date.now() + (s || 600) * 1000 }; }, remove: k => { delete cache[k]; },
@@ -75,7 +77,7 @@
   };
   const file = (id, name, size) => ({ getId: () => id, getName: () => name, getUrl: () => 'https://drive.google.com/file/d/' + id + '/view', getSize: () => size,
     setSharing() {}, setDescription(d) { if (DB.files[id]) { DB.files[id].desc = d; persist(); } }, getDescription: () => (DB.files[id] || {}).desc || '', setTrashed() { delete DB.files[id]; persist(); }, getDateCreated: () => new Date(DB.files[id] ? DB.files[id].at : Date.now()),
-    makeCopy(n, folder) { return folder.createFile({ bytes: [], name: n, mime: 'application/vnd.google-apps.spreadsheet' }); } });
+    moveTo() {}, makeCopy(n, folder) { return folder.createFile({ bytes: [], name: n, mime: 'application/vnd.google-apps.spreadsheet' }); } });
   const folder = (path) => ({
     getName: () => path, getId: () => path, getFoldersByName: n => { let done = false; return { hasNext: () => !done, next: () => { done = true; return folder(path + '/' + n); } }; },
     createFolder: n => folder(path + '/' + n),
