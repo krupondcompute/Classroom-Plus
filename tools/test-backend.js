@@ -202,7 +202,7 @@ const tm = R('chatCreateTeam', s1, 'ทีมโครงงาน', [id2]); ok(
 ok(R('chatCreateTeam', s1, 'x', [id3]).ok === false, 'team member must be contact');
 ok(R('chatSend', AD, R('chatOpen', AD, { type: 'dm', target: id3 }).data.id, 'จากแอดมิน').ok && R('chatUnread', s3).data === 1, 'admin dm anyone');
 const after = R('chatMessages', s1, dm.id, '').data.pop().key; R('chatSend', s2, dm.id, 'ตอบ'); ok(R('chatMessages', s1, dm.id, after).data.length === 1, 'incremental fetch');
-ok(R('saveStudentMenus', KA, JSON.stringify({ hidden: [], custom: [{ name: 'ลิงก์ครู', url: 'https://example.com' }], order: [] })).ok && JSON.parse(R('bootstrap', null).data.config.studentMenus).custom[0].name === 'ลิงก์ครู', 'teacher saves student menus');
+ok(R('saveStudentMenus', KA, JSON.stringify({ hidden: [], custom: [{ name: 'ลิงก์ครู', url: 'https://example.com' }], order: [] })).ok && JSON.parse(R('me', KA).data.user.prefs).menus[0].name === 'ลิงก์ครู' && R('me', s1).data.user.extraMenus.some(m => m.name === 'ลิงก์ครู') && !JSON.parse(R('bootstrap', null).data.config.studentMenus || '{"custom":[]}').custom.some(m => m.name === 'ลิงก์ครู'), 'teacher menus are personal');
 ok(R('saveStudentMenus', s1, '{}').code === 'FORBIDDEN', 'student cannot save menus');
 const us = R('uploadStart', KA, { name: 'a.mp4', mime: 'video/mp4', size: 1000, origin: 'https://example.github.io' }); ok(us.ok && us.data.direct, 'direct upload session');
 // ---------- v4.8 ----------
@@ -273,9 +273,43 @@ const VR = (vt, fn, tok, ...a) => ctx.rpc(fn, tok, a, vt);
 ok(VR(pastK, 'list', AD, 'Courses').data.length === 0, 'past term db empty');
 const pc = VR(pastK, 'save', AD, 'Courses', { name: 'วิชาในอดีต', code: 'ค00001' }); ok(pc.ok, 'save into past term db');
 ok(VR(pastK, 'list', AD, 'Courses').data.length === 1 && R('list', AD, 'Courses').data.length === nowCourses, 'term data isolated');
-ok(VR(pastK, 'me', AD).ok && VR(pastK, 'listUsers', AD).data.length === R('listUsers', AD).data.length, 'core tables shared');
+ok(VR(pastK, 'me', AD).ok && VR(pastK, 'listUsers', AD).data.filter(u => u.role !== 'student').length === R('listUsers', AD).data.filter(u => u.role !== 'student').length && !VR(pastK, 'listUsers', AD).data.some(u => u.role === 'student'), 'staff shared, students per term');
+// v5: ดึงข้อมูลจากภาคเรียนอื่น
+const srcs = VR(pastK, 'termSources', AD).data; ok(srcs.current === pastK && srcs.sources.some(x => x.key === 'main'), 'term sources');
+const peekS = VR(pastK, 'peekTerm', AD, 'main', 'students').data; ok(peekS.length > 0 && !peekS[0].exists, 'peek students from main');
+ok(VR(pastK, 'importTerm', AD, 'main', 'students', peekS.map(x => x.id)).data.added === peekS.length && VR(pastK, 'listUsers', AD).data.filter(u => u.role === 'student').length === peekS.length, 'import students');
+ok(VR(pastK, 'importTerm', AD, 'main', 'students', peekS.map(x => x.id)).data.added === 0, 'import students idempotent');
+const peekC = VR(pastK, 'peekTerm', AD, 'main', 'courses').data; ok(VR(pastK, 'importTerm', AD, 'main', 'courses', [peekC[0].id]).data.added === 1, 'import course');
+ok(VR(pastK, 'list', AD, 'Lessons').data.every(l => l.courseId === peekC[0].id), 'lessons copied with course');
+ok(VR(pastK, 'importTerm', AD, 'main', 'types', ['งานกลุ่ม']).ok && VR(pastK, 'getSettings', AD).data.config.assignmentTypes.indexOf('งานกลุ่ม') >= 0, 'import types');
+ok(VR(pastK, 'peekTerm', KA3, 'main', 'courses').data.every(c => true) && VR(pastK, 'peekTerm', s1, 'main', 'courses').code === 'FORBIDDEN', 'peek staff only');
 ok(R('createTermDb', AD, tkey).ok && R('list', AD, 'Courses').data.length === 0, 'current term uses its new db');
 ok(R('removeTermDb', AD, tkey).ok && R('list', AD, 'Courses').data.length === nowCourses, 'remove mapping restores main db');
 ok(R('getSettings', AD).data.termDbs.length === 1 && R('createTermDb', s1, '2551/1').code === 'FORBIDDEN', 'term db list + admin only');
+// v5: กิจกรรมตอบปัญหา
+const lq = R('liveSave', KA3, { kind: 'quiz', title: 'ตอบปัญหาวิทย์', data: { questions: [{ id: 'a1', type: 'mc', q: '1+1', options: ['1', '2'], answer: 1, points: 1, time: 10 }, { id: 'a2', type: 'tf', q: 'น้ำเดือด 100°C', answer: 'true', points: 1 }] }, settings: { timeMode: 'question', defaultTime: 20 } });
+ok(lq.ok && /^\d{6}$/.test(lq.data.pin), 'live quiz created');
+ok(R('liveInfo', null, lq.data.pin).code === 'NOTFOUND', 'draft not joinable');
+R('liveControl', KA3, lq.data.id, 'open');
+const p1 = R('liveJoin', null, lq.data.pin, 'ต้น').data, p2 = R('liveJoin', null, lq.data.pin, 'ต้น').data;
+ok(p1.pid && p2.name !== 'ต้น', 'join + unique name');
+ok(!R('liveInfo', null, lq.data.pin, p1.pid).data.questions, 'no questions in lobby');
+R('liveControl', KA3, lq.data.id, 'start');
+const li = R('liveInfo', null, lq.data.pin, p1.pid).data; ok(li.questions.length === 2 && li.questions[0].answer === undefined && li.questions[0].time === 10, 'questions without answers');
+const r1 = R('liveSubmit', null, lq.data.pin, p1.pid, { a1: '1', a2: 'true' }, { a1: 1000, a2: 2000 }).data, r2 = R('liveSubmit', null, lq.data.pin, p2.pid, { a1: '0', a2: 'true' }, { a1: 9000, a2: 19000 }).data;
+ok(r1.correct === 2 && r1.score > r2.score && r1.rank === 1, 'speed scoring + rank');
+ok(R('liveSubmit', null, lq.data.pin, p1.pid, { a1: '0' }, {}).data.already, 'submit once');
+R('liveControl', KA3, lq.data.id, 'close');
+const lb = R('liveInfo', null, lq.data.pin, p2.pid).data; ok(lb.top[0].name === 'ต้น' && lb.myRank === 2, 'podium data');
+ok(R('liveStatus', s1, lq.data.id).code === 'FORBIDDEN' && R('liveStatus', KA3, lq.data.id).data.players.length === 2, 'host status');
+// แบบสอบถาม
+const sv = R('liveSave', KA3, { kind: 'survey', title: 'ความพึงพอใจ', data: { questions: [{ id: 'q1', type: 'rating', q: 'พอใจไหม', scale: 5 }, { id: 'q2', type: 'choice', q: 'ชอบวิชาไหน', options: ['คณิต', 'วิทย์'] }, { id: 'q3', type: 'text', q: 'ข้อเสนอแนะ' }] } }).data;
+R('liveControl', KA3, sv.id, 'open'); R('liveControl', KA3, sv.id, 'start');
+[[5, 1, 'ดีมาก'], [3, 1, ''], [4, 0, 'สนุก']].forEach((a, i) => { const pp = R('liveJoin', null, sv.pin, 'คน' + i).data; R('liveSubmit', null, sv.pin, pp.pid, { q1: a[0], q2: a[1], q3: a[2] }); });
+const sm = R('liveStatus', KA3, sv.id).data.summary; ok(sm[0].avg === 4 && sm[1].counts.join() === '1,2' && sm[2].texts.length === 2, 'survey summary');
+// รวมคะแนนจากเมนูผลการเรียน
+const bk = ctx.SpreadsheetApp.create('ผลการเรียน'); const sh1 = bk.insertSheet('Sheet1'); sh1.appendRow(['ลำดับ', 'รหัสนักเรียน', 'ชื่อ-สกุล', 'รวมคะแนนทั้งหมด']); sh1.appendRow(['1', '80001', 'เด็กชายเอ', '87.5']);
+R('saveStudentMenus', AD, JSON.stringify({ hidden: [], custom: [{ name: 'ผลการเรียน', url: 'https://docs.google.com/spreadsheets/d/' + bk.getId() + '/edit' }], order: [] }));
+ctx.__clearCache(); ok((R('studentHome', s1).data.total || {}).value === '87.5', 'total score from result sheet');
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

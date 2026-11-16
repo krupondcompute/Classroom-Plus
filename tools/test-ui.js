@@ -153,6 +153,14 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   // v4.8: ผู้ใช้ตามระดับชั้น + ข้อมูลการติดต่อ + ภาคเรียนย้อนหลัง
   ok(await page.isVisible('.grade-card') && await page.isVisible('[data-termsel]'), 'users grade cards + term filter');
   await page.click('[data-contact] >> nth=0'); await page.waitForSelector('#modal.show'); ok(await page.isVisible('#modal:has-text("ข้อมูลการติดต่อ")'), 'contact modal'); await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  // v5: แก้ไขนักเรียนจากหน้าต่างรายชื่อห้อง
+  await page.click('.room-tile >> nth=0'); await page.waitForSelector('#modal.show'); await page.click('#modal [data-edit] >> nth=0'); await page.waitForTimeout(900);
+  ok(await page.isVisible('#modal.show') && /แก้ไขผู้ใช้/.test(await page.textContent('#modal .modal-title')), 'edit student from room list'); await page.click('#modal .btn-close'); await page.waitForTimeout(500);
+  // v5: ดึงนักเรียนจากภาคเรียนอื่น
+  await page.evaluate(() => api('createTermDb', '2550/1', {})); await page.evaluate(() => setViewTerm('2550/1')); await idle(); await page.waitForTimeout(400);
+  ok(!(await page.$('.room-tile')), 'past term db has no students'); await page.click('[data-import=students]'); await page.waitForSelector('#modal.show #imList input[data-im]');
+  await page.check('#imAll'); await page.click('#imGo'); await idle(); await page.waitForTimeout(500); ok(await page.$('.room-tile') !== null, 'import students from main');
+  await page.evaluate(() => setViewTerm('')); await idle(); await page.waitForTimeout(300);
   // v4.9: ตัวกรองชั้น/ห้อง + คอลัมน์รหัสนักเรียนต่อจากเลขที่
   await page.selectOption('#uG', 'ม.1'); await page.waitForTimeout(300);
   ok(await page.evaluate(() => [...document.querySelectorAll('#ul thead th')].map(t => t.textContent.trim()).slice(0, 4).join('|')) === 'เลขที่|รหัสนักเรียน|ชื่อ-สกุล|ชั้น/ห้อง', 'student filter table columns');
@@ -183,7 +191,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('#modal .btn-close'); await page.waitForTimeout(400);
   ok(await page.evaluate(() => { const t = document.querySelector('#sideToggle').getBoundingClientRect(), h = document.querySelector('.topbar').getBoundingClientRect(); return Math.abs((t.top + t.height / 2) - innerHeight / 2) < 4; }), 'round toggle vertically centered');
   ok(await page.isVisible('#sideNav > .ind.on'), 'sliding indicator');
-  await page.click('#sideNav [data-go=tools]'); await idle(); ok(await page.$$eval('.tool-card', x => x.length) === 6, '6 teacher tools');
+  await page.click('#sideNav [data-go=tools]'); await idle(); ok(await page.$$eval('.tool-card', x => x.length) === 8, '8 teacher tools');
   await page.screenshot({ path: SHOT + '/15-tools.png' });
   await page.click('[data-tool=wheel]'); await page.waitForSelector('#wCv');
   ok(await page.evaluate(() => { const r = document.querySelector('.wheel-stage').getBoundingClientRect(), b = document.querySelector('#tvBody'), cs = getComputedStyle(b), bl = b.getBoundingClientRect(), mid = bl.left + parseFloat(cs.paddingLeft) + (b.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)) / 2; return Math.abs(r.left + r.width / 2 - mid) < 8; }), 'wheel centered');
@@ -198,6 +206,19 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('[data-tool=bomb]'); await page.waitForTimeout(450); await page.fill('#bMin', '0'); await page.fill('#bSec', '2'); await page.dispatchEvent('#bSec', 'change'); await page.uncheck('#bTick'); await page.click('#bGo'); await page.waitForTimeout(3300);
   ok((await page.textContent('#bTime')) === 'บึ้ม!', 'time bomb explodes'); await page.screenshot({ path: SHOT + '/17-bomb.png' }); await page.click('[data-tvclose] >> nth=0');
   await page.click('[data-tool=noise]'); ok(await page.isVisible('#nGo'), 'noise meter opens'); await page.click('[data-tvclose] >> nth=0'); ok(!(await page.$('#toolView')), 'tool closed');
+  // v5: สุ่มตัวอักษรแบบช่วง
+  ok(await page.evaluate(() => parsePool('1-5, A-C, ก-ค, แมว', { th: 'กขฃคฅ'.split('') }).join(',')) === '1,2,3,4,5,A,B,C,ก,ข,ฃ,ค,แมว', 'letter custom ranges');
+  // v5: กิจกรรมตอบปัญหา (สร้าง → เปิดห้อง → QR/PIN)
+  await page.click('[data-tool=quizlive]'); await page.waitForSelector('[data-lnew]'); await page.click('[data-lnew]'); await page.waitForSelector('#modal.show .qz-card');
+  await page.fill('#modal [name=title]', 'ทดสอบตอบปัญหา'); await page.fill('#modal .qz-card [data-k=q]', '1+1 = ?');
+  for (const [j, v] of ['1', '2', '3', '4'].entries()) await page.fill(`#modal .qz-card [data-opt="${j}"]`, v);
+  await page.check('#modal .qz-card input[type=radio][value="1"]'); await page.fill('#modal .qz-card [data-k=time]', '15');
+  await page.click('#lvSave'); await idle(); await page.waitForSelector('.lh-pin', { timeout: 8000 });
+  const livePin = (await page.textContent('.lh-pin')).replace(/\D/g, '');
+  ok(/^\d{6}$/.test(livePin) && await page.$('.lh-qr svg') !== null, 'live host shows PIN + QR'); await page.screenshot({ path: SHOT + '/25-live-host.png' });
+  await page.click('[data-tvclose] >> nth=0');
+  const lp = await ctx.newPage(); await lp.goto(url + '?live=' + livePin); await lp.waitForSelector('#lvName', { timeout: 15000 }); await lp.fill('#lvName', 'มือถือ'); await lp.click('#lvJoin button');
+  await lp.waitForSelector('text=รอครูเริ่มกิจกรรม', { timeout: 8000 }); ok(true, 'participant joins lobby'); await lp.screenshot({ path: SHOT + '/26-live-join.png' }); await lp.close();
   // แชท + แจ้งเตือน: นักเรียนส่งข้อความหาผู้ดูแลระบบ
   await page.click('[aria-label="เมนูโปรไฟล์"]'); await page.click('#logoutBtn'); await confirm(); await idle();
   await page.click('#toForgot'); await page.fill('#fgName', 'ทดสอบ   ระบบดี'); await page.click('#fgGo'); await page.waitForSelector('.code-pill');

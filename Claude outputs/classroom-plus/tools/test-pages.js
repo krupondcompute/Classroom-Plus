@@ -5,7 +5,7 @@ const ctx = { console, Date, JSON, Math, Object, Array, String, Number, Error, B
 vm.runInContext(fs.readFileSync(path.join(__dirname, 'gas-shim.js'), 'utf8'), ctx);
 vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'Code.gs'), 'utf8') + '\nglobalThis.doPost=doPost;', ctx);
 const LIB = { 'bootstrap.min.css': 'bootstrap/dist/css/bootstrap.min.css', 'all.min.css': '@fortawesome/fontawesome-free/css/all.min.css', 'flatpickr.min.css': 'flatpickr/dist/flatpickr.min.css', 'sweetalert2.min.css': 'sweetalert2/dist/sweetalert2.min.css',
-  'bootstrap.bundle.min.js': 'bootstrap/dist/js/bootstrap.bundle.min.js', 'chart.umd.min.js': 'chart.js/dist/chart.umd.js', 'sweetalert2.all.min.js': 'sweetalert2/dist/sweetalert2.all.min.js', 'xlsx.full.min.js': 'xlsx/dist/xlsx.full.min.js', 'flatpickr.min.js': 'flatpickr/dist/flatpickr.min.js', 'th.js': 'flatpickr/dist/l10n/th.js' };
+  'bootstrap.bundle.min.js': 'bootstrap/dist/js/bootstrap.bundle.min.js', 'chart.umd.min.js': 'chart.js/dist/chart.umd.js', 'sweetalert2.all.min.js': 'sweetalert2/dist/sweetalert2.all.min.js', 'xlsx.full.min.js': 'xlsx/dist/xlsx.full.min.js', 'flatpickr.min.js': 'flatpickr/dist/flatpickr.min.js', 'th.js': 'flatpickr/dist/l10n/th.js', 'qrcode.js': 'qrcode-generator/qrcode.js' };
 let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; console.log('FAIL:', m); } };
 (async () => {
   const b = await chromium.launch(), p = await b.newPage(), errs = [];

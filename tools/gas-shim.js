@@ -27,6 +27,7 @@
   function Range(sh, r, c, nr, nc, bid) {
     const data = () => BK(bid)[sh];
     const self = {
+      getDisplayValues() { return self.getValues().map(r => r.map(x => String(x))); },
       getValues() { const d = data(), out = []; for (let i = 0; i < nr; i++) { const row = []; for (let j = 0; j < nc; j++) row.push(((d[r-1+i]||[])[c-1+j]) ?? ''); out.push(row); } return out; },
       setValues(v) { const d = data(); for (let i = 0; i < nr; i++) { d[r-1+i] = d[r-1+i] || []; for (let j = 0; j < nc; j++) { let x = v[i][j]; if (typeof x === 'string' && x[0] === "'") x = x.slice(1); d[r-1+i][c-1+j] = x; } } persist(); return self; },
       setValue(x) { return self.setValues([[x]]); },
@@ -38,7 +39,7 @@
     const d = () => BK(bid)[name];
     const lastRow = () => { const a = d(); let n = a.length; while (n && !(a[n-1]||[]).some(x => x !== '' && x != null)) n--; return n; };
     return {
-      getName: () => name, getLastRow: lastRow,
+      getName: () => name, getLastRow: lastRow, getSheetId: () => 0,
       getLastColumn: () => d().reduce((m, r) => { let n = (r||[]).length; while (n && (r[n-1] === '' || r[n-1] == null)) n--; return Math.max(m, n); }, 0),
       getMaxRows: () => Math.max(1000, d().length), getMaxColumns: () => 26,
       getRange: (r, c, nr = 1, nc = 1) => Range(name, r, c, nr, nc, bid),
@@ -50,7 +51,7 @@
   }
   function Spreadsheet(id) {
     return { getId: () => id, getName: () => 'Classroom PLus DB', getUrl: () => 'https://docs.google.com/spreadsheets/d/' + id,
-      getSheetByName: n => BK(id)[n] ? Sheet(n, id) : null, insertSheet: n => { BK(id)[n] = []; persist(); return Sheet(n, id); }, deleteSheet: sh => { delete BK(id)[sh.getName()]; persist(); } };
+      getSheets: () => Object.keys(BK(id)).map(n => Sheet(n, id)), getSheetByName: n => BK(id)[n] ? Sheet(n, id) : null, insertSheet: n => { BK(id)[n] = []; persist(); return Sheet(n, id); }, deleteSheet: sh => { delete BK(id)[sh.getName()]; persist(); } };
   }
   G.SpreadsheetApp = { openById: id => { if (/^bad/.test(id)) throw new Error('not found'); return Spreadsheet(id); },
     create: n => { const id = 'book' + Math.random().toString(36).slice(2, 12) + 'xxxxxxxxxxxxxxxxxx'; DB.books = DB.books || {}; DB.books[id] = {}; persist(); return Spreadsheet(id); } };
@@ -73,6 +74,7 @@
     computeDigest: (a, s) => sha256(utf8(s)).map(b => b > 127 ? b - 256 : b),
     base64EncodeWebSafe: bytes => b64(bytes).replace(/\+/g, '-').replace(/\//g, '_'),
     base64Decode: s => Array.from(typeof atob === 'function' ? atob(s) : Buffer.from(s, 'base64').toString('binary'), ch => ch.charCodeAt(0)),
+    parseCsv: t => String(t).split(/\r?\n/).filter(Boolean).map(l => l.split(',')),
     newBlob: (bytes, mime, name) => ({ bytes, mime, name, getContentType: () => mime })
   };
   const file = (id, name, size) => ({ getId: () => id, getName: () => name, getUrl: () => 'https://drive.google.com/file/d/' + id + '/view', getSize: () => size,

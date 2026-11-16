@@ -30,7 +30,8 @@ if (iv > 0) {
     'sweetalert2@11.12.4/dist/sweetalert2.all.min.js': 'sweetalert2/dist/sweetalert2.all.min.js',
     'xlsx@0.18.5/dist/xlsx.full.min.js': 'xlsx/dist/xlsx.full.min.js',
     'flatpickr@4.6.13/dist/flatpickr.min.js': 'flatpickr/dist/flatpickr.min.js',
-    'flatpickr@4.6.13/dist/l10n/th.js': 'flatpickr/dist/l10n/th.js'
+    'flatpickr@4.6.13/dist/l10n/th.js': 'flatpickr/dist/l10n/th.js',
+    'qrcode-generator@1.4.4/qrcode.js': 'qrcode-generator/qrcode.js'
   };
   const local = u => { const k = Object.keys(MAP).find(k => u.endsWith(k)); if (!k) return null; let t = fs.readFileSync(path.join(nm, MAP[k]), 'utf8');
     if (k.includes('font-awesome')) t = t.replace(/url\(\.\.\/webfonts\/([\w-]+)\.woff2\) format\("woff2"\),url\(\.\.\/webfonts\/[\w-]+\.ttf\) format\("truetype"\)/g, (m, f) => 'url(data:font/woff2;base64,' + fs.readFileSync(path.join(nm, '@fortawesome/fontawesome-free/webfonts', f + '.woff2')).toString('base64') + ') format("woff2")');
