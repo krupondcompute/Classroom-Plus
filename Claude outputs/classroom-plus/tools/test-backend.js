@@ -311,5 +311,24 @@ const sm = R('liveStatus', KA3, sv.id).data.summary; ok(sm[0].avg === 4 && sm[1]
 const bk = ctx.SpreadsheetApp.create('ผลการเรียน'); const sh1 = bk.insertSheet('Sheet1'); sh1.appendRow(['ลำดับ', 'รหัสนักเรียน', 'ชื่อ-สกุล', 'รวมคะแนนทั้งหมด']); sh1.appendRow(['1', '80001', 'เด็กชายเอ', '87.5']);
 R('saveStudentMenus', AD, JSON.stringify({ hidden: [], custom: [{ name: 'ผลการเรียน', url: 'https://docs.google.com/spreadsheets/d/' + bk.getId() + '/edit' }], order: [] }));
 ctx.__clearCache(); ok((R('studentHome', s1).data.total || {}).value === '87.5', 'total score from result sheet');
+// v5.1: แชท แก้ไข/ลบ/ซ่อน/ตั้งชื่อ/แนบไฟล์
+const dmr = R('chatOpen', s1, { type: 'dm', target: R('listUsers', AD).data.find(u => u.role === 'admin').id }).data;
+const cm1 = R('chatSend', s1, dmr.id, 'สวัสดี', []).data, t0 = cm1.at;
+ok(R('chatSend', s1, dmr.id, '', [{ id: 'fx', name: 'a.pdf', url: 'https://drive.google.com/file/d/fx/view', mime: 'application/pdf', size: 10 }]).data.files.length === 1, 'chat send file');
+ok(R('chatEdit', s1, cm1.id, 'สวัสดีครับ').ok && R('chatEdit', s2, cm1.id, 'x').code === 'FORBIDDEN', 'chat edit own only');
+const cmu = R('chatMessages', AD, dmr.id, cm1.key, t0).data; ok(cmu.some(m => m.upd && m.text === 'สวัสดีครับ' && m.edited), 'edited message pushed to others');
+ok(R('chatDelete', s1, cm1.id).ok && R('chatMessages', AD, dmr.id, '').data.find(m => m.id === cm1.id).deleted, 'chat delete');
+ok(R('chatRename', s1, dmr.id, 'ครูแอดมิน').ok && R('chatList', s1).data.find(r => r.id === dmr.id).title === 'ครูแอดมิน', 'chat alias');
+ok(R('chatHide', s1, dmr.id).ok && !R('chatList', s1).data.some(r => r.id === dmr.id), 'chat hide');
+R('chatSend', AD, dmr.id, 'กลับมา', []); ok(R('chatList', s1).data.some(r => r.id === dmr.id), 'hidden room returns on new message');
+// v5.1: กิจกรรมที่สร้างในภาคเรียนอื่น หาเจอจาก PIN + เข้าร่วมด้วยรหัสนักเรียน
+const lp2 = VR(pastK, 'liveSave', AD, { kind: 'survey', title: 'สำรวจภาคก่อน', data: { questions: [{ id: 'r1', type: 'rating', q: 'ระดับ', scale: 4, start: 0, levels: 'ไม่ดี,พอใช้,ดี,ดีมาก' }] } }).data;
+VR(pastK, 'liveControl', AD, lp2.id, 'open');
+ok(R('liveInfo', null, lp2.pin).data.title === 'สำรวจภาคก่อน', 'pin found across term dbs');
+const stCode = VR(pastK, 'listUsers', AD).data.find(u => u.role === 'student');
+const jc = R('liveJoin', null, lp2.pin, stCode.studentCode, '', pastK).data; ok(jc.name.indexOf(stCode.fullName) >= 0, 'join by student code');
+ok(!R('liveJoin', null, lp2.pin, '99998').ok, 'unknown code rejected');
+VR(pastK, 'liveControl', AD, lp2.id, 'start'); R('liveSubmit', null, lp2.pin, jc.pid, { r1: 0 }, {}, pastK);
+const sm2 = VR(pastK, 'liveStatus', AD, lp2.id).data.summary[0]; ok(sm2.counts[0] === 1 && sm2.levels[3] === 'ดีมาก' && sm2.start === 0, 'custom rating levels');
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -235,10 +235,13 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('#chatBtn'); await page.waitForSelector('#chatPanel:not(.hidden)'); await page.click('#chatPanel [data-cnew] >> nth=0'); await page.click('[data-ctype=dm]'); await page.waitForSelector('[data-cdm]');
   await page.click('[data-cdm]:has-text("ผู้ดูแลระบบ")'); await page.waitForSelector('#cText'); await page.fill('#cText', 'สวัสดีครับ ส่งงานแล้ว'); await page.press('#cText', 'Enter'); await page.waitForTimeout(600);
   ok(await page.isVisible('.cmsg.me:has-text("สวัสดีครับ")'), 'chat send');
+  ok(await page.$('.cmsg.me [data-cedit]') !== null && await page.$('.cmsg.me [data-cdel]') !== null && await page.isVisible('#cAttBtn') && await page.isVisible('[data-cset]'), 'chat edit/delete/attach/settings controls');
+  await page.click('.cmsg.me [data-cedit] >> nth=0', { force: true }); await page.waitForSelector('.swal2-textarea'); await page.fill('.swal2-textarea', 'สวัสดีครับ (แก้ไข)'); await page.click('.swal2-confirm'); await page.waitForTimeout(2600);
+  ok(await page.isVisible('.cmsg.me:has-text("แก้ไขแล้ว")'), 'chat edit message');
   await page.screenshot({ path: SHOT + '/18-chat.png' });
   await page.click('[data-cback=home]'); await page.waitForSelector('.crow'); await page.click('[data-cnew] >> nth=0'); await page.click('[data-ctype=class]'); await page.waitForSelector('[data-cclass]'); ok(await page.$$eval('[data-cclass]', x => x.length) === 1, 'student sees own class only');
   await page.click('[data-cclose] >> nth=0');
-  await page.click('.dock [data-go=home]'); await idle(); await page.waitForTimeout(1200); ok(/ภาคเรียนที่|ปิดภาคเรียน/.test(await page.textContent('.hero [data-term]')), 'term label on home');
+  await page.click('.dock [data-go=home]'); await idle(); await page.waitForTimeout(1200); ok(!(await page.$('.hero [data-term]')), 'no term picker for students');
   await page.click('[aria-label="เมนูโปรไฟล์"]'); await page.click('#logoutBtn'); await confirm(); await idle();
   await page.click('[data-tab=admin]'); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle(); await page.waitForTimeout(800);
   ok(await page.isVisible('#chatDot:not(.hidden)'), 'admin chat unread badge');

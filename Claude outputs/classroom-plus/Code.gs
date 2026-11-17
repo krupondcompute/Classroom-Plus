@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '5.0.0';
+const APP_VERSION = '5.1.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -42,8 +42,8 @@ const SCHEMA = {
   AuditLog: ['id','userId','action','detail','createdAt'],
   // ---------- แชท ----------
   ChatRooms: ['id','type','name','members','grade','room','createdBy','createdAt','lastAt','lastText','lastBy'],
-  ChatMessages: ['id','roomId','senderId','text','createdAt'],
-  ChatReads: ['id','userId','roomId','at'],
+  ChatMessages: ['id','roomId','senderId','text','createdAt','files','editedAt','deleted'],
+  ChatReads: ['id','userId','roomId','at','hidden','alias'],
   // ---------- v5: ค่าตั้งค่าระดับภาคเรียน + กิจกรรมตอบปัญหา/แบบสอบถาม ----------
   TermConfig: ['key','value','updatedAt'],
   LiveSessions: ['id','kind','title','pin','ownerId','data','settings','status','startedAt','endsAt','createdAt','updatedAt'],
@@ -121,7 +121,7 @@ const ROUTES = {
   listUsers: ['staff', listUsers_], saveUser: ['staff', saveUser_], importStudents: ['staff', importStudents_],
   listTeachers: ['staff', listTeachers_], saveStudentMenus: ['staff', saveStudentMenus_], uploadFinish: ['user', uploadFinish_],
   chatContacts: ['user', chatContacts_], chatList: ['user', chatList_], chatOpen: ['user', chatOpen_], chatMessages: ['user', chatMessages_],
-  chatSend: ['user', chatSend_], chatCreateTeam: ['user', chatCreateTeam_], chatUnread: ['user', chatUnread_],
+  chatSend: ['user', chatSend_], chatEdit: ['user', chatEdit_], chatDelete: ['user', chatDelete_], chatHide: ['user', chatHide_], chatRename: ['user', chatRename_], chatCreateTeam: ['user', chatCreateTeam_], chatUnread: ['user', chatUnread_],
   // admin (ผู้ดูแลระบบคนเดียว)
   deleteUser: ['admin', deleteUser_], setCoAdmin: ['admin', setCoAdmin_],
   setRole: ['admin', setRole_], getSettings: ['admin', getSettings_], saveSettings: ['admin', saveSettings_],
@@ -403,7 +403,7 @@ function createSession_(user, remember) {
   insert_('Sessions', { id: id_(), userId: user.id, tokenHash: th, expiresAt: String(exp), createdAt: now_() });
   CacheService.getScriptCache().put('s_' + th, JSON.stringify({ u: user.id, e: exp }), Math.min(21600, hours * 3600));
   log_(user.id, 'login', user.role); // ไม่เขียนชีต Users ทุกครั้งที่ login (เร็วขึ้น) — เวลาเข้าล่าสุดดูจาก AuditLog
-  const pu = pub_(user); pu.lastLoginAt = now_(); pu.courseIds = myCourseIds_(user); pu.extraMenus = teacherMenus_(user);
+  const pu = pub_(user); pu.lastLoginAt = now_(); pu.courseIds = myCourseIds_(user); pu.extraMenus = teacherMenus_(user); pu.termDbs = staff_(user) ? Object.keys(dbMap_()) : [];
   // ส่งข้อมูลหน้าแรกกลับไปพร้อมกัน → เข้าหน้าหลักได้ทันทีไม่ต้องเรียกซ้ำ
   const ctx = { user: user, token: token }, boot = {};
   try { if (staff_(user)) boot.adminDashboard = adminDashboard_(ctx); else boot.studentHome = studentHome_(ctx); } catch (e) {}
@@ -554,7 +554,7 @@ function resetStaffPassword_(ctx, d) {
 }
 function lastLogin_(uid) { const l = rows_('AuditLog'); for (let i = l.length - 1; i >= 0; i--) if (l[i].userId === uid && l[i].action === 'login') return l[i].createdAt; return ''; }
 function me_(ctx) {
-  const pu = pub_(ctx.user); pu.lastLoginAt = lastLogin_(ctx.user.id) || pu.lastLoginAt; pu.courseIds = myCourseIds_(ctx.user); pu.extraMenus = teacherMenus_(ctx.user);
+  const pu = pub_(ctx.user); pu.lastLoginAt = lastLogin_(ctx.user.id) || pu.lastLoginAt; pu.courseIds = myCourseIds_(ctx.user); pu.extraMenus = teacherMenus_(ctx.user); pu.termDbs = staff_(ctx.user) ? Object.keys(dbMap_()) : [];
   return { user: pu, term: term_(), config: publicCfg_(), classes: rows_('Classes').map(pub_), maxUploadMB: MAX_UPLOAD_MB,
     unread: rows_('Notifications').filter(n => n.ownerId === ctx.user.id && n.read !== 'true').length };
 }
@@ -1565,7 +1565,8 @@ function report_(ctx, type, f) {
   const logs = rows_('AuditLog');
   if (type === 'attendance') {
     return { title: 'รายงานการเข้าเรียน (การเข้าสู่ระบบ)', headers: ['รหัส', 'ชื่อ-สกุล', 'ชั้น/ห้อง', 'จำนวนครั้งที่เข้าระบบ', 'เข้าล่าสุด'],
-      rows: users.map(u => { const l = logs.filter(x => x.userId === u.id && x.action === 'login'); return [u.studentCode, name(u), u.grade + '/' + u.room, l.length, l.length ? l[l.length - 1].createdAt : (u.lastLoginAt || '-')]; }) };
+      rows: users.map(u => { const l = logs.filter(x => x.userId === u.id && x.action === 'login'); return [u.studentCode, name(u), u.grade + '/' + u.room, l.length, l.length ? l[l.length - 1].createdAt : (u.lastLoginAt || '-')]; })
+        .sort((a, b) => String(b[4] === '-' ? '' : b[4]).localeCompare(String(a[4] === '-' ? '' : a[4]))) }; // เข้าล่าสุดก่อน
   }
   if (type === 'views') {
     const lessons = rows_('Lessons').filter(l => cids.indexOf(l.courseId) >= 0), prog = rows_('Progress');
@@ -1632,13 +1633,21 @@ function chatTitle_(me, r, users) {
   return { title: userName_(other), sub: other ? (other.role === 'student' ? 'นักเรียน ' + (other.grade || '') + (other.room ? '/' + other.room : '') : other.role === 'admin' ? 'ผู้ดูแลระบบ' : 'ครูผู้สอน') : '', otherRole: other ? other.role : '' };
 }
 function readsOf_(uid) { const m = {}; rows_('ChatReads').forEach(r => { if (r.userId === uid) m[r.roomId] = r.at; }); return m; }
+function readRows_(uid) { const m = {}; rows_('ChatReads').forEach(r => { if (r.userId === uid) m[r.roomId] = r; }); return m; }
+/** แถวสถานะของผู้ใช้ในห้อง (อ่านล่าสุด / ซ่อน / ชื่อที่ตั้งเอง) */
+function readRow_(me, roomId, patch) {
+  delete MEM_.ChatReads; const id = me.id + '|' + roomId, x = rows_('ChatReads').find(y => y.id === id);
+  return x ? updateRow_('ChatReads', x, patch) : insert_('ChatReads', Object.assign({ id: id, userId: me.id, roomId: roomId, at: '', hidden: '', alias: '' }, patch));
+}
 function chatList_(ctx) {
   const me = ctx.user, users = {}; rows_('Users').forEach(u => users[u.id] = u);
-  const reads = readsOf_(me.id), unread = {};
+  const reads = readsOf_(me.id), rr = readRows_(me.id), unread = {};
   const rooms = rows_('ChatRooms').filter(r => chatCan_(me, r)), ids = {}; rooms.forEach(r => ids[r.id] = 1);
+  const lastKey = {}; rows_('ChatMessages').forEach(m => { if (ids[m.roomId]) lastKey[m.roomId] = m.id; });
   rows_('ChatMessages').forEach(m => { if (ids[m.roomId] && m.senderId !== me.id && (!reads[m.roomId] || m.createdAt > reads[m.roomId])) unread[m.roomId] = (unread[m.roomId] || 0) + 1; });
-  const out = rooms.map(r => Object.assign({ id: r.id, type: r.type, lastText: r.lastText, lastAt: r.lastAt || r.createdAt, lastBy: r.lastBy ? userName_(users[r.lastBy]) : '', unread: unread[r.id] || 0 }, chatTitle_(me, r, users)));
-  if (me.role === 'student' && me.grade && !out.some(r => r.type === 'class' && r.id === 'cls:' + me.grade + '|' + (me.room || ''))) // ห้องของตัวเองแสดงเสมอ
+  const out = rooms.filter(r => { const h = rr[r.id] && rr[r.id].hidden; return !h || h !== 'm:' + (lastKey[r.id] || ''); }) // ห้องที่ลบออกจากรายการ กลับมาเมื่อมีข้อความใหม่
+    .map(r => { const o = Object.assign({ id: r.id, type: r.type, lastText: r.lastText, lastAt: r.lastAt || r.createdAt, lastBy: r.lastBy ? userName_(users[r.lastBy]) : '', unread: unread[r.id] || 0 }, chatTitle_(me, r, users)); if (rr[r.id] && rr[r.id].alias) o.title = rr[r.id].alias; return o; });
+  if (me.role === 'student' && me.grade && !out.some(r => r.type === 'class' && r.id === 'cls:' + me.grade + '|' + (me.room || '')) && (rr['cls:' + me.grade + '|' + (me.room || '')] || {}).hidden !== 'm:' + (lastKey['cls:' + me.grade + '|' + (me.room || '')] || '')) // ห้องของตัวเองแสดงเสมอ (ยกเว้นลบออกจากรายการ)
     out.push({ id: 'cls:' + me.grade + '|' + (me.room || ''), type: 'class', title: 'ห้อง ' + me.grade + (me.room ? '/' + me.room : ''), sub: 'แชทรายห้อง', lastText: '', lastAt: '', unread: 0, virtual: true });
   return out.sort((a, b) => String(b.lastAt).localeCompare(String(a.lastAt)));
 }
@@ -1679,36 +1688,62 @@ function chatCreateTeam_(ctx, name, ids) {
 function chatRoomOut_(me, r) {
   const users = {}; rows_('Users').forEach(u => users[u.id] = u);
   const o = Object.assign({ id: r.id, type: r.type }, chatTitle_(me, r, users));
-  if (r.type === 'team') o.members = json_(r.members, []).map(id => userName_(users[id]));
+  const al = (rows_('ChatReads').find(x => x.id === me.id + '|' + r.id) || {}).alias; if (al) o.title = al;
+  if (r.type === 'team') { o.members = json_(r.members, []).map(id => userName_(users[id])); o.canRename = true; }
   return o;
 }
 /** ข้อความในห้อง (หลัง after = createdAt|id ล่าสุดที่มี) + บันทึกว่าอ่านแล้ว */
-function chatMessages_(ctx, roomId, after) {
+function chatMessages_(ctx, roomId, after, since) {
   const me = ctx.user;
   const r = /^cls:/.test(roomId) ? (find_('ChatRooms', roomId) || (function () { const k = roomId.slice(4).split('|'); return { id: roomId, type: 'class', grade: k[0], room: k[1] || '' }; })()) : find_('ChatRooms', roomId);
   if (!chatCan_(me, r)) throw err_('ไม่พบห้องแชท', 'FORBIDDEN');
   const users = {}; rows_('Users').forEach(u => users[u.id] = u);
   let list = rows_('ChatMessages').filter(m => m.roomId === roomId);
-  if (after) { const ix = list.findIndex(m => m.createdAt + '|' + m.id === after); list = ix >= 0 ? list.slice(ix + 1) : list.filter(m => m.createdAt > String(after).split('|')[0]); } // ข้อความเรียงตามลำดับที่บันทึก
+  let upd = [];
+  if (after) { const all = list, ix = all.findIndex(m => m.createdAt + '|' + m.id === after); list = ix >= 0 ? all.slice(ix + 1) : all.filter(m => m.createdAt > String(after).split('|')[0]);
+    const sn = String(since || '') || String(after).split('|')[0]; upd = all.filter(m => m.editedAt && m.editedAt >= sn && list.indexOf(m) < 0).slice(-50); } // ข้อความที่ถูกแก้ไข/ลบหลังโหลดครั้งก่อน
   list = list.slice(-150);
   const last = list.length ? list[list.length - 1].createdAt : '';
   const rd = rows_('ChatReads').find(x => x.id === me.id + '|' + roomId);
   if (last && (!rd || rd.at < last)) lock_(() => { delete MEM_.ChatReads; const x = rows_('ChatReads').find(y => y.id === me.id + '|' + roomId);
     if (x) updateRow_('ChatReads', x, { at: last }); else insert_('ChatReads', { id: me.id + '|' + roomId, userId: me.id, roomId: roomId, at: last }); });
-  return list.map(m => { const u = users[m.senderId]; return { id: m.id, key: m.createdAt + '|' + m.id, text: m.text, at: m.createdAt, mine: m.senderId === me.id, sender: userName_(u), role: u ? u.role : '' }; });
+  const out = m => { const u = users[m.senderId]; return { id: m.id, key: m.createdAt + '|' + m.id, text: m.deleted === 'true' ? '' : m.text, files: m.deleted === 'true' ? [] : json_(m.files, []), edited: !!m.editedAt && m.deleted !== 'true', ed: m.editedAt || '', deleted: m.deleted === 'true', at: m.createdAt, mine: m.senderId === me.id, sender: userName_(u), role: u ? u.role : '' }; };
+  return list.map(out).concat(upd.map(m => Object.assign(out(m), { upd: true })));
 }
-function chatSend_(ctx, roomId, text) {
-  const me = ctx.user, t = str_(text, 1000);
-  if (!t) throw err_('กรุณาพิมพ์ข้อความ');
+/** แก้ไข / ลบ ข้อความของตนเอง (ผู้ดูแลระบบลบได้ทุกข้อความ) */
+function chatEdit_(ctx, msgId, text) {
+  const me = ctx.user, t = str_(text, 1000); if (!t) throw err_('กรุณาพิมพ์ข้อความ');
+  return lock_(() => { delete MEM_.ChatMessages; const m = find_('ChatMessages', msgId);
+    if (!m || m.senderId !== me.id || m.deleted === 'true') throw err_('แก้ไขได้เฉพาะข้อความของคุณ', 'FORBIDDEN');
+    updateRow_('ChatMessages', m, { text: t, editedAt: now_() }); return true; });
+}
+function chatDelete_(ctx, msgId) {
+  const me = ctx.user;
+  return lock_(() => { delete MEM_.ChatMessages; const m = find_('ChatMessages', msgId);
+    if (!m || (m.senderId !== me.id && !isAdmin_(me))) throw err_('ลบได้เฉพาะข้อความของคุณ', 'FORBIDDEN');
+    purge_(fileIds_({ files: m.files })); updateRow_('ChatMessages', m, { text: '', files: '[]', deleted: 'true', editedAt: now_() }); return true; });
+}
+/** ลบห้องออกจากรายการแชทของฉัน (ไม่ลบข้อความของคนอื่น — กลับมาเมื่อมีข้อความใหม่) */
+function chatHide_(ctx, roomId) { const me = ctx.user; return lock_(() => { const ms = rows_('ChatMessages').filter(m => m.roomId === String(roomId)); readRow_(me, String(roomId), { hidden: 'm:' + (ms.length ? ms[ms.length - 1].id : '') }); return true; }); }
+/** ตั้งชื่อห้อง: ทีม = เปลี่ยนชื่อให้ทุกคน · แชทรายบุคคล/ห้องเรียน = ชื่อที่เห็นเฉพาะฉัน */
+function chatRename_(ctx, roomId, name) {
+  const me = ctx.user, nm = str_(name, 60);
+  return lock_(() => { delete MEM_.ChatRooms; const r = find_('ChatRooms', roomId);
+    if (r && r.type === 'team') { if (!chatCan_(me, r)) throw err_('ไม่พบห้องแชท', 'FORBIDDEN'); if (!nm) throw err_('กรุณาตั้งชื่อทีม'); updateRow_('ChatRooms', r, { name: nm }); return { title: nm }; }
+    readRow_(me, String(roomId), { alias: nm }); return { title: nm }; });
+}
+function chatSend_(ctx, roomId, text, files) {
+  const me = ctx.user, t = str_(text, 1000), fs = cleanFiles_(files || []).slice(0, 5);
+  if (!t && !fs.length) throw err_('กรุณาพิมพ์ข้อความหรือแนบไฟล์');
   throttle_('chat_' + me.id, 30, 1)();
   return lock_(() => {
     delete MEM_.ChatRooms;
     let r = find_('ChatRooms', roomId);
     if (!r && /^cls:/.test(roomId)) { const k = roomId.slice(4).split('|'); if (canClass_(me, k[0], k[1] || '')) r = insert_('ChatRooms', { id: roomId, type: 'class', name: '', members: '[]', grade: k[0], room: k[1] || '', createdBy: me.id, createdAt: now_(), lastAt: '', lastText: '', lastBy: '' }); }
     if (!chatCan_(me, r)) throw err_('ไม่พบห้องแชท', 'FORBIDDEN');
-    const m = insert_('ChatMessages', { id: id_(), roomId: r.id, senderId: me.id, text: t, createdAt: now_() });
-    updateRow_('ChatRooms', r, { lastAt: m.createdAt, lastText: t.slice(0, 120), lastBy: me.id });
-    return { id: m.id, key: m.createdAt + '|' + m.id, text: t, at: m.createdAt, mine: true, sender: userName_(me), role: me.role };
+    const m = insert_('ChatMessages', { id: id_(), roomId: r.id, senderId: me.id, text: t, files: fs, createdAt: now_(), editedAt: '', deleted: '' });
+    updateRow_('ChatRooms', r, { lastAt: m.createdAt, lastText: (t || '📎 ' + fs.map(f => f.name).join(', ')).slice(0, 120), lastBy: me.id });
+    return { id: m.id, key: m.createdAt + '|' + m.id, text: t, files: fs, at: m.createdAt, mine: true, sender: userName_(me), role: me.role };
   });
 }
 
@@ -1941,7 +1976,10 @@ function survey_(v) {
     const out = { id: id, type: type, q: str_(q.q, 1000), required: !!q.required };
     if (!out.q) throw err_(n + 'กรุณาพิมพ์คำถาม');
     if (type === 'choice') { out.options = (Array.isArray(q.options) ? q.options : []).map(x => str_(x, 200)).filter(Boolean).slice(0, 12); if (out.options.length < 2) throw err_(n + 'ต้องมีตัวเลือกอย่างน้อย 2 ข้อ'); out.multi = !!q.multi; }
-    if (type === 'rating') { out.scale = [5, 10].indexOf(Number(q.scale)) >= 0 ? Number(q.scale) : 5; out.minLabel = str_(q.minLabel, 40); out.maxLabel = str_(q.maxLabel, 40); out.style = q.style === 'star' ? 'star' : q.style === 'emoji' ? 'emoji' : 'number'; }
+    if (type === 'rating') { // กำหนดจำนวนระดับ 2–10 · ป้ายรายระดับ · ค่าคะแนนเริ่มต้น (0 หรือ 1)
+      out.scale = Math.min(10, Math.max(2, Math.round(Number(q.scale)) || 5)); out.start = Number(q.start) === 0 ? 0 : 1;
+      out.levels = (Array.isArray(q.levels) ? q.levels : String(q.levels || '').split(',')).map(x => str_(x, 40)).slice(0, out.scale); if (!out.levels.some(Boolean)) delete out.levels;
+      out.minLabel = str_(q.minLabel, 40); out.maxLabel = str_(q.maxLabel, 40); out.style = q.style === 'star' ? 'star' : q.style === 'emoji' ? 'emoji' : 'number'; }
     return out; }) };
 }
 function liveSettings_(v, kind) {
@@ -2003,7 +2041,7 @@ function surveySummary_(r) {
     const vals = ans.map(a => a[q.id]).filter(v => v !== undefined && v !== '' && !(Array.isArray(v) && !v.length));
     const o = { id: q.id, type: q.type, q: q.q, n: vals.length };
     if (q.type === 'choice') { o.options = q.options; o.counts = q.options.map((x, i) => vals.filter(v => (Array.isArray(v) ? v : [v]).map(Number).indexOf(i) >= 0).length); }
-    else if (q.type === 'rating') { o.scale = q.scale; o.counts = Array.from({ length: q.scale }, (x, i) => vals.filter(v => Number(v) === i + 1).length); o.avg = vals.length ? r2_(vals.reduce((t, v) => t + Number(v), 0) / vals.length) : 0; o.minLabel = q.minLabel; o.maxLabel = q.maxLabel; }
+    else if (q.type === 'rating') { const st = q.start === 0 ? 0 : 1; o.scale = q.scale; o.start = st; o.levels = q.levels || []; o.counts = Array.from({ length: q.scale }, (x, i) => vals.filter(v => Number(v) === i + st).length); o.avg = vals.length ? r2_(vals.reduce((t, v) => t + Number(v), 0) / vals.length) : 0; o.minLabel = q.minLabel; o.maxLabel = q.maxLabel; }
     else o.texts = vals.map(v => str_(v, 1000)).slice(-500);
     return o;
   });
@@ -2015,25 +2053,35 @@ function liveStatus_(ctx, id) {
   return o;
 }
 /* ---------- ฝั่งผู้เข้าร่วม (ไม่ต้องเข้าสู่ระบบ — ใช้ PIN + ชื่อ) ---------- */
-function liveByPin_(pin) { const p = str_(pin, 6); const r = rows_('LiveSessions').find(x => x.pin === p && x.status !== 'draft'); if (!r) throw err_('ไม่พบกิจกรรมนี้ หรือกิจกรรมยังไม่เปิด', 'NOTFOUND'); return r; }
+/** หา PIN ในฐานข้อมูลภาคเรียน: ภาคที่ระบุใน QR → ภาคปัจจุบัน → ทุกภาคที่ตั้งไว้ → ไฟล์หลัก แล้วสลับไปใช้ฐานข้อมูลนั้นตลอดคำขอ */
+function liveByPin_(pin, tkey) {
+  const p = str_(pin, 6), find = () => rows_('LiveSessions').find(x => x.pin === p && x.status !== 'draft');
+  const keys = [tkey && (tkey === 'main' || /^25\d\d\/[12]$/.test(tkey)) ? tkey : '', ''].concat(Object.keys(dbMap_()).sort().reverse(), ['main']);
+  const seen = {};
+  for (const k of keys) { const t = resolveTerm_(k), sid = t.sheetId || 'main'; if (seen[sid]) continue; seen[sid] = 1;
+    useTerm_(k); try { const r = find(); if (r) return r; } catch (e) {} }
+  throw err_('ไม่พบกิจกรรมนี้ หรือกิจกรรมยังไม่เปิด', 'NOTFOUND');
+}
 function liveQs_(r, shuffle) {
   const d = json_(r.data, { questions: [] });
   if (r.kind === 'survey') return d.questions;
   const pub = json_(quizPub_(JSON.stringify(Object.assign({}, d, { questions: d.questions }))), { questions: [] });
   return pub.questions;
 }
-function liveInfo_(ctx, pin, pid) {
-  const r = liveByPin_(pin), st = json_(r.settings, {}), o = { kind: r.kind, title: r.title, status: r.status, count: json_(r.data, { questions: [] }).questions.length, settings: { timeMode: st.timeMode, totalSec: st.totalSec, defaultTime: st.defaultTime, shuffle: !!st.shuffle, anonymous: !!st.anonymous }, startedAt: r.startedAt, endsAt: r.endsAt, players: rows_('LiveAnswers').filter(a => a.sessionId === r.id).length };
+function liveInfo_(ctx, pin, pid, tkey) {
+  const r = liveByPin_(pin, tkey), st = json_(r.settings, {}), o = { kind: r.kind, title: r.title, status: r.status, count: json_(r.data, { questions: [] }).questions.length, settings: { timeMode: st.timeMode, totalSec: st.totalSec, defaultTime: st.defaultTime, shuffle: !!st.shuffle, anonymous: !!st.anonymous }, startedAt: r.startedAt, endsAt: r.endsAt, players: rows_('LiveAnswers').filter(a => a.sessionId === r.id).length };
   if (pid) { const me = rows_('LiveAnswers').find(a => a.sessionId === r.id && a.pid === String(pid)); if (me) { o.me = { name: me.name, finished: !!me.finishedAt, score: Number(me.score) || 0, correct: Number(me.correct) || 0 };
     if (r.status === 'live' && !me.finishedAt) { o.questions = liveQs_(r); o.joinedAt = me.createdAt; } } }
   if (r.status === 'closed' && r.kind === 'quiz') { const b = liveBoard_(r); o.top = b.slice(0, 10).map((x, i) => ({ rank: i + 1, name: x.name, score: x.score })); if (pid) { const i = b.findIndex(x => x.pid === String(pid)); if (i >= 0) o.myRank = i + 1; } }
   return o;
 }
-function liveJoin_(ctx, pin, name, token) {
-  const r = liveByPin_(pin), st = json_(r.settings, {});
+function liveJoin_(ctx, pin, name, token, tkey) {
+  const r = liveByPin_(pin, tkey), st = json_(r.settings, {});
   if (r.status === 'closed') throw err_('กิจกรรมนี้ปิดแล้ว');
-  const acc = token ? auth_(token) : null;
-  let nm = acc ? (acc.nickname || (acc.prefix + acc.fullName)) : str_(name, 40);
+  const raw = str_(name, 40), byCode = /^\d{5}$/.test(raw) ? rows_('Users').find(u => u.role === 'student' && u.studentCode === raw && u.status !== 'disabled') : null;
+  if (/^\d{5}$/.test(raw) && !byCode) throw err_('ไม่พบรหัสนักเรียนนี้ในภาคเรียนของกิจกรรม — ตรวจสอบรหัส หรือพิมพ์ชื่อแทน');
+  const acc = byCode || (token ? auth_(token) : null);
+  let nm = acc ? (acc.prefix + acc.fullName) : raw;
   if (st.anonymous && r.kind === 'survey') nm = nm || 'ผู้ตอบ';
   if (!nm) throw err_('กรุณาพิมพ์ชื่อหรือชื่อเล่น');
   throttle_('lj_' + r.id, 400, 30)();
@@ -2047,8 +2095,8 @@ function liveJoin_(ctx, pin, name, token) {
   });
 }
 /** ส่งคำตอบทั้งชุด (timings = เวลาที่ใช้ต่อข้อ ms) → คะแนน: ถูก × 1000 × คะแนนข้อ + โบนัสความเร็ว */
-function liveSubmit_(ctx, pin, pid, answers, timings) {
-  const r = liveByPin_(pin), st = json_(r.settings, {});
+function liveSubmit_(ctx, pin, pid, answers, timings, tkey) {
+  const r = liveByPin_(pin, tkey), st = json_(r.settings, {});
   if (r.status !== 'live') throw err_(r.status === 'closed' ? 'หมดเวลา — กิจกรรมปิดแล้ว' : 'กิจกรรมยังไม่เริ่ม');
   return lock_(() => {
     delete MEM_.LiveAnswers;
@@ -2071,7 +2119,7 @@ function liveSubmit_(ctx, pin, pid, answers, timings) {
       const ans = {}; answers = answers && typeof answers === 'object' ? answers : {};
       d.questions.forEach(q => { const a = answers[q.id]; if (a === undefined || a === null || a === '') { if (q.required) throw err_('กรุณาตอบ: ' + str_(q.q, 40)); return; }
         if (q.type === 'choice') ans[q.id] = (Array.isArray(a) ? a : [a]).map(Number).filter(i => i >= 0 && i < q.options.length).slice(0, q.multi ? 12 : 1);
-        else if (q.type === 'rating') { const v = Math.round(Number(a)); if (v >= 1 && v <= q.scale) ans[q.id] = v; }
+        else if (q.type === 'rating') { const v = Math.round(Number(a)), st = q.start === 0 ? 0 : 1; if (v >= st && v <= q.scale - 1 + st) ans[q.id] = v; }
         else ans[q.id] = str_(a, 1000); });
       updateRow_('LiveAnswers', me, { answers: ans, finishedAt: now_(), updatedAt: now_() });
     }
