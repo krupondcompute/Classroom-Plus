@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '5.1.0';
+const APP_VERSION = '5.2.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -26,8 +26,8 @@ const PRIVATE_CONFIG = ['lineToken'];
 const SCHEMA = {
   Config: ['key','value','updatedAt'],
   Users: ['id','role','username','studentCode','passSalt','passHash','prefix','fullName','birthDate','grade','room',
-    'email','avatar','status','mustChangePassword','createdAt','updatedAt','lastLoginAt','classNo','acadYear','nickname','contacts','coAdmin','prefs'],
-  Sessions: ['id','userId','tokenHash','expiresAt','createdAt'],
+    'email','avatar','status','mustChangePassword','createdAt','updatedAt','lastLoginAt','classNo','acadYear','nickname','contacts','coAdmin','prefs','tenant'],
+  Sessions: ['id','userId','tokenHash','expiresAt','createdAt','tenant','term'],
   Classes: ['id','grade','room','order','createdAt'],
   Categories: ['id','name','createdAt','code'],
   Courses: ['id','code','name','description','category','grade','room','cover','teacher','order','ownerId','createdAt','updatedAt','teachers','acadYear','term'],
@@ -82,7 +82,7 @@ function doPost(e) {
 /** จุดเข้าเดียวจากหน้าเว็บ: google.script.run.rpc(fn, token, args) */
 function rpc(fn, token, args, vt) {
   try {
-    useTerm_(''); // ยืนยันตัวตนกับภาคเรียนปัจจุบันเสมอ แล้วจึงสลับไปภาคเรียนที่กำลังดู
+    useTenant_(''); useTerm_(''); // ยืนยันตัวตนกับภาคเรียนปัจจุบันเสมอ แล้วจึงสลับไปภาคเรียนที่กำลังดู
     const route = ROUTES[fn];
     if (!route) throw err_('ไม่พบคำสั่ง ' + fn);
     const ctx = { token: token, user: null };
@@ -91,7 +91,8 @@ function rpc(fn, token, args, vt) {
       if (!ctx.user) throw err_('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่', 'AUTH');
       routeOk_(route, ctx.user);
     }
-    if (vt) useTerm_(String(vt));
+    if (ctx.user && tenant_().unset && !SETUP_OK[fn]) throw err_('กรุณาตั้งค่าฐานข้อมูล (Google Sheet และ Google Drive) ของคุณก่อนใช้งาน — ไปที่ ตั้งค่าระบบ → ฐานข้อมูล', 'TENANT_SETUP');
+    if (vt && ctx.user && staff_(ctx.user)) useTerm_(String(vt)); // นักเรียนใช้ภาคเรียนของบัญชีตนเองเสมอ
     const data = route[1].apply(null, [ctx].concat(args || []));
     return JSON.parse(JSON.stringify({ ok: true, data: data === undefined ? null : data }));
   } catch (e) {
@@ -100,6 +101,8 @@ function rpc(fn, token, args, vt) {
   }
 }
 
+/** คำสั่งที่ใช้ได้ระหว่างที่ผู้ดูแลระบบคนใหม่ยังไม่ได้ตั้งฐานข้อมูลของตนเอง */
+const SETUP_OK = { me: 1, logout: 1, getSettings: 1, saveSettings: 1, changeCredentials: 1, updateProfile: 1 };
 const ROUTES = {
   // public
   bootstrap: ['public', bootstrap_], login: ['public', login_], registerStudent: ['public', registerStudent_],
@@ -121,9 +124,9 @@ const ROUTES = {
   listUsers: ['staff', listUsers_], saveUser: ['staff', saveUser_], importStudents: ['staff', importStudents_],
   listTeachers: ['staff', listTeachers_], saveStudentMenus: ['staff', saveStudentMenus_], uploadFinish: ['user', uploadFinish_],
   chatContacts: ['user', chatContacts_], chatList: ['user', chatList_], chatOpen: ['user', chatOpen_], chatMessages: ['user', chatMessages_],
-  chatSend: ['user', chatSend_], chatEdit: ['user', chatEdit_], chatDelete: ['user', chatDelete_], chatHide: ['user', chatHide_], chatRename: ['user', chatRename_], chatCreateTeam: ['user', chatCreateTeam_], chatUnread: ['user', chatUnread_],
+  chatSend: ['user', chatSend_], chatEdit: ['user', chatEdit_], chatDelete: ['user', chatDelete_], chatHide: ['user', chatHide_], chatRename: ['user', chatRename_], chatTeamMembers: ['user', chatTeamMembers_], chatCreateTeam: ['user', chatCreateTeam_], chatUnread: ['user', chatUnread_],
   // admin (ผู้ดูแลระบบคนเดียว)
-  deleteUser: ['admin', deleteUser_], setCoAdmin: ['admin', setCoAdmin_],
+  deleteUser: ['admin', deleteUser_], deleteUsers: ['admin', deleteUsers_], setCoAdmin: ['admin', setCoAdmin_],
   setRole: ['admin', setRole_], getSettings: ['admin', getSettings_], saveSettings: ['admin', saveSettings_],
   auditLog: ['admin', auditLog_], backupNow: ['admin', function () { return backup_(); }],
   listBackups: ['admin', listBackups_], liveList: ['staff', liveList_], liveGet: ['staff', liveGet_], liveSave: ['staff', liveSave_], liveRemove: ['staff', liveRemove_],
@@ -132,6 +135,8 @@ const ROUTES = {
 };
 
 /** ผู้ดูแลระบบ = admin หลัก หรือครูที่ได้รับสิทธิ์ผู้ดูแลระบบร่วม (coAdmin) */
+/** เจ้าของระบบ: admin หลัก หรือผู้ดูแลระบบคนใหม่ที่มีฐานข้อมูลแยกของตนเอง */
+const ownerAdmin_ = u => !!u && (u.role === 'admin' || (u.role === 'teacher' && u.coAdmin === 'true' && u.tenant === u.id));
 const isAdmin_ = u => !!u && (u.role === 'admin' || (u.role === 'teacher' && u.coAdmin === 'true'));
 const staff_ = u => !!u && (u.role === 'admin' || u.role === 'teacher');
 function routeOk_(route, u) {
@@ -151,10 +156,37 @@ function batch_(ctx, calls) {
 
 /* ============================== Data layer ============================== */
 const MEM_ = {};
-let SS_ = null;
+let SS_ = null, GSS_ = null, TENANT_ = null;
 function props_() { return PropertiesService.getScriptProperties(); }
-function sheetId_() { return props_().getProperty('SHEET_ID') || DEFAULTS.SHEET_ID; }
-function coreDriveId_() { return props_().getProperty('DRIVE_ID') || DEFAULTS.DRIVE_ID; }
+/* ---------- ผู้ดูแลระบบหลายคน (v5.2): ผู้ดูแลระบบแต่ละคนมีฐานข้อมูลของตนเอง (tenant) ----------
+ * ไฟล์หลักของระบบ (SHEET_ID): บัญชีครู/ผู้ดูแลระบบทุกคน + เซสชัน + ข้อมูลของผู้ดูแลระบบหลัก
+ * ผู้ดูแลระบบที่ได้รับการตั้งแบบ "ฐานข้อมูลแยก": ตั้งค่า Google Sheet + Drive ของตนเอง → ตั้งค่าระบบ/ภาคเรียน/ข้อมูลทั้งหมดเก็บแยก */
+function mainSheetId_() { return props_().getProperty('SHEET_ID') || DEFAULTS.SHEET_ID; }
+function mainDriveId_() { return props_().getProperty('DRIVE_ID') || DEFAULTS.DRIVE_ID; }
+function tenants_() { const m = json_(props_().getProperty('TENANTS'), {}); return m && typeof m === 'object' ? m : {}; }
+function tenant_() { return TENANT_ || (TENANT_ = { id: '', sheetId: '', driveId: '' }); }
+const tenantOf_ = u => (u && u.tenant) || '';
+function useTenant_(tid) {
+  tid = String(tid || ''); const reg = tid ? tenants_()[tid] || {} : {}, old = tenant_();
+  const t = tid ? { id: tid, sheetId: reg.sheetId || '', driveId: reg.driveId || '', unset: !reg.sheetId } : { id: '', sheetId: '', driveId: '' };
+  TENANT_ = t;
+  if (old.id !== t.id || old.sheetId !== t.sheetId) { SS_ = null; TSS_ = null; TERM_ = null; Object.keys(MEM_).forEach(k => delete MEM_[k]);
+    if (t.id && !t.unset && props_().getProperty('SETUP_T_' + t.id) !== t.sheetId + '|' + APP_VERSION) setupTenant_(); }
+}
+function sheetId_() { const t = tenant_(); if (t.id) { if (t.unset) throw err_('กรุณาตั้งค่าฐานข้อมูล (Google Sheet และ Google Drive) ของคุณก่อนใช้งาน — ไปที่ ตั้งค่าระบบ → ฐานข้อมูล', 'TENANT_SETUP'); return t.sheetId; } return mainSheetId_(); }
+function coreDriveId_() { const t = tenant_(); return t.id && t.driveId ? t.driveId : mainDriveId_(); }
+function gss_() { return tenant_().id ? (GSS_ || (GSS_ = SpreadsheetApp.openById(mainSheetId_()))) : ss_(); }
+/** บัญชีครู/ผู้ดูแลระบบทั้งหมดทุกฐานข้อมูล (ใช้เข้าสู่ระบบ / ตรวจชื่อผู้ใช้ซ้ำ) */
+function allStaff_() { return MEM_._staff || (MEM_._staff = prows_('Users', 'g').filter(u => u.role !== 'student')); }
+/** เตรียมไฟล์ฐานข้อมูลของผู้ดูแลระบบ (ตาราง + ค่าเริ่มต้น) */
+function setupTenant_() {
+  const t = tenant_(), ss = SpreadsheetApp.openById(t.sheetId);
+  Object.keys(SCHEMA).filter(n => n !== 'Sessions').forEach(n => ensureSheet_(ss, n));
+  const cfg = ss.getSheetByName('Config'), have = cfg.getLastRow() > 1 ? cfg.getRange(2, 1, cfg.getLastRow() - 1, 1).getValues().map(r => String(r[0])) : [];
+  Object.keys(CONFIG_DEFAULTS).forEach(k => { if (have.indexOf(k) < 0) cfg.appendRow([k, CONFIG_DEFAULTS[k], now_()]); });
+  props_().setProperty('SETUP_T_' + t.id, t.sheetId + '|' + APP_VERSION);
+  Object.keys(MEM_).forEach(k => delete MEM_[k]);
+}
 /** โฟลเดอร์เก็บไฟล์: ใช้โฟลเดอร์ของภาคเรียน (ถ้าตั้งไว้) ไม่งั้นใช้โฟลเดอร์หลัก */
 function driveId_() { return termDb_().driveId || coreDriveId_(); }
 function ss_() { return SS_ || (SS_ = SpreadsheetApp.openById(sheetId_())); }
@@ -164,7 +196,8 @@ function ss_() { return SS_ || (SS_ = SpreadsheetApp.openById(sheetId_())); }
  * ภาคเรียนที่ยังไม่ได้ตั้งไฟล์ → ใช้ไฟล์หลักทั้งหมด (เหมือนเดิม) */
 const CORE_TABLES = { Config: 1, Sessions: 1 };
 let TERM_ = null, TSS_ = null;
-function dbMap_() { const m = json_(props_().getProperty('DB_MAP'), {}); return m && typeof m === 'object' ? m : {}; }
+const dbKey_ = () => 'DB_MAP' + (tenant_().id ? '_' + tenant_().id : '');
+function dbMap_() { const m = json_(props_().getProperty(dbKey_()), {}); return m && typeof m === 'object' ? m : {}; }
 function curTermKey_() { const t = term_(); return t.year + '/' + t.term; }
 function resolveTerm_(vt) {
   if (vt === 'main') return { key: 'main', sheetId: '', driveId: '' };
@@ -182,10 +215,16 @@ function useTerm_(vt) {
 /** ทำงานกับฐานข้อมูลของอีกภาคเรียนชั่วคราว แล้วกลับมาที่เดิม */
 function withTerm_(vt, fn) { const was = termDb_(); useTerm_(vt); try { return fn(); } finally { useTerm_(was.key); TERM_ = was; } }
 /** ส่วนของตาราง: 'c' = ไฟล์หลัก · 't' = ไฟล์ภาคเรียน (Users แยกตามบทบาท) */
-function partOf_(name, row) { if (!split_() || CORE_TABLES[name]) return 'c'; if (name === 'Users') return row && row.role === 'student' ? 't' : 'c'; return 't'; }
-function ssPart_(part) { return part === 't' ? (TSS_ || (TSS_ = SpreadsheetApp.openById(termDb_().sheetId))) : ss_(); }
+/** 'g' = ไฟล์หลักของระบบ (บัญชีครู/ผู้ดูแลระบบ เซสชัน) · 'c' = ไฟล์ของผู้ดูแลระบบ (ตั้งค่า + ข้อมูลเมื่อไม่ได้แยกภาค) · 't' = ไฟล์ภาคเรียน */
+function partOf_(name, row) {
+  if (name === 'Sessions') return 'g';
+  if (name === 'Users') return row && row.role === 'student' ? (split_() ? 't' : 'c') : 'g';
+  if (name === 'Config') return 'c';
+  return split_() ? 't' : 'c';
+}
+function ssPart_(part) { return part === 't' ? (TSS_ || (TSS_ = SpreadsheetApp.openById(termDb_().sheetId))) : part === 'g' ? gss_() : ss_(); }
 /** คีย์แคชแยกตามไฟล์ฐานข้อมูล */
-function ck_(name, part) { return (part || partOf_(name)) === 't' ? termDb_().sheetId.slice(-10) + ':' + name : name; }
+function ck_(name, part) { part = part || partOf_(name); if (part === 't') return termDb_().sheetId.slice(-10) + ':' + name; if (part === 'c' && tenant_().id) return sheetId_().slice(-10) + '#' + name; return name; }
 function sheet_(name, part) {
   const ss = ssPart_(part || partOf_(name));
   let sh = ss.getSheetByName(name);
@@ -204,14 +243,14 @@ function ensureSheet_(ss, name) {
   sh.getRange(1, 1, sh.getMaxRows(), cols).setNumberFormat('@'); // เก็บเป็นข้อความ กันวันที่/เลข 0 นำหน้าเพี้ยน
   sh.getRange(1, 1, 1, cols).setFontWeight('bold').setBackground('#dbeafe');
   sh.setFrozenRows(1);
-  try { cache_().put('v_' + (ss.getId && ss.getId() !== sheetId_() ? String(ss.getId()).slice(-10) + ':' : '') + name, id_(), 21600); } catch (e) {}
+  try { const id = String(ss.getId ? ss.getId() : ''), tsid = tenant_().id ? tenant_().sheetId : ''; cache_().put('v_' + (id === mainSheetId_() || !id ? '' : id === tsid ? id.slice(-10) + '#' : id.slice(-10) + ':') + name, id_(), 21600); } catch (e) {}
   Object.keys(MEM_).forEach(k => { if (k === '_h_' + name + '#c' || k === '_h_' + name + '#t') delete MEM_[k]; });
 }
 /* แคชข้อมูลชีตใน CacheService (เร็วกว่าอ่านชีตทุกครั้งมาก) — เปลี่ยนเวอร์ชันทุกครั้งที่เขียน */
 const NO_CACHE = { Sessions: 1 };
 function cache_() { return CacheService.getScriptCache(); }
 function ver_(name, part) { const k = 'v_' + ck_(name, part); let v = cache_().get(k); if (!v) { v = id_(); cache_().put(k, v, 21600); } return v; }
-function bump_(name, part) { try { (part ? [part] : name === 'Users' && split_() ? ['c', 't'] : [partOf_(name)]).forEach(p => cache_().put('v_' + ck_(name, p), id_(), 21600)); } catch (e) {} }
+function bump_(name, part) { try { (part ? [part] : name === 'Users' ? ['g', split_() ? 't' : 'c'] : [partOf_(name)]).forEach(p => cache_().put('v_' + ck_(name, p), id_(), 21600)); } catch (e) {} }
 function cacheGet_(name, part) {
   if (NO_CACHE[name]) return null;
   try {
@@ -235,7 +274,7 @@ function cachePut_(name, list, part) {
   } catch (e) {}
 }
 function headers_(name, part) {
-  part = part || (name === 'Users' ? 'c' : partOf_(name));
+  part = part || (name === 'Users' ? 'g' : partOf_(name));
   const k = '_h_' + name + '#' + part;
   if (!MEM_[k]) { const sh = sheet_(name, part); MEM_[k] = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String); }
   return MEM_[k];
@@ -257,7 +296,12 @@ function prows_(name, part) {
 }
 function rows_(name) {
   if (MEM_[name]) return MEM_[name];
-  if (name === 'Users' && split_()) return MEM_.Users = prows_('Users', 'c').filter(u => u.role !== 'student').concat(prows_('Users', 't').filter(u => u.role === 'student'));
+  if (name === 'Users') { // ครู/ผู้ดูแลระบบของฐานข้อมูลนี้ (จากไฟล์หลัก) + นักเรียนของภาคเรียนนี้
+    if (tenant_().unset) return MEM_.Users = prows_('Users', 'g').filter(u => u.role !== 'student' && tenantOf_(u) === tenant_().id);
+    const tid = tenant_().id, sp = split_() ? 't' : 'c', g = prows_('Users', 'g'), mine = u => tenantOf_(u) === tid || (!tid && u.tenant && u.tenant === u.id); // ผู้ดูแลระบบหลักเห็นผู้ดูแลระบบที่แยกฐานข้อมูลด้วย (จัดการสิทธิ์ได้)
+    if (!tid && sp === 'c') return MEM_.Users = g.filter(u => u.role === 'student' || mine(u));
+    return MEM_.Users = g.filter(u => u.role !== 'student' && mine(u)).concat(prows_('Users', sp).filter(u => u.role === 'student'));
+  }
   return MEM_[name] = prows_(name, partOf_(name));
 }
 function cell_(v) {
@@ -271,31 +315,34 @@ function insert_(name, obj) {
   const o = { _r: sh.getLastRow(), _db: part };
   h.forEach(k => o[k] = obj[k] === undefined || obj[k] === null ? '' : (typeof obj[k] === 'object' ? JSON.stringify(obj[k]) : String(obj[k])));
   if (MEM_[name]) MEM_[name].push(o);
+  if (name === 'Users') delete MEM_._staff;
   return o;
 }
 function insertMany_(name, list) {
   if (!list.length) return;
-  ['c', 't'].forEach(part => {
+  ['g', 'c', 't'].forEach(part => {
     const sub = list.filter(o => partOf_(name, o) === part); if (!sub.length) return;
     const h = headers_(name, part), sh = sheet_(name, part);
     sh.getRange(sh.getLastRow() + 1, 1, sub.length, h.length).setValues(sub.map(o => h.map(k => cell_(o[k])))); bump_(name, part);
   });
-  delete MEM_[name];
+  delete MEM_[name]; if (name === 'Users') delete MEM_._staff;
 }
 function updateRow_(name, row, patch) {
   const part = row._db || partOf_(name, row), h = headers_(name, part);
   Object.keys(patch).forEach(k => { if (h.indexOf(k) >= 0) row[k] = typeof patch[k] === 'object' && patch[k] !== null ? JSON.stringify(patch[k]) : String(patch[k] === null || patch[k] === undefined ? '' : patch[k]); });
   sheet_(name, part).getRange(row._r, 1, 1, h.length).setValues([h.map(k => cell_(row[k]))]); bump_(name, part);
+  if (name === 'Users') { // บัญชีครูอ่านได้ 2 ทาง (allStaff_ / rows_) — ล้างสำเนาที่อาจค้าง
+    delete MEM_._staff; const o = MEM_.Users && MEM_.Users.find(x => x.id === row.id); if (o && o !== row) Object.assign(o, row); }
   return row;
 }
 function find_(name, id) { return rows_(name).find(r => r.id === String(id)); }
 function deleteWhere_(name, pred) {
   const list = rows_(name).filter(pred);
-  ['c', 't'].forEach(part => {
+  ['g', 'c', 't'].forEach(part => {
     const sub = list.filter(r => (r._db || partOf_(name, r)) === part).sort((a, b) => b._r - a._r); if (!sub.length) return;
     const sh = sheet_(name, part); sub.forEach(r => sh.deleteRow(r._r)); bump_(name, part);
   });
-  delete MEM_[name];
+  delete MEM_[name]; if (name === 'Users') delete MEM_._staff;
   return list.length;
 }
 function lock_(fn) {
@@ -386,7 +433,7 @@ function sha_(s) { return Utilities.base64EncodeWebSafe(Utilities.computeDigest(
 function hashPw_(pw, salt) { let h = salt + ':' + pw; for (let i = 0; i < 300; i++) h = sha_(h + salt); return h; }
 function pub_(u) {
   if (!u) return null;
-  const o = {}; Object.keys(u).forEach(k => { if (['passSalt', 'passHash', '_r'].indexOf(k) < 0) o[k] = u[k]; });
+  const o = {}; Object.keys(u).forEach(k => { if (['passSalt', 'passHash', '_r', '_db'].indexOf(k) < 0) o[k] = u[k]; });
   return o;
 }
 function throttle_(key, max, minutes) {
@@ -395,15 +442,16 @@ function throttle_(key, max, minutes) {
   return () => c.put('t_' + key, String(n + 1), minutes * 60);
 }
 function createSession_(user, remember) {
-  const c = cfg_();
+  let c = CONFIG_DEFAULTS; try { c = cfg_(); } catch (e) {}
   const hours = remember ? Number(c.rememberDays || 30) * 24 : Number(c.sessionHours || 8);
   const token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
   const exp = Date.now() + hours * 3600e3;
   const th = sha_(token);
-  insert_('Sessions', { id: id_(), userId: user.id, tokenHash: th, expiresAt: String(exp), createdAt: now_() });
-  CacheService.getScriptCache().put('s_' + th, JSON.stringify({ u: user.id, e: exp }), Math.min(21600, hours * 3600));
+  const tn = tenant_().id, tm = user.role === 'student' ? termDb_().key : ''; // นักเรียน: จำฐานข้อมูล/ภาคเรียนที่พบบัญชี
+  insert_('Sessions', { id: id_(), userId: user.id, tokenHash: th, expiresAt: String(exp), createdAt: now_(), tenant: tn, term: tm });
+  CacheService.getScriptCache().put('s_' + th, JSON.stringify({ u: user.id, e: exp, tn: tn, tm: tm }), Math.min(21600, hours * 3600));
   log_(user.id, 'login', user.role); // ไม่เขียนชีต Users ทุกครั้งที่ login (เร็วขึ้น) — เวลาเข้าล่าสุดดูจาก AuditLog
-  const pu = pub_(user); pu.lastLoginAt = now_(); pu.courseIds = myCourseIds_(user); pu.extraMenus = teacherMenus_(user); pu.termDbs = staff_(user) ? Object.keys(dbMap_()) : [];
+  const pu = userOut_(user); pu.lastLoginAt = now_();
   // ส่งข้อมูลหน้าแรกกลับไปพร้อมกัน → เข้าหน้าหลักได้ทันทีไม่ต้องเรียกซ้ำ
   const ctx = { user: user, token: token }, boot = {};
   try { if (staff_(user)) boot.adminDashboard = adminDashboard_(ctx); else boot.studentHome = studentHome_(ctx); } catch (e) {}
@@ -417,12 +465,32 @@ function auth_(token) {
   if (!s) {
     const row = rows_('Sessions').find(r => r.tokenHash === th);
     if (!row) return null;
-    s = { u: row.userId, e: Number(row.expiresAt) };
+    s = { u: row.userId, e: Number(row.expiresAt), tn: row.tenant || '', tm: row.term || '' };
     if (s.e > Date.now()) cache.put('s_' + th, JSON.stringify(s), Math.max(1, Math.min(21600, Math.floor((s.e - Date.now()) / 1000))));
   }
   if (s.e < Date.now()) return null;
+  const st = allStaff_().find(x => x.id === s.u);
+  if (st) { useTenant_(tenantOf_(st)); return st.status === 'active' ? st : null; }
+  useTenant_(s.tn || ''); if (s.tm) useTerm_(s.tm); // นักเรียน: ใช้ฐานข้อมูล/ภาคเรียนที่เข้าสู่ระบบ
   const u = find_('Users', s.u);
   return u && u.status === 'active' ? u : null;
+}
+/** ข้อมูลผู้ใช้ที่ส่งให้หน้าเว็บ */
+function userOut_(u) {
+  const pu = pub_(u); pu.tenantSetup = !!tenant_().unset;
+  try { pu.courseIds = myCourseIds_(u); pu.extraMenus = teacherMenus_(u); pu.termDbs = staff_(u) ? Object.keys(dbMap_()) : []; } catch (e) { pu.courseIds = []; pu.extraMenus = []; pu.termDbs = []; }
+  return pu;
+}
+/** ค้นหาในทุกฐานข้อมูล (ผู้ดูแลระบบทุกคน × ภาคปัจจุบัน → ทุกภาคที่ตั้งไว้ → ไฟล์หลัก) — คืนค่าแรกที่พบ (fn คืน truthy) */
+function eachDb_(fn, prefer) {
+  const tids = [''].concat(Object.keys(tenants_()));
+  for (const tid of tids) {
+    try { useTenant_(tid); if (tenant_().unset) continue;
+      const keys = [prefer || '', ''].concat(Object.keys(dbMap_()).sort().reverse(), ['main']), seen = {};
+      for (const k of keys) { const t = resolveTerm_(k), sid = t.sheetId || 'core'; if (seen[sid]) continue; seen[sid] = 1; useTerm_(k); const r = fn(); if (r) return r; }
+    } catch (e) { if (e.code === 'THROTTLE') throw e; }
+  }
+  useTenant_(''); useTerm_(''); return null;
 }
 function killSessions_(userId) {
   const cache = CacheService.getScriptCache();
@@ -449,16 +517,19 @@ function login_(ctx, f) {
   if (f.mode === 'admin') {
     const un = str_(f.username, 40).toLowerCase();
     const done = throttle_('a_' + un, 5, 10);
-    const u = rows_('Users').find(x => staff_(x) && x.username === un);
+    const u = allStaff_().find(x => x.username === un);
     if (!u || hashPw_(String(f.password || ''), u.passSalt) !== u.passHash) { done(); throw err_('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'); }
     if (u.status === 'pending') throw err_('บัญชีของคุณรอการอนุมัติจาก Admin');
     if (u.status !== 'active') throw err_('บัญชีนี้ถูกระงับการใช้งาน');
+    useTenant_(tenantOf_(u));
     return createSession_(u, !!f.remember);
   }
   const code = str_(f.studentCode, 5);
   const done = throttle_('s_' + code, 5, 10), doneAll = throttle_('s_all', 60, 10);
-  const u = rows_('Users').find(x => x.role === 'student' && x.studentCode === code);
-  if (!/^\d{5}$/.test(code) || !u) { done(); doneAll(); throw err_('ไม่พบรหัสนักเรียนนี้ กรุณาตรวจสอบหรือลงทะเบียนก่อน'); }
+  // ค้นหาทุกภาคเรียน/ปีการศึกษา (และทุกฐานข้อมูลของผู้ดูแลระบบ) → นักเรียนเข้าสู่ระบบได้เสมอ
+  const u = /^\d{5}$/.test(code) ? eachDb_(() => rows_('Users').find(x => x.role === 'student' && x.studentCode === code && x.status === 'active') || null)
+    || eachDb_(() => rows_('Users').find(x => x.role === 'student' && x.studentCode === code) || null) : null;
+  if (!u) { done(); doneAll(); throw err_('ไม่พบรหัสนักเรียนนี้ กรุณาตรวจสอบหรือลงทะเบียนก่อน'); }
   if (u.status !== 'active') throw err_('บัญชีนี้ยังใช้งานไม่ได้ กรุณาติดต่อครูผู้สอน');
   return createSession_(u, !!f.remember);
 }
@@ -474,7 +545,7 @@ function validPerson_(d) {
 }
 function classNo_(v) { v = str_(v, 3); if (v && !/^\d{1,3}$/.test(v)) throw err_('เลขที่ต้องเป็นตัวเลข'); return v ? String(Number(v)) : ''; }
 function codeTaken_(code, exceptId) { return rows_('Users').some(u => u.studentCode === code && u.id !== exceptId); }
-function userTaken_(un, exceptId) { return rows_('Users').some(u => u.username === un && u.id !== exceptId); }
+function userTaken_(un, exceptId) { return allStaff_().some(u => u.username === un && u.id !== exceptId); }
 function checkStudentCode_(ctx, code) {
   throttle_('chk', 120, 10)();
   code = str_(code, 5);
@@ -528,7 +599,7 @@ function forgotCode_(ctx, d) {
   const name = nameKey_(str_(d.fullName, 100));
   if (name.length < 3 || name.indexOf(' ') < 0) throw err_('กรุณาพิมพ์ชื่อและนามสกุล (เว้นวรรคระหว่างชื่อกับสกุล)');
   throttle_('fg_' + name, 8, 10)(); throttle_('fg_all', 200, 10)();
-  const list = rows_('Users').filter(u => u.role === 'student' && u.status !== 'disabled' && nameKey_(u.fullName) === name).slice(0, 5);
+  const list = [], seen = {}; eachDb_(() => { rows_('Users').forEach(u => { if (u.role === 'student' && u.status !== 'disabled' && nameKey_(u.fullName) === name && !seen[u.studentCode]) { seen[u.studentCode] = 1; list.push(u); } }); return list.length >= 5; });
   if (!list.length) throw err_('ไม่พบชื่อนี้ในระบบ กรุณาตรวจสอบการสะกด หรือติดต่อครูผู้สอน');
   log_(list[0].id, 'forgot_code', list.length + ' match');
   return list.map(u => ({ studentCode: u.studentCode, name: u.prefix + u.fullName, grade: u.grade, room: u.room, classNo: u.classNo }));
@@ -540,7 +611,7 @@ function resetStaffPassword_(ctx, d) {
   if (name.length < 3) throw err_('กรุณาพิมพ์ชื่อ-สกุล');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(bd)) throw err_('กรุณาเลือกวัน/เดือน/ปีเกิด');
   const done = throttle_('rs_' + name, 5, 15);
-  const u = rows_('Users').find(x => staff_(x) && x.status === 'active' && nameKey_(x.fullName) === name && x.birthDate === bd);
+  const u = allStaff_().find(x => x.status === 'active' && nameKey_(x.fullName) === name && x.birthDate === bd);
   if (!u) { done(); throw err_('ข้อมูลไม่ตรงกับในระบบ (ถ้ายังไม่เคยบันทึกวันเกิด กรุณาให้ผู้ดูแลระบบรีเซ็ตรหัสผ่านให้)'); }
   if (pw.length < 6) throw err_('รหัสผ่านใหม่อย่างน้อย 6 ตัว');
   if (pw !== String(d.confirm || '')) throw err_('ยืนยันรหัสผ่านไม่ตรงกัน');
@@ -554,7 +625,9 @@ function resetStaffPassword_(ctx, d) {
 }
 function lastLogin_(uid) { const l = rows_('AuditLog'); for (let i = l.length - 1; i >= 0; i--) if (l[i].userId === uid && l[i].action === 'login') return l[i].createdAt; return ''; }
 function me_(ctx) {
-  const pu = pub_(ctx.user); pu.lastLoginAt = lastLogin_(ctx.user.id) || pu.lastLoginAt; pu.courseIds = myCourseIds_(ctx.user); pu.extraMenus = teacherMenus_(ctx.user); pu.termDbs = staff_(ctx.user) ? Object.keys(dbMap_()) : [];
+  const pu = userOut_(ctx.user);
+  if (tenant_().unset) { const c = Object.assign({}, CONFIG_DEFAULTS); PRIVATE_CONFIG.forEach(k => delete c[k]); return { user: pu, term: term_(), config: c, classes: [], maxUploadMB: MAX_UPLOAD_MB, unread: 0 }; }
+  pu.lastLoginAt = lastLogin_(ctx.user.id) || pu.lastLoginAt;
   return { user: pu, term: term_(), config: publicCfg_(), classes: rows_('Classes').map(pub_), maxUploadMB: MAX_UPLOAD_MB,
     unread: rows_('Notifications').filter(n => n.ownerId === ctx.user.id && n.read !== 'true').length };
 }
@@ -1296,14 +1369,18 @@ function listUsers_() {
     || (Number(a.room) || 0) - (Number(b.room) || 0) || (Number(a.classNo) || 999) - (Number(b.classNo) || 999) || String(a.studentCode).localeCompare(String(b.studentCode)));
 }
 /** ให้/ถอนสิทธิ์ผู้ดูแลระบบร่วมแก่ครู (เฉพาะผู้ดูแลระบบหลัก) */
-function setCoAdmin_(ctx, id, on) {
-  if (ctx.user.role !== 'admin') throw err_('เฉพาะผู้ดูแลระบบหลัก (admin) เท่านั้น', 'FORBIDDEN');
+function setCoAdmin_(ctx, id, on, mode) {
+  if (!ownerAdmin_(ctx.user)) throw err_('เฉพาะผู้ดูแลระบบหลัก (admin) เท่านั้น', 'FORBIDDEN');
   return lock_(() => {
     const u = find_('Users', id);
-    if (!u || u.role !== 'teacher') throw err_('กำหนดได้เฉพาะครูผู้สอน');
-    updateRow_('Users', u, { coAdmin: on ? 'true' : '', updatedAt: now_() });
+    if (!u || u.role !== 'teacher' || u.id === ctx.user.id) throw err_('กำหนดได้เฉพาะครูผู้สอน');
+    // mode 'separate' = ผู้ดูแลระบบคนใหม่ ใช้ฐานข้อมูลของตนเอง (ต้องตั้ง Google Sheet + Drive ใหม่) — ข้อมูลทั้งหมดแยกจากเดิม
+    const sep = !!on && mode === 'separate';
+    const patch = { coAdmin: on ? 'true' : '', updatedAt: now_() };
+    if (sep) patch.tenant = u.id; else if (!on && u.tenant === u.id) patch.tenant = tenant_().id;
+    updateRow_('Users', u, patch);
     killSessions_(u.id);
-    log_(ctx.user.id, 'co_admin', { id: id, on: !!on });
+    log_(ctx.user.id, 'co_admin', { id: id, on: !!on, mode: sep ? 'separate' : 'shared' });
     return pub_(u);
   });
 }
@@ -1368,6 +1445,7 @@ function saveUser_(ctx, d) {
     }
     if (!String(patch.fullName || (u && u.fullName) || '').trim()) throw err_('กรุณากรอกชื่อ-สกุล');
     let row;
+    if (isNew && role !== 'student') patch.tenant = tenant_().id; // ครูที่เพิ่มอยู่ในฐานข้อมูลของผู้ดูแลระบบที่เพิ่ม
     if (isNew) row = insert_('Users', Object.assign({ id: id_(), role: role, status: 'active', createdAt: now_() }, patch));
     else { row = updateRow_('Users', u, patch); if (patch.studentCode || patch.passHash || patch.status === 'disabled') killSessions_(u.id); }
     log_(ctx.user.id, isNew ? 'create_user' : 'update_user', row.id);
@@ -1432,7 +1510,33 @@ function deleteUser_(ctx, id) {
     return counts;
   });
 }
+/** ลบนักเรียนหลายคนพร้อมกัน: {ids:[...]} หรือ {all:true} หรือ {grade, room} — ลบงานที่ส่ง/ความก้าวหน้า/การแจ้งเตือนด้วย */
+function deleteUsers_(ctx, d) {
+  d = d || {};
+  return lock_(() => {
+    const ids = {};
+    rows_('Users').forEach(u => { if (u.role !== 'student') return;
+      if (d.all === true || (Array.isArray(d.ids) && d.ids.indexOf(u.id) >= 0) || (d.grade && u.grade === String(d.grade) && (d.room === undefined || d.room === null || String(d.room) === '*' || (u.room || '') === String(d.room)))) ids[u.id] = u; });
+    const list = Object.keys(ids); if (!list.length) throw err_('ไม่พบนักเรียนที่เลือก');
+    if (d.confirm !== (Array.isArray(d.ids) ? d.ids.length : list.length)) throw err_('จำนวนที่ยืนยันไม่ตรงกับจำนวนนักเรียน (' + list.length + ' คน)', 'CONFIRM');
+    const has = x => !!ids[x];
+    const cache = CacheService.getScriptCache(); rows_('Sessions').filter(x => has(x.userId)).forEach(x => cache.remove('s_' + x.tokenHash)); deleteWhere_('Sessions', x => has(x.userId));
+    purgeRows_('Submissions', x => has(x.ownerId)); purge_([].concat.apply([], list.map(id => fileIds_(ids[id]))));
+    const counts = { Users: list.length, Submissions: deleteWhere_('Submissions', x => has(x.ownerId)), Progress: deleteWhere_('Progress', x => has(x.ownerId)),
+      Notifications: deleteWhere_('Notifications', x => has(x.ownerId)) };
+    deleteWhere_('Users', x => has(x.id));
+    log_(ctx.user.id, 'delete_users', { scope: d.all ? 'all' : d.grade ? d.grade + '/' + (d.room || '*') : 'selected', cascade: counts });
+    return counts;
+  });
+}
 /** สลับบทบาท ครูผู้สอน ↔ นักเรียน (ผู้ดูแลระบบมีคนเดียว เปลี่ยนไม่ได้) */
+/** แก้บัญชี — ถ้าบทบาทเปลี่ยนแล้วต้องย้ายไฟล์ (ครู = ไฟล์หลัก, นักเรียน = ฐานข้อมูล/ภาคเรียน) ให้ย้ายแถว */
+function patchUser_(u, patch) {
+  const nu = Object.assign({}, u, patch), from = u._db || partOf_('Users', u), to = partOf_('Users', nu);
+  if (from === to || ssPart_(from).getId() === ssPart_(to).getId()) return updateRow_('Users', u, patch);
+  const id = u.id; deleteWhere_('Users', x => x.id === id && (x._db || partOf_('Users', x)) === from);
+  delete nu._r; delete nu._db; return insert_('Users', nu);
+}
 function setRole_(ctx, id, role, extra) {
   extra = extra || {};
   if (role === 'admin') role = 'teacher';
@@ -1447,17 +1551,17 @@ function setRole_(ctx, id, role, extra) {
       if (userTaken_(un, id)) throw err_('Username นี้ถูกใช้แล้ว');
       if (pw.length < 6) throw err_('รหัสผ่านอย่างน้อย 6 ตัว');
       const salt = id_();
-      updateRow_('Users', u, { role: 'teacher', username: un, passSalt: salt, passHash: hashPw_(pw, salt), mustChangePassword: 'true', updatedAt: now_() });
+      patchUser_(u, { role: 'teacher', username: un, passSalt: salt, passHash: hashPw_(pw, salt), mustChangePassword: 'true', tenant: tenant_().id, updatedAt: now_() });
     } else if (role === 'student') {
       if (u.id === ctx.user.id) throw err_('ลดสิทธิ์บัญชีที่กำลังใช้งานอยู่ไม่ได้');
       const code = str_(extra.studentCode || u.studentCode, 5);
       if (!/^\d{5}$/.test(code)) throw err_('กรุณากำหนดรหัสนักเรียน 5 หลัก');
       if (codeTaken_(code, id)) throw err_('รหัสนักเรียนนี้ถูกใช้แล้ว');
-      updateRow_('Users', u, { role: 'student', studentCode: code, updatedAt: now_() });
+      patchUser_(u, { role: 'student', studentCode: code, coAdmin: '', updatedAt: now_() });
     } else throw err_('สิทธิ์ไม่ถูกต้อง');
     killSessions_(id);
     log_(ctx.user.id, 'set_role', { id: id, role: role });
-    return pub_(u);
+    return pub_(find_('Users', id) || u);
   });
 }
 function changeCredentials_(ctx, d) {
@@ -1689,8 +1793,33 @@ function chatRoomOut_(me, r) {
   const users = {}; rows_('Users').forEach(u => users[u.id] = u);
   const o = Object.assign({ id: r.id, type: r.type }, chatTitle_(me, r, users));
   const al = (rows_('ChatReads').find(x => x.id === me.id + '|' + r.id) || {}).alias; if (al) o.title = al;
-  if (r.type === 'team') { o.members = json_(r.members, []).map(id => userName_(users[id])); o.canRename = true; }
+  if (r.type === 'team') { const ids = json_(r.members, []); o.members = ids.map(id => userName_(users[id])); o.canRename = true; o.canManage = true;
+    o.memberList = ids.map(id => { const u = users[id]; return { id: id, name: userName_(u), role: u ? u.role : '', grade: u ? u.grade || '' : '', room: u ? u.room || '' : '', me: id === me.id, owner: id === r.createdBy }; }); }
   return o;
+}
+/** แก้ไข/ลบ ข้อความ: ของตนเอง หรือของคู่สนทนา (แชทรายบุคคล/ทีม) · ห้องเรียน: ครู/ผู้ดูแลระบบจัดการได้ทุกข้อความ */
+function msgCan_(me, m) {
+  if (!m || m.deleted === 'true') return false;
+  if (m.senderId === me.id || isAdmin_(me)) return true;
+  const r = /^cls:/.test(m.roomId) ? { type: 'class', grade: m.roomId.slice(4).split('|')[0], room: m.roomId.slice(4).split('|')[1] || '' } : find_('ChatRooms', m.roomId);
+  if (!chatCan_(me, r)) return false;
+  return r.type === 'class' ? staff_(me) : true;
+}
+/** เพิ่ม/ลบ สมาชิกแชทกลุ่ม (สมาชิกในกลุ่มจัดการได้) */
+function chatTeamMembers_(ctx, roomId, add, remove) {
+  const me = ctx.user;
+  return lock_(() => { delete MEM_.ChatRooms; const r = find_('ChatRooms', roomId);
+    if (!r || r.type !== 'team' || !chatCan_(me, r)) throw err_('ไม่พบแชทกลุ่ม', 'FORBIDDEN');
+    let ids = json_(r.members, []);
+    (Array.isArray(add) ? add : []).map(String).forEach(id => { if (ids.indexOf(id) >= 0) return; if (!canContact_(me, find_('Users', id))) throw err_('มีสมาชิกที่คุณไม่สามารถเพิ่มได้'); ids.push(id); });
+    const rm = (Array.isArray(remove) ? remove : []).map(String); ids = ids.filter(id => rm.indexOf(id) < 0).slice(0, 60);
+    if (!ids.length) throw err_('แชทกลุ่มต้องมีสมาชิกอย่างน้อย 1 คน');
+    const users = {}; rows_('Users').forEach(u => users[u.id] = u);
+    const note = [].concat((add || []).filter(id => json_(r.members, []).indexOf(String(id)) < 0).map(id => 'เพิ่ม ' + userName_(users[id])), rm.filter(id => json_(r.members, []).indexOf(id) >= 0).map(id => (id === me.id ? 'ออกจากกลุ่ม: ' : 'นำออก ') + userName_(users[id]))).join(', ');
+    updateRow_('ChatRooms', r, { members: ids, lastAt: now_(), lastText: (note || 'แก้ไขสมาชิก').slice(0, 120), lastBy: me.id });
+    log_(me.id, 'chat_members', { room: r.id, add: add, remove: rm });
+    return ids.indexOf(me.id) >= 0 ? chatRoomOut_(me, r) : { left: true };
+  });
 }
 /** ข้อความในห้อง (หลัง after = createdAt|id ล่าสุดที่มี) + บันทึกว่าอ่านแล้ว */
 function chatMessages_(ctx, roomId, after, since) {
@@ -1707,20 +1836,21 @@ function chatMessages_(ctx, roomId, after, since) {
   const rd = rows_('ChatReads').find(x => x.id === me.id + '|' + roomId);
   if (last && (!rd || rd.at < last)) lock_(() => { delete MEM_.ChatReads; const x = rows_('ChatReads').find(y => y.id === me.id + '|' + roomId);
     if (x) updateRow_('ChatReads', x, { at: last }); else insert_('ChatReads', { id: me.id + '|' + roomId, userId: me.id, roomId: roomId, at: last }); });
-  const out = m => { const u = users[m.senderId]; return { id: m.id, key: m.createdAt + '|' + m.id, text: m.deleted === 'true' ? '' : m.text, files: m.deleted === 'true' ? [] : json_(m.files, []), edited: !!m.editedAt && m.deleted !== 'true', ed: m.editedAt || '', deleted: m.deleted === 'true', at: m.createdAt, mine: m.senderId === me.id, sender: userName_(u), role: u ? u.role : '' }; };
+  const out = m => { const u = users[m.senderId]; return { id: m.id, key: m.createdAt + '|' + m.id, text: m.deleted === 'true' ? '' : m.text, files: m.deleted === 'true' ? [] : json_(m.files, []), edited: !!m.editedAt && m.deleted !== 'true', ed: m.editedAt || '', deleted: m.deleted === 'true', at: m.createdAt, mine: m.senderId === me.id, can: m.deleted !== 'true' && (m.senderId === me.id || isAdmin_(me) || (r.type === 'class' ? staff_(me) : true)), sender: userName_(u), role: u ? u.role : '' }; };
   return list.map(out).concat(upd.map(m => Object.assign(out(m), { upd: true })));
 }
 /** แก้ไข / ลบ ข้อความของตนเอง (ผู้ดูแลระบบลบได้ทุกข้อความ) */
 function chatEdit_(ctx, msgId, text) {
   const me = ctx.user, t = str_(text, 1000); if (!t) throw err_('กรุณาพิมพ์ข้อความ');
   return lock_(() => { delete MEM_.ChatMessages; const m = find_('ChatMessages', msgId);
-    if (!m || m.senderId !== me.id || m.deleted === 'true') throw err_('แก้ไขได้เฉพาะข้อความของคุณ', 'FORBIDDEN');
-    updateRow_('ChatMessages', m, { text: t, editedAt: now_() }); return true; });
+    if (!msgCan_(me, m)) throw err_('คุณไม่มีสิทธิ์แก้ไขข้อความนี้', 'FORBIDDEN');
+    updateRow_('ChatMessages', m, { text: t, editedAt: now_() }); if (m.senderId !== me.id) log_(me.id, 'chat_edit_other', m.id); return true; });
 }
 function chatDelete_(ctx, msgId) {
   const me = ctx.user;
   return lock_(() => { delete MEM_.ChatMessages; const m = find_('ChatMessages', msgId);
-    if (!m || (m.senderId !== me.id && !isAdmin_(me))) throw err_('ลบได้เฉพาะข้อความของคุณ', 'FORBIDDEN');
+    if (!msgCan_(me, m)) throw err_('คุณไม่มีสิทธิ์ลบข้อความนี้', 'FORBIDDEN');
+    if (m.senderId !== me.id) log_(me.id, 'chat_delete_other', m.id);
     purge_(fileIds_({ files: m.files })); updateRow_('ChatMessages', m, { text: '', files: '[]', deleted: 'true', editedAt: now_() }); return true; });
 }
 /** ลบห้องออกจากรายการแชทของฉัน (ไม่ลบข้อความของคนอื่น — กลับมาเมื่อมีข้อความใหม่) */
@@ -1743,7 +1873,7 @@ function chatSend_(ctx, roomId, text, files) {
     if (!chatCan_(me, r)) throw err_('ไม่พบห้องแชท', 'FORBIDDEN');
     const m = insert_('ChatMessages', { id: id_(), roomId: r.id, senderId: me.id, text: t, files: fs, createdAt: now_(), editedAt: '', deleted: '' });
     updateRow_('ChatRooms', r, { lastAt: m.createdAt, lastText: (t || '📎 ' + fs.map(f => f.name).join(', ')).slice(0, 120), lastBy: me.id });
-    return { id: m.id, key: m.createdAt + '|' + m.id, text: t, files: fs, at: m.createdAt, mine: true, sender: userName_(me), role: me.role };
+    return { id: m.id, key: m.createdAt + '|' + m.id, text: t, files: fs, at: m.createdAt, mine: true, can: true, sender: userName_(me), role: me.role };
   });
 }
 
@@ -1780,14 +1910,31 @@ function saveStudentMenus_(ctx, v) {
   return out;
 }
 function getSettings_() {
-  return { config: cfg_(), sheetId: sheetId_(), driveId: coreDriveId_(), sheetUrl: 'https://docs.google.com/spreadsheets/d/' + sheetId_(),
+  const t = tenant_();
+  if (t.unset) return { config: Object.assign({}, CONFIG_DEFAULTS), sheetId: '', driveId: '', sheetUrl: '', driveUrl: '', termDbs: [], curTerm: '', webAppUrl: ScriptApp.getService().getUrl(), triggers: [], tenant: t.id, needsDb: true };
+  return { tenant: t.id, config: cfg_(), sheetId: sheetId_(), driveId: coreDriveId_(), sheetUrl: 'https://docs.google.com/spreadsheets/d/' + sheetId_(),
     driveUrl: 'https://drive.google.com/drive/folders/' + coreDriveId_(), termDbs: termDbList_(), curTerm: curTermKey_(), webAppUrl: ScriptApp.getService().getUrl(),
     triggers: ScriptApp.getProjectTriggers().map(t => t.getHandlerFunction()) };
 }
 function extractId_(s) { s = str_(s, 300); const m = s.match(/[-\w]{25,}/); return m ? m[0] : ''; }
 function saveSettings_(ctx, d) {
   d = d || {};
-  const res = { reloaded: false };
+  const res = { reloaded: false }, t = tenant_();
+  if (t.id) { // ผู้ดูแลระบบคนใหม่ (ฐานข้อมูลแยก): ต้องกำหนด Google Sheet และ Google Drive ของตนเอง
+    if (!ownerAdmin_(ctx.user) && t.unset) throw err_('เฉพาะผู้ดูแลระบบเจ้าของฐานข้อมูล', 'FORBIDDEN');
+    const sid = d.sheetId !== undefined ? extractId_(d.sheetId) : t.sheetId, did = d.driveId !== undefined ? extractId_(d.driveId) : t.driveId;
+    if (sid !== t.sheetId || did !== t.driveId) {
+      if (!sid || !did) throw err_('กรุณากรอกทั้ง Google Sheet ID/URL และ Google Drive Folder ID/URL');
+      if (sid === mainSheetId_() || did === mainDriveId_()) throw err_('ผู้ดูแลระบบคนใหม่ต้องใช้ Google Sheet และ Google Drive ใหม่ของตนเอง (ห้ามใช้ของระบบเดิม)');
+      const tn = tenants_(); if (Object.keys(tn).some(k => k !== t.id && (tn[k].sheetId === sid || tn[k].driveId === did))) throw err_('Google Sheet/Drive นี้ถูกใช้โดยผู้ดูแลระบบคนอื่นแล้ว');
+      try { SpreadsheetApp.openById(sid).getName(); } catch (e) { throw err_('เปิด Google Sheet นี้ไม่ได้ ตรวจสอบ ID และสิทธิ์'); }
+      try { DriveApp.getFolderById(did).getName(); } catch (e) { throw err_('เปิดโฟลเดอร์ Google Drive นี้ไม่ได้ ตรวจสอบ ID และสิทธิ์'); }
+      lock_(() => { const m = tenants_(); m[t.id] = { sheetId: sid, driveId: did, updatedAt: now_() }; props_().setProperty('TENANTS', JSON.stringify(m)); });
+      TENANT_ = null; useTenant_(t.id); res.reloaded = true;
+    }
+    delete d.sheetId; delete d.driveId;
+    if (tenant_().unset) return res;
+  }
   if (d.driveId !== undefined && extractId_(d.driveId) !== coreDriveId_()) {
     const id = extractId_(d.driveId);
     try { DriveApp.getFolderById(id).getName(); } catch (e) { throw err_('เปิดโฟลเดอร์ Google Drive นี้ไม่ได้ ตรวจสอบ ID และสิทธิ์'); }
@@ -1859,7 +2006,7 @@ function saveTermDb_(ctx, d) {
   if (did) { try { DriveApp.getFolderById(did).getName(); } catch (e) { throw err_('เปิดโฟลเดอร์ Google Drive นี้ไม่ได้ ตรวจสอบ ID และสิทธิ์'); } }
   return lock_(() => {
     const m = dbMap_(); m[k] = { sheetId: sid, driveId: did, createdAt: (m[k] && m[k].createdAt) || now_() };
-    props_().setProperty('DB_MAP', JSON.stringify(m)); setupTermSheets_(sid);
+    props_().setProperty(dbKey_(), JSON.stringify(m)); setupTermSheets_(sid);
     let copied = 0; if (from && from !== k) copied = copyAllTerm_(from, k);
     log_(ctx.user.id, 'term_db', k + ' ' + sid + (copied ? ' copied ' + copied : ''));
     const out = termDbList_(); out.copied = copied; return out;
@@ -1930,7 +2077,7 @@ function importTerm_(ctx, from, kind, ids, opts) {
 }
 function removeTermDb_(ctx, key) {
   const k = termKeyOk_(key);
-  return lock_(() => { const m = dbMap_(); delete m[k]; props_().setProperty('DB_MAP', JSON.stringify(m)); log_(ctx.user.id, 'term_db_remove', k); return termDbList_(); });
+  return lock_(() => { const m = dbMap_(); delete m[k]; props_().setProperty(dbKey_(), JSON.stringify(m)); log_(ctx.user.id, 'term_db_remove', k); return termDbList_(); });
 }
 function backup_() {
   const name = 'Backup ' + cfg_().schoolName + ' ' + Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HHmm');
@@ -2056,10 +2203,8 @@ function liveStatus_(ctx, id) {
 /** หา PIN ในฐานข้อมูลภาคเรียน: ภาคที่ระบุใน QR → ภาคปัจจุบัน → ทุกภาคที่ตั้งไว้ → ไฟล์หลัก แล้วสลับไปใช้ฐานข้อมูลนั้นตลอดคำขอ */
 function liveByPin_(pin, tkey) {
   const p = str_(pin, 6), find = () => rows_('LiveSessions').find(x => x.pin === p && x.status !== 'draft');
-  const keys = [tkey && (tkey === 'main' || /^25\d\d\/[12]$/.test(tkey)) ? tkey : '', ''].concat(Object.keys(dbMap_()).sort().reverse(), ['main']);
-  const seen = {};
-  for (const k of keys) { const t = resolveTerm_(k), sid = t.sheetId || 'main'; if (seen[sid]) continue; seen[sid] = 1;
-    useTerm_(k); try { const r = find(); if (r) return r; } catch (e) {} }
+  const r = eachDb_(() => { try { return find() || null; } catch (e) { return null; } }, tkey && (tkey === 'main' || /^25\d\d\/[12]$/.test(tkey)) ? tkey : '');
+  if (r) return r;
   throw err_('ไม่พบกิจกรรมนี้ หรือกิจกรรมยังไม่เปิด', 'NOTFOUND');
 }
 function liveQs_(r, shuffle) {

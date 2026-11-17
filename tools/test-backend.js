@@ -330,5 +330,48 @@ const jc = R('liveJoin', null, lp2.pin, stCode.studentCode, '', pastK).data; ok(
 ok(!R('liveJoin', null, lp2.pin, '99998').ok, 'unknown code rejected');
 VR(pastK, 'liveControl', AD, lp2.id, 'start'); R('liveSubmit', null, lp2.pin, jc.pid, { r1: 0 }, {}, pastK);
 const sm2 = VR(pastK, 'liveStatus', AD, lp2.id).data.summary[0]; ok(sm2.counts[0] === 1 && sm2.levels[3] === 'ดีมาก' && sm2.start === 0, 'custom rating levels');
+// ---------- v5.2 ----------
+// นักเรียนเข้าสู่ระบบได้ทุกภาคเรียน/ปีการศึกษา (มีบัญชีเฉพาะในภาคเรียนเก่า)
+ok(VR(pastK, 'saveUser', AD, { prefix: 'เด็กหญิง', fullName: 'ภาค ก่อน', grade: 'ม.2', room: '1', studentCode: '18970', birthDate: '2012-01-01' }).ok, 'create student in past term only');
+ok(!R('listUsers', AD).data.some(u => u.studentCode === '18970'), 'not in current term');
+const PL = R('login', null, { mode: 'student', studentCode: '18970' }); ok(PL.ok && PL.data.user.fullName === 'ภาค ก่อน', 'login student from past term ' + PL.error);
+ok(R('me', PL.data.token).data.user.studentCode === '18970' && R('studentHome', PL.data.token).ok, 'past-term student session works');
+ok(R('me', PL.data.token, ).ok && ctx.rpc('me', PL.data.token, [], tkey).data.user.studentCode === '18970', 'student ignores view-term');
+ok(R('forgotCode', null, { fullName: 'ภาค ก่อน' }).data[0].studentCode === '18970', 'forgot code across terms');
+// ผู้ดูแลระบบคนใหม่ + ฐานข้อมูลแยก
+const kt = R('saveUser', AD, { role: 'teacher', prefix: 'นาง', fullName: 'ครู แยก', username: 'kru.t', password: 'pass123' }).data;
+ok(R('setCoAdmin', AD, kt.id, true, 'separate').ok, 'promote separate admin');
+let KT = R('login', null, { mode: 'admin', username: 'kru.t', password: 'pass123' }).data.token;
+ok(R('me', KT).data.user.tenantSetup === true && R('getSettings', KT).data.needsDb === true, 'new admin must set db');
+ok(R('list', KT, 'Courses').code === 'TENANT_SETUP', 'blocked until db set');
+ok(!R('saveSettings', KT, { sheetId: 'x'.repeat(40) }).ok, 'need both sheet and drive');
+const mainSid = R('getSettings', AD).data.sheetId; ok(!R('saveSettings', KT, { sheetId: mainSid, driveId: 'd'.repeat(33) }).ok, 'cannot reuse main sheet');
+const tb = ctx.SpreadsheetApp.create('ฐานข้อมูลครูแยก');
+const ts = R('saveSettings', KT, { sheetId: 'https://docs.google.com/spreadsheets/d/' + tb.getId() + '/edit', driveId: 'https://drive.google.com/drive/folders/' + 'f'.repeat(33) });
+ok(ts.ok && ts.data.reloaded, 'tenant db saved ' + ts.error);
+ok(R('getSettings', KT).data.sheetId === tb.getId() && R('list', KT, 'Courses').ok && R('list', KT, 'Courses').data.length === 0, 'tenant data separated');
+ok(R('saveSettings', KT, { config: { schoolName: 'โรงเรียนแยก' } }).ok && R('getSettings', KT).data.config.schoolName === 'โรงเรียนแยก' && R('getSettings', AD).data.config.schoolName !== 'โรงเรียนแยก', 'tenant settings separate');
+ok(R('saveUser', KT, { prefix: 'นาย', fullName: 'นักเรียน แยก', grade: 'ม.1', room: '1', studentCode: '55501', birthDate: '2013-01-01' }).ok, 'tenant student');
+ok(!R('listUsers', AD).data.some(u => u.studentCode === '55501') && R('listUsers', KT).data.some(u => u.studentCode === '55501'), 'tenant students isolated');
+const TL = R('login', null, { mode: 'student', studentCode: '55501' }); ok(TL.ok && R('me', TL.data.token).data.user.fullName === 'นักเรียน แยก', 'tenant student login');
+ok(!R('listUsers', KT).data.some(u => u.username === 'kru.a'), 'tenant admin sees only own staff');
+KT = R('login', null, { mode: 'admin', username: 'kru.t', password: 'pass123' }).data.token; ok(R('me', KT).data.user.tenantSetup === false, 'relogin tenant admin');
+ok(R('saveUser', KT, { role: 'teacher', prefix: 'นาย', fullName: 'ครู ลูกทีม', username: 'kru.a', password: 'pass123' }).ok === false, 'usernames unique across tenants');
+// แชทกลุ่ม: เพิ่ม/ลบสมาชิก + แก้ไข/ลบข้อความของคู่สนทนา
+const tm2 = R('chatCreateTeam', s1, 'กลุ่มทดสอบ', [id2]).data;
+const tmA = R('chatTeamMembers', s1, tm2.id, [], [id2]).data; ok(tmA.memberList.length === 1, 'remove member');
+ok(R('chatTeamMembers', s1, tm2.id, [id2], []).data.memberList.length === 2 && R('chatList', s2).data.some(r => r.id === tm2.id), 'add member');
+ok(R('chatTeamMembers', s3, tm2.id, [], [id2]).code === 'FORBIDDEN', 'non-member cannot manage');
+const om = R('chatSend', s1, tm2.id, 'ข้อความ s1', []).data; ok(R('chatEdit', s2, om.id, 'แก้โดย s2').ok && R('chatMessages', s1, tm2.id, '').data.find(m => m.id === om.id).text === 'แก้โดย s2', 'edit other member message');
+ok(R('chatDelete', s2, om.id).ok, 'delete other member message');
+ok(R('chatTeamMembers', s2, tm2.id, [], [id2]).data.left === true && !R('chatList', s2).data.some(r => r.id === tm2.id), 'leave group');
+// ลบนักเรียนหลายคน
+const before = R('listUsers', AD).data.filter(u => u.role === 'student');
+const victims = before.filter(u => u.grade === 'ม.6');
+ok(R('deleteUsers', AD, { grade: 'ม.6', room: '*', confirm: 999 }).code === 'CONFIRM', 'bulk delete needs confirm count');
+ok(R('deleteUsers', KA2 || s1, { all: true, confirm: before.length }).ok === false, 'bulk delete admin only');
+const dr = R('deleteUsers', AD, { grade: 'ม.6', room: '*', confirm: victims.length }); ok(dr.ok && dr.data.Users === victims.length && !R('listUsers', AD).data.some(u => u.grade === 'ม.6'), 'bulk delete by grade ' + dr.error);
+const two = R('listUsers', AD).data.filter(u => u.role === 'student').slice(0, 2).map(u => u.id);
+ok(R('deleteUsers', AD, { ids: two, confirm: 2 }).data.Users === 2, 'bulk delete selected');
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

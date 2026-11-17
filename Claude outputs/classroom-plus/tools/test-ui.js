@@ -163,7 +163,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.evaluate(() => setViewTerm('')); await idle(); await page.waitForTimeout(300);
   // v4.9: ตัวกรองชั้น/ห้อง + คอลัมน์รหัสนักเรียนต่อจากเลขที่
   await page.selectOption('#uG', 'ม.1'); await page.waitForTimeout(300);
-  ok(await page.evaluate(() => [...document.querySelectorAll('#ul thead th')].map(t => t.textContent.trim()).slice(0, 4).join('|')) === 'เลขที่|รหัสนักเรียน|ชื่อ-สกุล|ชั้น/ห้อง', 'student filter table columns');
+  ok(await page.evaluate(() => [...document.querySelectorAll('#ul thead th')].map(t => t.textContent.trim()).filter(Boolean).slice(0, 4).join('|')) === 'เลขที่|รหัสนักเรียน|ชื่อ-สกุล|ชั้น/ห้อง', 'student filter table columns');
   ok(await page.evaluate(() => getComputedStyle(document.querySelector('#ul thead th')).textAlign) === 'center', 'table header centered');
   await page.selectOption('#uG', ''); await page.waitForTimeout(200);
   await page.click('#fab'); await page.waitForSelector('#modal.show'); await page.click('#modal [name=birthDate] + input, #modal input.flatpickr-input.form-control:not([type=hidden])').catch(() => {}); await page.waitForTimeout(300);
@@ -247,6 +247,44 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   ok(await page.isVisible('#chatDot:not(.hidden)'), 'admin chat unread badge');
   await page.click('#chatBtn'); await page.waitForSelector('.crow.unread'); await page.click('.crow.unread'); await page.waitForSelector('.cmsg'); ok(await page.isVisible('.cmsg:not(.me):has-text("สวัสดีครับ")'), 'admin receives chat');
   await page.click('[data-cclose] >> nth=0');
+  // ---------- v5.2 ----------
+  // ผู้ใช้งาน: รายชื่อทั้งหมด (หน้าละ 30) + ลบหลายคน
+  await page.evaluate(async () => { const rows = []; for (let i = 0; i < 35; i++) rows.push({ studentCode: String(41000 + i), prefix: 'เด็กหญิง', fullName: 'ทดสอบ ลบ' + i, grade: 'ม.5', room: String(1 + (i % 2)), classNo: String(i + 1), acadYear: termOf().year }); await api('importStudents', rows, {}); });
+  await page.evaluate(() => go('users', {}, { force: true })); await idle();
+  await page.click('[data-uview=all]'); await idle(); ok(await page.$$eval('#uTbl tbody tr', x => x.length) === 30 && await page.isVisible('#uTbl [data-pg="2"]'), 'all students paginated 30');
+  await page.selectOption('#uG', 'ม.5'); await page.waitForTimeout(400);
+  await page.check('#uTbl tbody tr:nth-child(1) [data-pick]'); await page.check('#uTbl tbody tr:nth-child(2) [data-pick]'); ok((await page.textContent('#uTbl [data-delpick]')).includes('(2)'), 'pick count');
+  await page.click('#uTbl [data-delpick]'); await confirm(); await page.waitForTimeout(500);
+  ok((await page.evaluate(async () => (await api('listUsers')).filter(u => u.grade === 'ม.5').length)) === 33, 'bulk delete selected');
+  await page.click('[data-uview=room]'); await idle(); await page.selectOption('#uG', ''); await page.evaluate(() => go('users', {}, { force: true })); await idle();
+  await page.click('[data-room="ม.5|1"]'); await page.waitForSelector('#mhTools [data-rdel]'); await page.screenshot({ path: SHOT + '/30-room-delete.png' });
+  await page.click('#mhTools [data-rdel]'); await confirm(); await page.waitForTimeout(500);
+  ok(!(await page.evaluate(async () => (await api('listUsers')).some(u => u.grade === 'ม.5' && u.room === '1'))), 'delete whole room');
+  await page.click('.grade-card:has-text("ม.5") .dropdown-toggle'); await page.click('.grade-card:has-text("ม.5") [data-gdel]'); await confirm(); await page.waitForTimeout(500);
+  ok(!(await page.evaluate(async () => (await api('listUsers')).some(u => u.grade === 'ม.5'))), 'delete whole grade');
+  // แชทกลุ่ม: ตั้งค่า เปลี่ยนชื่อ + จัดการสมาชิก
+  await page.click('#chatBtn'); await page.waitForTimeout(800); if (await page.$('[data-cback=home]')) { await page.click('[data-cback=home]'); await page.waitForTimeout(600); } await page.click('[data-cnew] >> nth=0'); await page.click('[data-ctype=team]'); await page.waitForSelector('#cPeople input');
+  await page.fill('#cTeam', 'กลุ่ม UI'); const cbx = await page.$$('#cPeople input'); await cbx[0].check(); await page.click('#cMake'); await page.waitForSelector('#cText');
+  await page.fill('#cText', 'ทดสอบกลุ่ม'); await page.keyboard.press('Enter'); await page.waitForSelector('.cmsg.me');
+  await page.click('[data-cset]'); await page.waitForSelector('#csMem'); const n0 = await page.$$eval('#csMem .crow', x => x.length);
+  await page.click('#csMem [data-csrm] >> nth=0'); await confirm(); await page.waitForTimeout(500); ok(await page.$$eval('#csMem .crow', x => x.length) === n0 - 1, 'chat remove member');
+  await page.click('#csAdd'); await page.check('#csPeople input >> nth=0'); await page.click('#csAddGo'); await page.waitForTimeout(500); ok(await page.$$eval('#csMem .crow', x => x.length) === n0, 'chat add member');
+  await page.fill('#csName', 'กลุ่มใหม่'); await page.click('#csSave'); await page.waitForTimeout(400); await page.click('[data-csback]'); await page.waitForSelector('#cTitle'); ok((await page.textContent('#cTitle')) === 'กลุ่มใหม่', 'chat rename from settings');
+  await page.click('[data-cclose] >> nth=0');
+  // ผู้ดูแลระบบคนใหม่ (ฐานข้อมูลแยก)
+  await page.evaluate(async () => { await api('saveUser', { role: 'teacher', prefix: 'นาง', fullName: 'ครู แยกฐาน', username: 'kru.sep', password: 'pass123' }); });
+  await page.evaluate(() => go('users', {}, { force: true })); await idle();
+  await page.click('.ucard:has-text("แยกฐาน") [data-coadmin]'); await page.check('input[name=camode][value=separate]'); await confirm();
+  await page.evaluate(() => localLogout()); await idle();
+  await page.click('[data-tab=admin]'); await page.fill('#lgUser', 'kru.sep'); await page.fill('#lgPass', 'pass123'); await page.click('#loginForm button[type=submit]'); await idle(); await page.waitForTimeout(600);
+  ok(await page.evaluate(() => S.page === 'settings' && S.params.tab === 'db') && await page.isVisible('#dbS'), 'new admin forced to db setup');
+  await page.screenshot({ path: SHOT + '/31-tenant-db.png' });
+  const nsid = await page.evaluate(() => SpreadsheetApp.create('tenant').getId());
+  await page.fill('#dbS', nsid); await page.fill('#dbD', 'https://drive.google.com/drive/folders/' + 'g'.repeat(33)); await page.click('#dbSave'); await confirm(); await page.waitForTimeout(400); await confirm(); await page.waitForTimeout(600);
+  ok(await page.evaluate(() => S.page === 'dash' && !S.user.tenantSetup), 'tenant db saved → dashboard');
+  ok((await page.evaluate(async () => (await api('listUsers')).length)) === 1, 'tenant has separate data');
+  await page.evaluate(() => localLogout()); await idle();
+  await page.click('[data-tab=admin]'); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle();
   // mobile
   const m = await browser.newContext({ ...require('playwright').devices['iPhone 13'], ignoreHTTPSErrors: true });
   const mp = await m.newPage(); mp.on('pageerror', e => errs.push('m: ' + e.message));

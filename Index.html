@@ -126,6 +126,18 @@ a{color:var(--blue)}
 .auth-right{padding:40px clamp(20px,4vw,48px);display:flex;flex-direction:column;justify-content:center;color:var(--blue-dark)}
 [data-theme=dark] .auth-right{color:#bfdbfe}
 .auth-right h2{font-weight:800;margin-bottom:18px}
+.useg{display:inline-flex;gap:4px;background:var(--surface-2);border-radius:14px;padding:4px}.useg .btn{min-height:36px;border-radius:10px}
+.mh-tools{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto;margin-right:10px;align-items:center}.mh-tools .btn{min-height:36px}
+#modal .modal-header{gap:8px;flex-wrap:wrap;justify-content:flex-start}#modal .modal-header .btn-close{margin-left:auto}#modal .mh-tools+.btn-close{margin-left:0}
+/* v5.2: ข้อความในช่องกรอกอยู่กึ่งกลางแนวตั้งเสมอ */
+.form-control,.form-select{padding-top:.55rem;padding-bottom:.55rem}textarea.form-control{padding-top:.65rem;padding-bottom:.65rem}
+input.form-control:not([type=file]):not([type=color]),.form-select{display:block;height:auto}
+input.form-control[type=date],input.form-control[type=time],input.form-control[type=datetime-local],input.form-control[type=month]{display:flex;align-items:center;line-height:1.6}
+input.form-control::-webkit-datetime-edit{padding:0;line-height:1.6}input.form-control::-webkit-date-and-time-value{text-align:left;min-height:1.6em}
+.form-control[type=file]{padding:0;line-height:42px;overflow:hidden}.form-control[type=file]::file-selector-button{height:42px;margin:0 12px 0 0;padding:0 14px;border:0;border-right:1px solid var(--border)}
+.form-control-sm,.form-select-sm{min-height:36px;padding-top:.3rem;padding-bottom:.3rem;font-size:14px}
+.input-group>.form-control,.input-group>.form-select{min-height:44px}.input-group-text{min-height:44px;display:flex;align-items:center}
+.form-control-color{padding:6px;height:44px}
 .seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface-2);border-radius:16px;padding:5px;margin-bottom:20px;position:relative}
 .seg button{border:0;background:transparent;min-height:44px;border-radius:12px;font-weight:700;color:var(--muted);position:relative;z-index:1;transition:color .3s ease .05s}
 .seg button.active{color:#fff}
@@ -286,6 +298,7 @@ a.navlink{text-decoration:none}
 .cp-swal .swal2-actions{gap:10px;margin-top:1.4em;flex-wrap:wrap}
 .cp-swal .swal2-actions .btn{min-width:120px}
 .cp-swal .swal2-input,.cp-swal .swal2-textarea,.cp-swal .swal2-select{width:auto;margin:1.1em 1.2em 0;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:16px;height:52px;box-shadow:none;padding:0 16px;font-family:inherit}
+.cp-swal .swal2-textarea{height:auto;min-height:110px;padding:12px 16px;line-height:1.6}.cp-swal .swal2-input{line-height:52px}
 .cp-swal .swal2-input:focus{border-color:var(--blue);box-shadow:0 0 0 4px color-mix(in srgb,var(--blue) 18%,transparent)}
 .cp-swal .swal2-input::placeholder{color:var(--muted)}
 .cp-swal .swal2-validation-message{background:#fef2f2;color:#b91c1c;border-radius:12px;margin:1em 1.2em 0;font-size:.92rem}
@@ -778,13 +791,14 @@ body.live-mode footer,body.live-mode .chat-btn{display:none!important}
 .crow-wrap:hover .crow-del,.crow-del:focus{opacity:1}.crow-del:hover{background:#fee2e2;color:#b91c1c}
 @media (hover:none){.crow-del{opacity:.7}}
 .crow-wrap .crow .text-end{margin-right:6px}
+.cset{padding:14px;overflow:auto;flex:1}.cinput textarea::placeholder{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cset .cpeople{max-height:260px}
 .cmsg .cmact{border:0;background:none;color:inherit;opacity:.55;padding:0 3px;font-size:.72rem}.cmsg .cmact:hover{opacity:1}
 .cmsg.del .cb{opacity:.75}
 .cfiles{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.cfiles img{max-width:180px;max-height:160px;border-radius:12px;cursor:zoom-in;object-fit:cover}
 .cfile{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:12px;background:rgba(255,255,255,.25);color:inherit;text-decoration:none;font-size:.86rem;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cmsg:not(.me) .cfile{background:var(--surface-2)}
 .cattach{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px 0;background:var(--surface)}
-.cinput .catt-btn{width:44px;height:44px;border-radius:50%;align-self:flex-end;margin-bottom:6px}
+.cinput .catt-btn{width:44px;height:44px;border-radius:50%;align-self:flex-end;margin-bottom:4px}
 .code-pill{background:var(--blue);color:#fff;border-radius:12px;padding:0 12px;letter-spacing:2px}
 .add-chip{border-style:dashed!important;color:var(--blue)!important;background:transparent!important}
 
@@ -820,12 +834,12 @@ body.live-mode footer,body.live-mode .chat-btn{display:none!important}
 .cmsg .cname{font-size:.74rem;color:var(--muted);margin:0 0 2px 8px}.cmsg .ct{font-size:.68rem;color:var(--muted);margin:2px 8px 0}
 .cday{align-self:center;font-size:.72rem;color:var(--muted);background:var(--surface);border-radius:999px;padding:2px 10px;margin:6px 0}
 .cinput{display:flex;gap:10px;align-items:flex-end;padding:12px;border-top:1px solid var(--border);background:var(--surface)}
-.cinput textarea{flex:1;resize:none;border-radius:20px;border:1px solid var(--border);padding:10px 14px;background:var(--surface);color:var(--text);min-height:64px;max-height:160px;font-size:16.5px;line-height:1.45;padding:12px 16px}
+.cinput textarea{flex:1;resize:none;border-radius:20px;border:1px solid var(--border);padding:10px 14px;background:var(--surface);color:var(--text);min-height:52px;max-height:160px;font-size:16.5px;line-height:24px;padding:13px 18px;box-sizing:border-box;overflow-y:auto}
 .cinput .btn-icon{width:52px;height:52px;border-radius:50%;font-size:1.1rem}
 .cinput textarea:focus{outline:3px solid rgba(56,189,248,.45);border-color:var(--blue)}
 body.auth .chat-btn,body.auth .chat-panel{display:none!important}
 @media (max-width:575.98px){.chat-panel{left:auto;right:calc(3vw + var(--sar));width:94vw;height:min(62dvh,560px);bottom:calc(var(--dock-h) + 84px + var(--sab));border-radius:24px;z-index:1060;box-shadow:0 24px 60px rgba(15,23,42,.35)}
-  .cinput textarea{min-height:56px}}
+  .cinput textarea{min-height:52px}}
 /* =================== v4.7: เครื่องมือครู =================== */
 .tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:18px}
 .tool-card{position:relative;overflow:hidden;isolation:isolate;border:0;border-radius:26px;min-height:200px;padding:22px;color:#fff;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;
@@ -1089,13 +1103,14 @@ function call(fn, args, o = {}) {
   if (MUTATING.has(fn)) { CACHE.clear(); PC.clear(); }
   if (o.loader !== false) Loader.show(o.msg);
   return attempt(o.retry ?? 1)
-    .catch(e => { if (e.code === 'AUTH' && S.token) { localLogout(); toast(e.message, 'warning'); } throw e; })
+    .catch(e => { if (e.code === 'AUTH' && S.token) { localLogout(); toast(e.message, 'warning'); }
+      if (e.code === 'TENANT_SETUP' && S.user && !S.user.tenantSetup) { S.user.tenantSetup = true; setTimeout(() => go('settings', { tab: 'db' }, { force: true }), 0); } throw e; })
     .finally(() => { if (o.loader !== false) Loader.hide(); });
 }
 const api = (fn, ...a) => call(fn, a);
 /* แคชข้อมูลฝั่งเว็บ: แสดงข้อมูลเดิมทันที แล้วอัปเดตเบื้องหลัง (เปิดหน้าเดิมซ้ำแทบไม่ต้องรอ) */
 const CACHE = new Map();
-const MUTATING = new Set(['save', 'remove', 'submitWork', 'deleteSubmission', 'saveUser', 'deleteUser', 'importStudents', 'setRole', 'gradeSubmission', 'saveSettings', 'updateProfile', 'saveProgress', 'restoreBackup', 'changeCredentials', 'markRead', 'login', 'logout', 'registerStudent', 'registerAdmin', 'addAssignmentType', 'saveStudentMenus', 'chatSend', 'chatCreateTeam', 'editSubmission', 'removeSubmission', 'renameClass', 'saveTermDb', 'createTermDb', 'removeTermDb', 'importTerm', 'liveSave', 'liveRemove', 'liveControl']);
+const MUTATING = new Set(['save', 'remove', 'submitWork', 'deleteSubmission', 'saveUser', 'deleteUser', 'deleteUsers', 'chatTeamMembers', 'setCoAdmin', 'importStudents', 'setRole', 'gradeSubmission', 'saveSettings', 'updateProfile', 'saveProgress', 'restoreBackup', 'changeCredentials', 'markRead', 'login', 'logout', 'registerStudent', 'registerAdmin', 'addAssignmentType', 'saveStudentMenus', 'chatSend', 'chatCreateTeam', 'editSubmission', 'removeSubmission', 'renameClass', 'saveTermDb', 'createTermDb', 'removeTermDb', 'importTerm', 'liveSave', 'liveRemove', 'liveControl']);
 let rerenderT = 0;
 function rerender() { clearTimeout(rerenderT); rerenderT = setTimeout(() => { if (S.user && !document.querySelector('.modal.show') && !document.querySelector('.swal2-container')) go(S.page, S.params, { quiet: true }); }, 250); }
 /* แคชถาวรในเครื่อง (เปิดหน้าเว็บใหม่ก็แสดงข้อมูลล่าสุดทันที แล้วอัปเดตเบื้องหลัง) */
@@ -1150,8 +1165,10 @@ const fileIcon = n => { const e = String(n).split('.').pop().toLowerCase(); retu
 const driveId = u => (String(u || '').match(/(?:\/d\/|id=)([\w-]{20,})/) || [])[1] || '';
 
 /* ---------------- Modal ---------------- */
-function modal(title, body, foot = '', size = 'modal-lg') {
+function modal(title, body, foot = '', size = 'modal-lg', tools = '') {
   $('#modalTitle').textContent = title;
+  const mc = $('#modal .modal-content'); mc.onclick = null; mc.onchange = null;
+  $('#mhTools')?.remove(); if (tools) $('#modalTitle').insertAdjacentHTML('afterend', `<div id="mhTools" class="mh-tools">${tools}</div>`);
   $('#modalBody').innerHTML = body;
   $('#modalFoot').innerHTML = foot;
   $('#modal .modal-dialog').className = `modal-dialog ${size} modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down`;
@@ -1469,6 +1486,14 @@ function tableHtml(headers, rows) {
   if (!rows.length) return empty('fa-inbox', 'ยังไม่มีข้อมูล');
   return `<div class="table-responsive-md"><table class="table-x"><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td data-label="${esc(String(headers[i]).replace(/<[^>]+>/g, ''))}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
+/** ปุ่มเลขหน้า (ใช้ร่วมกัน) */
+function pagerHtml(page, pages) {
+  if (pages <= 1) return '';
+  const nums = Array.from({ length: pages }, (_, i) => i + 1).filter(n => n === 1 || n === pages || Math.abs(n - page) <= 2);
+  return `<button class="btn btn-sm btn-soft" data-pg="${page - 1}" ${page > 1 ? '' : 'disabled'} aria-label="หน้าก่อนหน้า"><i class="fa-solid fa-chevron-left"></i> ก่อนหน้า</button>`
+    + nums.map((n, i) => (i && n - nums[i - 1] > 1 ? '<span class="align-self-center px-1">…</span>' : '') + `<button class="btn btn-sm ${n === page ? 'btn-primary' : 'btn-soft'}" data-pg="${n}" style="min-width:44px" aria-label="หน้า ${n}">${n}</button>`).join('')
+    + `<button class="btn btn-sm btn-primary" data-pg="${page + 1}" ${page < pages ? '' : 'disabled'} aria-label="หน้าถัดไป">ถัดไป <i class="fa-solid fa-chevron-right"></i></button>`;
+}
 /** list view: ค้นหา debounce 300ms + Pagination */
 function listView(root, { items, headers, row, card, search, filters = '', size = 30, onFilter, emptyText }) {
   root.innerHTML = `<div class="d-flex flex-wrap gap-2 mb-3"><div class="flex-fill" style="min-width:220px"><input class="form-control" type="search" placeholder="ค้นหา..." aria-label="ค้นหา" data-q></div>${filters}</div><div data-t></div><nav class="d-flex justify-content-center gap-2 mt-3 flex-wrap" data-p></nav>`;
@@ -1495,7 +1520,8 @@ function listView(root, { items, headers, row, card, search, filters = '', size 
 /* ---------------- นาฬิกา / คำทักทาย ---------------- */
 const isStaff = () => !!S.user && (S.user.role === 'admin' || S.user.role === 'teacher');
 const isAdm = () => !!S.user && (S.user.role === 'admin' || (S.user.role === 'teacher' && S.user.coAdmin === 'true'));
-const roleTh = u => u && u.role === 'teacher' && u.coAdmin === 'true' ? 'ผู้ดูแลระบบร่วม' : ROLE_TH[u && u.role] || '';
+const ownerAdm = () => !!S.user && (S.user.role === 'admin' || (S.user.role === 'teacher' && S.user.coAdmin === 'true' && S.user.tenant === S.user.id));
+const roleTh = u => u && u.role === 'teacher' && u.coAdmin === 'true' ? (u.tenant === u.id ? 'ผู้ดูแลระบบ (ฐานข้อมูลแยก)' : 'ผู้ดูแลระบบร่วม') : ROLE_TH[u && u.role] || '';
 const ROLE_TH = { admin: 'ผู้ดูแลระบบ', teacher: 'ครูผู้สอน', student: 'นักเรียน' };
 /** ภาคเรียน/ปีการศึกษาอัตโนมัติ: ภาค 1 = 16 พ.ค.–30 ก.ย. · ปิดภาค 1–20 ต.ค. · ภาค 2 = 21 ต.ค.–31 มี.ค. · ปิดภาค 1 เม.ย.–15 พ.ค. */
 function termOf(d = new Date()) {
@@ -1885,6 +1911,7 @@ function enterApp() {
   $('#modeSwitch').classList.toggle('hidden', !isAdmin);
   applyBrand(); renderMe(); renderShell();
   go(S.mode === 'admin' ? 'dash' : 'home');
+  if (S.user.tenantSetup) return; // ยังไม่ตั้งฐานข้อมูล → ไม่ดึงข้อมูลอื่น
   refreshNotifs();
   setTimeout(prefetch, 1500);
   S.bg = S.bg || setInterval(() => { if (S.token) { refreshNotifs(); if (S.expiresAt && Date.now() > S.expiresAt) { localLogout(); Sw.fire({ icon: 'info', title: 'หมดเวลาการใช้งาน', text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง' }); } } }, 60000);
@@ -1902,7 +1929,8 @@ function renderMe() {
     ? `<small>ชั้น ${esc(u.grade || '-')}${u.room ? '/' + esc(u.room) : ''}</small><small>เลขที่ ${esc(u.classNo || '-')}</small>` : `<small>${roleTh(u) || ''}</small>`}</div>`;
   tickClock();
   $('#meAvatar').innerHTML = avatarHtml(u); $('#meName').textContent = u.fullName;
-  $('#bannerBox').innerHTML = u.role === 'teacher' && u.mustChangePassword === 'true'
+  $('#bannerBox').innerHTML = u.tenantSetup ? `<div class="banner"><i class="fa-solid fa-database"></i><div class="flex-fill">คุณได้รับสิทธิ์เป็น <b>ผู้ดูแลระบบคนใหม่</b> — กรุณากำหนด Google Sheet และ Google Drive ของคุณเองก่อนเริ่มใช้งาน (ข้อมูลทั้งหมดจะแยกเก็บตามลิงก์ใหม่)</div><button class="btn btn-sm btn-dark" data-go="settings" data-tab="db">ตั้งค่าเลย</button></div>`
+    : u.role === 'teacher' && u.mustChangePassword === 'true'
     ? `<div class="banner"><i class="fa-solid fa-shield-halved"></i><div class="flex-fill">คุณยังใช้รหัสผ่านเริ่มต้นอยู่ กรุณาเปลี่ยน Username/รหัสผ่านเพื่อความปลอดภัย</div><button class="btn btn-sm btn-dark" data-go="settings" data-tab="account">เปลี่ยนเลย</button></div>` : '';
 }
 /* ---------- เมนูลิงก์ฝั่งนักเรียน ---------- */
@@ -2019,6 +2047,7 @@ function go(page, params = {}, opt2 = {}) {
     return;
   }
   S.dirty = null;
+  if (S.user && S.user.tenantSetup && S.mode === 'admin') { page = 'settings'; params = { tab: ['db', 'account'].includes(params && params.tab) ? params.tab : 'db' }; } // ผู้ดูแลระบบคนใหม่: ตั้งฐานข้อมูลก่อน
   if (!PAGES[page]) page = S.mode === 'admin' ? 'dash' : 'home';
   if (PAGES[page].admin && S.mode !== 'admin') page = 'home';
   if (S.mode === 'student' && stuMenus().hidden.includes(page)) page = 'home';
@@ -2029,16 +2058,18 @@ function go(page, params = {}, opt2 = {}) {
   $('#pageTitle').textContent = nav ? nav[1] : HIDDEN_TITLES[page] || '';
   $('#fab').classList.add('hidden'); $('#fab').onclick = null;
   document.body.classList.remove('side-open'); fixToggleIcon();
-  const el = $('#page');
-  el.onclick = null; // ล้าง handler ของหน้าก่อน (สาเหตุ error "reading 'id'")
+  // v5.2: เปลี่ยนหน้าใช้กล่องใหม่เสมอ — หน้าก่อนหน้าที่ยังโหลดไม่เสร็จจะเขียนลงกล่องเก่า (ไม่ทับหน้าที่เพิ่งเปิด/เมนูไม่ค้าง)
+  let el = $('#page'); if (!opt2.quiet) { const nel = el.cloneNode(false); nel.removeAttribute('style'); el.replaceWith(nel); el = nel; }
+  const seq = S.navSeq = (S.navSeq || 0) + 1;
+  el.onclick = null; el.onchange = null; el.oninput = null; // ล้าง handler ของหน้าก่อน (สาเหตุ error "reading 'id'")
   el.classList.toggle('page-full', page === 'web');
   const act = $('#dock .active'); if (act) { const d = $('#dock'); d.scrollLeft = act.offsetLeft - d.clientWidth / 2 + act.offsetWidth / 2; }
   const y = window.scrollY;
   if (!opt2.quiet) { el.style.animation = 'none'; el.offsetHeight; el.style.animation = ''; el.innerHTML = skeleton(); window.scrollTo({ top: 0 }); }
   let shown = false; const lt = opt2.quiet ? 0 : setTimeout(() => { shown = true; Loader.show('กำลังโหลดหน้า...'); }, 180);
   Promise.resolve().then(() => PAGES[page].render(el, S.params))
-    .then(() => { tickClock(); if (opt2.quiet) window.scrollTo({ top: y }); })
-    .catch(e => { el.innerHTML = `<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><div class="mb-3">${esc(e.message)}</div><button class="btn btn-primary" id="retryBtn"><i class="fa-solid fa-rotate-right"></i> ลองใหม่</button></div>`; $('#retryBtn').onclick = () => go(page, params); })
+    .then(() => { if (seq !== S.navSeq) return; tickClock(); if (opt2.quiet) window.scrollTo({ top: y }); })
+    .catch(e => { if (seq !== S.navSeq || !el.isConnected) return; console.warn(page, e); el.innerHTML = `<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><div class="mb-3">${esc(e.message)}</div><button class="btn btn-primary" id="retryBtn"><i class="fa-solid fa-rotate-right"></i> ลองใหม่</button></div>`; $('#retryBtn').onclick = () => go(page, params); })
     .finally(() => { clearTimeout(lt); if (shown) Loader.hide(); });
 }
 /* ---------- แถบไฮไลต์เลื่อนตามเมนูที่เลือก (แถบด้านข้าง / Dock / แท็บในหน้า) ---------- */
@@ -2623,7 +2654,7 @@ PAGES.users = { admin: true, async render(el, p = {}) {
     if (u.role === 'admin') return `<div class="d-flex gap-1 justify-content-end">${cBtn(u)}${u.id === S.user.id ? '<button class="btn btn-sm btn-soft" data-go="settings" data-tab="account"><i class="fa-solid fa-key"></i> บัญชี</button>' : ''}</div>`;
     if (!adm) return u.role === 'student' ? `<div class="d-flex gap-1 justify-content-end">${cBtn(u)}<button class="btn btn-sm btn-icon btn-soft" data-edit="${esc(u.id)}" aria-label="แก้ไข"><i class="fa-solid fa-pen"></i></button></div>` : `<div class="d-flex justify-content-end">${cBtn(u)}</div>`;
     return actBtns(u.id, cBtn(u) + (u.status === 'pending' ? `<button class="btn btn-sm btn-success" data-approve="${esc(u.id)}">อนุมัติ</button>` : '') + `<button class="btn btn-sm btn-icon btn-soft" data-role="${esc(u.id)}" aria-label="เปลี่ยนบทบาท" title="${u.role === 'teacher' ? 'เปลี่ยนเป็นนักเรียน' : 'ตั้งเป็นครูผู้สอน'}"><i class="fa-solid fa-user-pen"></i></button>`
-      + (u.role === 'teacher' && S.user.role === 'admin' ? `<button class="btn btn-sm btn-icon ${u.coAdmin === 'true' ? 'btn-danger' : 'btn-soft'}" data-coadmin="${esc(u.id)}" aria-label="ผู้ดูแลระบบร่วม" title="${u.coAdmin === 'true' ? 'ถอนสิทธิ์ผู้ดูแลระบบร่วม' : 'ตั้งเป็นผู้ดูแลระบบร่วม'}"><i class="fa-solid fa-user-shield"></i></button>` : ''));
+      + (u.role === 'teacher' && ownerAdm() && u.id !== S.user.id ? `<button class="btn btn-sm btn-icon ${u.coAdmin === 'true' ? 'btn-danger' : 'btn-soft'}" data-coadmin="${esc(u.id)}" aria-label="ผู้ดูแลระบบร่วม" title="${u.coAdmin === 'true' ? 'ถอนสิทธิ์ผู้ดูแลระบบร่วม' : 'ตั้งเป็นผู้ดูแลระบบร่วม'}"><i class="fa-solid fa-user-shield"></i></button>` : ''));
   };
   const personCard = u => `<div class="card-x ucard"><div class="d-flex gap-3 align-items-center">${avatarHtml(u, 56)}<div class="flex-fill" style="min-width:0"><b class="d-block">${esc(u.prefix + u.fullName)}</b>
     <small class="text-muted d-block">${esc(roleTh(u))}${u.username ? ' · ' + esc(u.username) : ''}</small><div class="mt-1">${stChip(u)}</div></div></div><div class="mt-2">${acts(u)}</div></div>`;
@@ -2633,30 +2664,63 @@ PAGES.users = { admin: true, async render(el, p = {}) {
   <h5 class="fw-bold mb-2"><i class="fa-solid fa-chalkboard-user text-primary me-2"></i>ครูผู้สอน <span class="chip info">${teachers.length} คน</span></h5>
   <div class="grid g3 mb-4">${teachers.map(personCard).join('') || '<div class="text-muted">ยังไม่มีครูผู้สอน</div>'}</div>
   <div class="d-flex flex-wrap gap-2 align-items-center mb-2"><h5 class="fw-bold m-0 flex-fill"><i class="fa-solid fa-user-graduate text-success me-2"></i>นักเรียน</h5>
+    <div class="useg" role="group" aria-label="มุมมองรายชื่อนักเรียน"><button type="button" class="btn btn-sm ${S.uAll ? 'btn-soft' : 'btn-primary'}" data-uview="room"><i class="fa-solid fa-door-open"></i> แยกห้อง</button><button type="button" class="btn btn-sm ${S.uAll ? 'btn-primary' : 'btn-soft'}" data-uview="all"><i class="fa-solid fa-list"></i> ทั้งหมด</button></div>
     <select class="form-select w-auto" id="uG" aria-label="กรองระดับชั้น"><option value="">ทุกชั้น</option>${opt([...new Set(allStuds.map(u => u.grade).filter(Boolean))].sort((a, b) => (GRADES.includes(a) ? GRADES.indexOf(a) : 99) - (GRADES.includes(b) ? GRADES.indexOf(b) : 99) || natural(a, b)))}</select>
     <select class="form-select w-auto" id="uR" aria-label="กรองห้อง"><option value="">ทุกห้อง</option>${opt([...new Set(allStuds.map(u => u.room).filter(Boolean))].sort(natural))}</select>
     <input class="form-control" style="max-width:260px" type="search" id="uq" placeholder="ค้นหาชื่อ / รหัส / ชื่อเล่น..." aria-label="ค้นหานักเรียน"></div>
   <div id="ul"></div>`;
-  const stuTable = (arr, withRoom) => tableHtml(['เลขที่', 'รหัสนักเรียน', 'ชื่อ-สกุล'].concat(withRoom ? ['ชั้น/ห้อง'] : [], ['สถานะ', '']), arr.slice().sort((a, b) => (withRoom ? natural((a.grade || '') + '/' + (a.room || ''), (b.grade || '') + '/' + (b.room || '')) : 0) || (Number(a.classNo) || 999) - (Number(b.classNo) || 999))
-    .map(u => [esc(u.classNo || '-'), `<b>${esc(u.studentCode)}</b>`, who(u)].concat(withRoom ? [`<span class="chip info">${esc(u.grade || '-')}/${esc(u.room || '-')}</span>`] : [], [stChip(u), acts(u)])));
+  const sortStu = (arr, withRoom) => arr.slice().sort((a, b) => (withRoom ? (gOrder(a.grade) - gOrder(b.grade) || natural((a.grade || '') + '/' + (a.room || ''), (b.grade || '') + '/' + (b.room || ''))) : 0) || (Number(a.classNo) || 999) - (Number(b.classNo) || 999));
+  const ck = u => `<input class="form-check-input" type="checkbox" data-pick="${esc(u.id)}" aria-label="เลือก ${esc(u.fullName)}">`;
+  const stuTable = (arr, withRoom, sel) => tableHtml((sel ? ['<input class="form-check-input" type="checkbox" data-pickall aria-label="เลือกทั้งหมด">'] : []).concat(['เลขที่', 'รหัสนักเรียน', 'ชื่อ-สกุล'], withRoom ? ['ชั้น/ห้อง'] : [], ['สถานะ', '']), sortStu(arr, withRoom)
+    .map(u => (sel ? [ck(u)] : []).concat([esc(u.classNo || '-'), `<b>${esc(u.studentCode)}</b>`, who(u)], withRoom ? [`<span class="chip info">${esc(u.grade || '-')}/${esc(u.room || '-')}</span>`] : [], [stChip(u), acts(u)])));
+  /** ลบนักเรียนหลายคน (ยืนยันก่อนเสมอ) */
+  const bulkDel = async (list, label) => {
+    if (!list.length) return toast('กรุณาเลือกนักเรียนอย่างน้อย 1 คน', 'warning');
+    if (!await confirmBox({ title: 'ยืนยันการลบนักเรียน', html: `ลบ<b>${esc(label)}</b> จำนวน <b class="text-danger">${list.length} คน</b> ?<br><span class="text-danger small">งานที่ส่ง ความคืบหน้า และการแจ้งเตือนของนักเรียนเหล่านี้จะถูกลบด้วย และกู้คืนไม่ได้</span>`, danger: true, confirmText: 'ลบ ' + list.length + ' คน' })) return;
+    const r = await apiMsg('กำลังลบนักเรียน...', 'deleteUsers', { ids: list.map(u => u.id), confirm: list.length });
+    bootstrap.Modal.getInstance('#modal')?.hide(); toast(`ลบนักเรียนแล้ว ${r.Users} คน`); S.cache.at = 0; go('users', {}, { force: true });
+  };
+  const picked = root => $$('[data-pick]:checked', root).map(c => find(c.dataset.pick)).filter(Boolean);
+  const syncPick = root => { const n = picked(root).length, b = $('[data-delpick]', root.closest('.modal-content') || document); if (b) { b.disabled = !n; b.querySelector('span').textContent = n; } };
   const byGrade = {}; studs.forEach(u => { const g = u.grade || '-', r = u.room || '-'; ((byGrade[g] = byGrade[g] || {})[r] = byGrade[g][r] || []).push(u); });
   const gOrder = g => { const i = GRADES.indexOf(g); return i < 0 ? 99 : i; };
-  const draw = () => {
+  let upage = 1, ulist = [];
+  const draw = (keepPage) => {
     const q = $('#uq').value.trim().toLowerCase(), fg = $('#uG').value, fr = $('#uR').value;
-    if (q || fg || fr) { const f = (q ? allStuds : studs).filter(u => (!fg || u.grade === fg) && (!fr || u.room === fr) && (!q || (u.fullName + (u.nickname || '') + u.studentCode + u.classNo + u.grade + '/' + u.room).toLowerCase().includes(q)));
-      $('#ul').innerHTML = f.length ? `<div class="card-x"><div class="small text-muted mb-2">พบ ${f.length} คน</div>${stuTable(f, true)}</div>` : empty('fa-users-slash', 'ไม่พบนักเรียน'); return; }
+    if (!keepPage) upage = 1;
+    if (q || fg || fr || S.uAll) { const f = sortStu((q ? allStuds : studs).filter(u => (!fg || u.grade === fg) && (!fr || u.room === fr) && (!q || (u.fullName + (u.nickname || '') + u.studentCode + u.classNo + u.grade + '/' + u.room).toLowerCase().includes(q))), true);
+      const PER = 30, pages = Math.max(1, Math.ceil(f.length / PER)); upage = Math.min(upage, pages); ulist = f;
+      $('#ul').innerHTML = f.length ? `<div class="card-x" id="uTbl"><div class="d-flex flex-wrap align-items-center gap-2 mb-2"><div class="small text-muted flex-fill">พบ ${f.length} คน · หน้า ${upage}/${pages} (แสดงหน้าละ ${PER} รายการ)</div>
+        ${adm ? `<button class="btn btn-sm btn-danger" data-delpick disabled><i class="fa-solid fa-trash"></i> ลบที่เลือก (<span>0</span>)</button><button class="btn btn-sm btn-outline-danger" data-delall><i class="fa-solid fa-trash-can"></i> ลบทั้งหมดที่แสดง (${f.length})</button>` : ''}</div>
+        ${stuTable(f.slice((upage - 1) * PER, upage * PER), true, adm)}<nav class="d-flex justify-content-center gap-2 mt-3 flex-wrap" aria-label="เลขหน้า">${pagerHtml(upage, pages)}</nav></div>` : empty('fa-users-slash', 'ไม่พบนักเรียน'); return; }
     const gs = Object.keys(byGrade).sort((a, b) => gOrder(a) - gOrder(b) || natural(a, b));
     $('#ul').innerHTML = gs.length ? gs.map(g => { const rs = Object.keys(byGrade[g]).sort(natural), n = rs.reduce((t, r) => t + byGrade[g][r].length, 0);
-      return `<div class="card-x grade-card mb-3"><div class="d-flex align-items-center gap-2 mb-3"><span class="grade-ic">${esc(g)}</span><div class="flex-fill"><b class="fs-5">ระดับชั้น ${esc(g)}</b><div class="small text-muted">${rs.length} ห้อง · ${n} คน</div></div></div>
+      return `<div class="card-x grade-card mb-3"><div class="d-flex align-items-center gap-2 mb-3"><span class="grade-ic">${esc(g)}</span><div class="flex-fill"><b class="fs-5">ระดับชั้น ${esc(g)}</b><div class="small text-muted">${rs.length} ห้อง · ${n} คน</div></div>
+        ${adm ? `<div class="dropdown"><button class="btn btn-sm btn-outline-danger dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="ลบนักเรียนระดับชั้น ${esc(g)}"><i class="fa-solid fa-trash"></i> ลบ</button>
+          <ul class="dropdown-menu dropdown-menu-end"><li><button class="dropdown-item text-danger" data-gdel="${esc(g)}"><i class="fa-solid fa-trash-can me-2"></i>ลบทั้งหมดในระดับชั้น ${esc(g)} (${n} คน)</button></li><li><hr class="dropdown-divider"></li>
+          ${rs.map(r => `<li><button class="dropdown-item" data-rdel="${esc(g)}|${esc(r)}"><i class="fa-solid fa-door-open me-2"></i>ลบห้อง ${esc(g)}/${esc(r)} (${byGrade[g][r].length} คน)</button></li>`).join('')}</ul></div>` : ''}</div>
         <div class="grid g4">${rs.map(r => `<button type="button" class="card-x stat link room-tile" data-room="${esc(g)}|${esc(r)}"><div class="ic" style="background:#dcfce7;color:#15803d"><i class="fa-solid fa-door-open"></i></div><div><b>${esc(g)}/${esc(r)}</b><small>${byGrade[g][r].length} คน${byGrade[g][r].some(u => u.status === 'pending') ? ' · <span class="text-warning">มีรออนุมัติ</span>' : ''}</small></div><i class="fa-solid fa-chevron-right go"></i></button>`).join('')}</div></div>`; }).join('')
       : empty('fa-users-slash', 'ไม่มีนักเรียนในปีการศึกษานี้');
   };
   $('#uq').addEventListener('input', debounce(draw, 250)); $('#uG').onchange = draw; $('#uR').onchange = draw; draw();
   fab(adm ? 'เพิ่มผู้ใช้' : 'เพิ่มนักเรียน', () => userForm({}));
   const find = id => users.find(u => u.id === id);
-  const openRoom = (g, r) => { const arr = (byGrade[g] || {})[r] || allStuds.filter(u => u.grade === g && u.room === r); const m = modal(`นักเรียนห้อง ${g}/${r} (${arr.length} คน)`, arr.length ? stuTable(arr) : empty('fa-users-slash', 'ไม่มีนักเรียนในห้องนี้'), '', 'modal-xl'); m.body.onclick = handle; };
+  const roomArr = (g, r) => (byGrade[g] || {})[r] || allStuds.filter(u => u.grade === g && u.room === r);
+  const openRoom = (g, r) => { const arr = roomArr(g, r);
+    const tools = adm && arr.length ? `<button class="btn btn-sm btn-danger" data-delpick disabled><i class="fa-solid fa-trash"></i> ลบที่เลือก (<span>0</span>)</button><button class="btn btn-sm btn-outline-danger" data-rdel="${esc(g)}|${esc(r)}"><i class="fa-solid fa-trash-can"></i> ลบทั้งห้อง</button>` : '';
+    const m = modal(`นักเรียนห้อง ${g}/${r} (${arr.length} คน)`, arr.length ? stuTable(arr, false, adm) : empty('fa-users-slash', 'ไม่มีนักเรียนในห้องนี้'), '', 'modal-xl', tools);
+    const mc = $('#modal .modal-content'); mc.onclick = handle; mc.onchange = pickChange; S.uRoom = [g, r]; };
+  const pickChange = e => { const root = e.target.closest('.modal-content') || $('#uTbl'); if (!root) return;
+    if (e.target.matches('[data-pickall]')) $$('[data-pick]', root).forEach(c => c.checked = e.target.checked);
+    if (e.target.matches('[data-pick],[data-pickall]')) syncPick(root); };
   const handle = async e => {
     const t = k => e.target.closest(`[data-${k}]`)?.dataset[k];
+    const pg = t('pg'); if (pg && e.target.closest('#uTbl')) { upage = +pg; draw(true); return $('#ul').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    const uv = t('uview'); if (uv) { S.uAll = uv === 'all'; $$('[data-uview]').forEach(b => { b.classList.toggle('btn-primary', b.dataset.uview === uv); b.classList.toggle('btn-soft', b.dataset.uview !== uv); }); return draw(); }
+    if (e.target.closest('[data-delpick]')) { const inModal = e.target.closest('.modal-content'); return bulkDel(picked(inModal || $('#uTbl')), inModal ? `นักเรียนที่เลือกในห้อง ${S.uRoom[0]}/${S.uRoom[1]}` : 'นักเรียนที่เลือก'); }
+    if (e.target.closest('[data-delall]')) return bulkDel(ulist, 'นักเรียนทั้งหมดที่แสดง');
+    const gd = t('gdel'); if (gd) return bulkDel(studs.filter(u => (u.grade || '-') === gd), `นักเรียนทั้งหมดในระดับชั้น ${gd}`);
+    const rd = t('rdel'); if (rd) { const [g, r] = rd.split('|'); return bulkDel(roomArr(g, r), `นักเรียนทั้งห้อง ${g}/${r}`); }
     const rm = t('room'); if (rm) { const [g, r] = rm.split('|'); return openRoom(g, r); }
     if (t('contact')) { const u = find(t('contact')); return swapModal(() => showContacts(u)); }
     if (t('edit')) { const u = find(t('edit')); return swapModal(() => userForm(u)); }
@@ -2664,10 +2728,16 @@ PAGES.users = { admin: true, async render(el, p = {}) {
     if (t('approve')) { const u = find(t('approve')); if (await confirmBox({ title: 'อนุมัติผู้ใช้', html: `อนุมัติ <b>${esc(u.fullName)}</b> ให้ใช้งานระบบ?` })) { await api('saveUser', { id: u.id, status: 'active' }); bootstrap.Modal.getInstance('#modal')?.hide(); toast('อนุมัติแล้ว'); go('users'); } }
     if (t('role')) { const u = find(t('role')); return swapModal(() => roleForm(u)); }
     if (t('coadmin')) { const u = find(t('coadmin')), on = u.coAdmin !== 'true';
-      if (!await confirmBox({ title: on ? 'ตั้งเป็นผู้ดูแลระบบร่วม' : 'ถอนสิทธิ์ผู้ดูแลระบบร่วม', html: `<b>${esc(u.prefix + u.fullName)}</b><br><small>${on ? 'จะตั้งค่าระบบและดูข้อมูลทั้งหมดได้เหมือนผู้ดูแลระบบ' : 'จะกลับเป็นครูผู้สอนที่เห็นเฉพาะรายวิชาของตน'}</small>`, danger: !on, faIcon: 'fa-user-shield' })) return;
-      await api('setCoAdmin', u.id, on); toast(on ? 'ตั้งเป็นผู้ดูแลระบบร่วมแล้ว' : 'ถอนสิทธิ์แล้ว'); go('users'); }
+      if (!on) { if (!await confirmBox({ title: 'ถอนสิทธิ์ผู้ดูแลระบบ', html: `<b>${esc(u.prefix + u.fullName)}</b><br><small>จะกลับเป็นครูผู้สอนที่เห็นเฉพาะรายวิชาของตน${u.tenant === u.id ? ' (ฐานข้อมูลแยกของครูท่านนี้ยังอยู่ แต่จะไม่ถูกใช้งาน)' : ''}</small>`, danger: true, faIcon: 'fa-user-shield' })) return;
+        await api('setCoAdmin', u.id, false); toast('ถอนสิทธิ์แล้ว'); return go('users'); }
+      const r = await Sw.fire({ title: 'ตั้งเป็นผู้ดูแลระบบ', html: `<b>${esc(u.prefix + u.fullName)}</b><div class="text-start mt-3 d-grid gap-2">
+        <label class="card-x d-flex gap-2 align-items-start" style="cursor:pointer"><input class="form-check-input mt-1" type="radio" name="camode" value="shared" checked><span><b>ผู้ดูแลระบบร่วม</b><br><small class="text-muted">ใช้ฐานข้อมูลเดียวกับระบบนี้ เห็นและตั้งค่าข้อมูลเดียวกันทั้งหมด</small></span></label>
+        <label class="card-x d-flex gap-2 align-items-start" style="cursor:pointer"><input class="form-check-input mt-1" type="radio" name="camode" value="separate"><span><b>ผู้ดูแลระบบคนใหม่ (ฐานข้อมูลแยก)</b><br><small class="text-muted">ตั้งค่าระบบได้ทั้งหมด แต่ต้องกำหนด Google Sheet และ Google Drive ใหม่ของตนเอง — การตั้งค่าและข้อมูลทั้งหมดแยกเก็บตามลิงก์ใหม่ ไม่ปนกับข้อมูลเดิม</small></span></label></div>`,
+        showCancelButton: true, confirmButtonText: 'ยืนยัน', customClass: SW_CLASS(false), preConfirm: () => (document.querySelector('input[name=camode]:checked') || {}).value || 'shared' });
+      if (!r.isConfirmed) return;
+      await api('setCoAdmin', u.id, true, r.value); toast(r.value === 'separate' ? 'ตั้งเป็นผู้ดูแลระบบคนใหม่แล้ว — ครูต้องตั้ง Google Sheet/Drive ของตนเองเมื่อเข้าสู่ระบบ' : 'ตั้งเป็นผู้ดูแลระบบร่วมแล้ว'); go('users'); }
   };
-  el.onclick = handle;
+  el.onclick = handle; el.onchange = pickChange;
   if (p.grade && p.room) setTimeout(() => openRoom(p.grade, p.room), 50);
   else if (p.grade) { $('#uG').value = p.grade; draw(); setTimeout(() => $('#ul').scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); }
   $('#expBtn') && ($('#expBtn').onclick = () => exportXlsx('ผู้ใช้งาน', ['บทบาท', 'รหัสนักเรียน', 'Username', 'คำนำหน้า', 'ชื่อ-สกุล', 'ชื่อเล่น', 'วันเกิด', 'ชั้น', 'ห้อง', 'เลขที่', 'ปีการศึกษา', 'อีเมล', 'สถานะ'], users.map(u => [roleTh(u), u.studentCode, u.username, u.prefix, u.fullName, u.nickname, u.birthDate, u.grade, u.room, u.classNo, u.acadYear, u.email, u.status].map(csvSafe))));
@@ -3044,7 +3114,8 @@ PAGES.settings = { admin: true, async render(el, p) {
   if (!isAdm() && !['general', 'look', 'menus', 'account'].includes(p.tab)) p = Object.assign({}, p, { tab: 'general' });
   const s = isAdm() ? await apiQ('getSettings') : { config: Object.assign({}, S.config) }, c = s.config;
   const tabs = !isAdm() ? [['general', 'ทั่วไป', 'fa-school'], ['look', 'สีระบบ', 'fa-palette'], ['menus', 'เมนูนักเรียน', 'fa-bars'], ['account', 'บัญชีของฉัน', 'fa-key']] : [['general', 'ทั่วไป', 'fa-school'], ['look', 'สีระบบ', 'fa-palette'], ['menus', 'เมนูนักเรียน', 'fa-bars'], ['system', 'ระบบ/ความปลอดภัย', 'fa-shield-halved'], ['notify', 'การแจ้งเตือน', 'fa-bell'], ['db', 'ฐานข้อมูล', 'fa-database'], ['backup', 'สำรอง/กู้คืน', 'fa-cloud-arrow-up'], ['account', 'บัญชีของฉัน', 'fa-key'], ['audit', 'Audit Log', 'fa-clipboard-list']];
-  let tab = p.tab || 'general';
+  if (s.needsDb) tabs.splice(0, tabs.length, ['db', 'ฐานข้อมูล', 'fa-database'], ['account', 'บัญชีของฉัน', 'fa-key']);
+  let tab = s.needsDb && p.tab !== 'account' ? 'db' : p.tab || 'general';
   el.innerHTML = `<div class="page-head"><h3>ตั้งค่าระบบ</h3></div><ul class="nav nav-pills gap-2 mb-3 flex-nowrap overflow-auto pb-1">${tabs.map(t => `<li class="nav-item"><button class="nav-link text-nowrap" data-st="${t[0]}"><i class="fa-solid ${t[2]}"></i> ${t[1]}</button></li>`).join('')}</ul><div class="card-x" id="sBody"></div>`;
   const GF = {
     general: [{ k: 'schoolName', label: 'ชื่อโรงเรียน / ชื่อระบบ', req: true }, { k: 'welcome', label: 'ข้อความต้อนรับหน้าเข้าสู่ระบบ' }, { k: 'siteUrl', label: 'ลิงก์หน้าเว็บที่แจกนักเรียน (เช่น GitHub Pages) — ใช้แนบในอีเมลแจ้งเตือน', type: 'url', valid: v => v && !/^https:\/\//.test(v) ? 'ต้องขึ้นต้นด้วย https://' : '' }, { k: 'logo', label: 'โลโก้ (แนะนำรูปสี่เหลี่ยมจัตุรัส พื้นโปร่งใส)', type: 'image', w: 512, h: 512, png: true, contain: true, folder: 'รูปภาพ/โลโก้' }],
@@ -3078,6 +3149,21 @@ PAGES.settings = { admin: true, async render(el, p) {
         if (!await confirmBox({ title: 'ยืนยันการแก้ไขการตั้งค่า', html: 'บันทึกการตั้งค่า <b>' + esc(tabs.find(t => t[0] === tab)[1]) + '</b>' })) return;
         await api('saveSettings', { config: d }); finalizeUploads(B, d); Object.assign(c, d); Object.assign(S.config, d); delete S.config.lineToken; applyBrand(); toast('บันทึกการตั้งค่าแล้ว');
       };
+    } else if (tab === 'db' && s.tenant) { // ผู้ดูแลระบบคนใหม่ (ฐานข้อมูลแยก)
+      B.innerHTML = `<div class="gb-alert ${s.needsDb ? 'warn' : 'info'} mb-3"><i class="fa-solid fa-database"></i><div><b>ฐานข้อมูลของคุณ (แยกจากผู้ดูแลระบบเดิม)</b><br>
+        ${s.needsDb ? 'กรุณาสร้าง Google Sheet เปล่า 1 ไฟล์ และโฟลเดอร์ Google Drive 1 โฟลเดอร์ (ของคุณเอง) แล้ววางลิงก์ด้านล่าง — ' : ''}การตั้งค่าระบบ ครู นักเรียน รายวิชา งาน และไฟล์/รูปทั้งหมดของคุณจะเก็บในลิงก์นี้ ไม่ปนกับข้อมูลเดิม · บัญชีที่ใช้ deploy เว็บแอปต้องมีสิทธิ์แก้ไขไฟล์และโฟลเดอร์นี้</div></div>
+        <div class="mb-3"><label class="form-label" for="dbS">Google Sheet ID หรือ URL <span class="text-danger">*</span></label><div class="input-group"><input class="form-control" id="dbS" value="${esc(s.sheetId)}" placeholder="https://docs.google.com/spreadsheets/d/..." required>${s.sheetUrl ? `<a class="btn btn-soft" target="_blank" rel="noopener" href="${safeUrl(s.sheetUrl)}"><i class="fa-solid fa-up-right-from-square"></i> เปิด</a>` : ''}</div></div>
+        <div class="mb-3"><label class="form-label" for="dbD">Google Drive Folder ID หรือ URL (เก็บไฟล์/รูป) <span class="text-danger">*</span></label><div class="input-group"><input class="form-control" id="dbD" value="${esc(s.driveId)}" placeholder="https://drive.google.com/drive/folders/..." required>${s.driveUrl ? `<a class="btn btn-soft" target="_blank" rel="noopener" href="${safeUrl(s.driveUrl)}"><i class="fa-solid fa-up-right-from-square"></i> เปิด</a>` : ''}</div></div>
+        <button class="btn btn-primary" id="dbSave"><i class="fa-solid fa-plug"></i> ทดสอบและบันทึก</button>`;
+      $('#dbSave').onclick = async () => {
+        const d = { sheetId: $('#dbS').value.trim(), driveId: $('#dbD').value.trim() };
+        if (!d.sheetId || !d.driveId) return toast('กรุณากรอกทั้ง Google Sheet และ Google Drive', 'warning');
+        if (!await confirmBox({ title: 'ยืนยันฐานข้อมูลของคุณ', html: 'ระบบจะทดสอบสิทธิ์และสร้างแผ่นงานทั้งหมดในไฟล์นี้ให้อัตโนมัติ' })) return;
+        const r = await apiMsg('กำลังเตรียมฐานข้อมูล...', 'saveSettings', d);
+        if (r.reloaded) { CACHE.clear(); PC.clear(); const me = await api('me'); S.user = me.user; S.config = me.config; S.classes = me.classes || []; applyBrand(); renderMe(); renderShell();
+          await Sw.fire({ icon: 'success', title: 'ตั้งค่าฐานข้อมูลเรียบร้อย', text: 'ข้อมูลทั้งหมดของคุณจะเก็บแยกในไฟล์นี้' }); go('dash', {}, { force: true }); refreshNotifs(); } else toast('บันทึกแล้ว');
+      };
+      if (!s.needsDb) drawTermDbs(B, s);
     } else if (tab === 'db') {
       B.innerHTML = `<div class="alert alert-warning rounded-4"><i class="fa-solid fa-triangle-exclamation"></i> การเปลี่ยน Google Sheet จะย้ายไปใช้ฐานข้อมูลใหม่ทันที (ข้อมูลเดิมยังอยู่ในชีตเดิม) ระบบจะสร้างชีตและหัวคอลัมน์ให้อัตโนมัติ และถ้าชีตใหม่ยังไม่มี Admin จะสร้างบัญชี admin / admin123 ให้ — ทุกคนต้องเข้าสู่ระบบใหม่</div>
         <div class="mb-3"><label class="form-label" for="dbS">Google Sheet ID หรือ URL</label><div class="input-group"><input class="form-control" id="dbS" value="${esc(s.sheetId)}"><a class="btn btn-soft" target="_blank" rel="noopener" href="${safeUrl(s.sheetUrl)}"><i class="fa-solid fa-up-right-from-square"></i> เปิด</a></div></div>
@@ -3619,17 +3705,53 @@ async function chatNew(step = 'type', type) {
       chatRoomView(await apiMsg('กำลังสร้างทีม...', 'chatCreateTeam', nm, [...pick])); };
   }
 }
+/** ตั้งค่าแชท: เปลี่ยนชื่อ · แชทกลุ่ม = เพิ่ม/นำสมาชิกออก/ออกจากกลุ่ม · ลบออกจากรายการ */
+async function chatSettings(room) {
+  chatStop(); CHAT.room = null;
+  const back = () => chatRoomView(room);
+  $('#chatHead').innerHTML = `<button class="cbtn" data-csback aria-label="กลับไปที่แชท"><i class="fa-solid fa-arrow-left"></i></button><b class="flex-fill text-truncate">ตั้งค่าแชท</b><button class="cbtn" data-cclose aria-label="ปิดแชท"><i class="fa-solid fa-xmark"></i></button>`;
+  $('#chatBody').innerHTML = '<div class="text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+  $('[data-csback]').onclick = back;
+  let r = room; if (room.type === 'team') { try { r = Object.assign({}, room, await apiQ('chatOpen', { id: room.id })); } catch (e) { toast(e.message, 'error'); return chatHome(); } }
+  const team = r.type === 'team', ml = r.memberList || [];
+  let people = []; if (team) { try { people = (await apiQ('chatContacts')).people; } catch (e) {} }
+  const ROLE_IC = { student: 'fa-user-graduate', admin: 'fa-user-shield', teacher: 'fa-chalkboard-user' };
+  const draw = () => { $('#chatBody').innerHTML = `<div class="cset">
+    <label class="form-label fw-bold small" for="csName">${team ? 'ชื่อแชทกลุ่ม (เปลี่ยนให้สมาชิกทุกคน)' : 'ชื่อแชท (เห็นเฉพาะคุณ · เว้นว่าง = ชื่อเดิม)'}</label>
+    <div class="d-flex gap-2 mb-3"><input class="form-control" id="csName" maxlength="60" value="${esc(r.title || '')}"><button class="btn btn-primary flex-none text-nowrap" id="csSave"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button></div>
+    ${team ? `<div class="d-flex align-items-center mb-2"><b class="flex-fill small">สมาชิก ${ml.length} คน</b><button class="btn btn-sm btn-soft" id="csAdd"><i class="fa-solid fa-user-plus"></i> เพิ่มสมาชิก</button></div>
+      <div class="cpeople mb-2" id="csMem">${ml.map(m => `<div class="crow"><span class="cav ${m.role}"><i class="fa-solid ${ROLE_IC[m.role] || 'fa-user'}"></i></span><span class="flex-fill text-start" style="min-width:0"><b class="d-block text-truncate">${esc(m.name)}${m.me ? ' <span class="chip info">คุณ</span>' : ''}${m.owner ? ' <span class="chip">ผู้สร้าง</span>' : ''}</b><small class="text-muted">${m.role === 'student' ? esc(m.grade + '/' + m.room) : (ROLE_CHIP[m.role] || ['-'])[0]}</small></span>${m.me ? '' : `<button class="btn btn-sm btn-outline-danger flex-none" data-csrm="${esc(m.id)}" data-name="${esc(m.name)}" aria-label="นำ ${esc(m.name)} ออกจากกลุ่ม"><i class="fa-solid fa-user-minus"></i></button>`}</div>`).join('')}</div>
+      <div id="csPick" class="hidden"><input class="form-control mb-2" type="search" id="csQ" placeholder="ค้นหาชื่อเพื่อเพิ่ม..." aria-label="ค้นหาสมาชิกที่จะเพิ่ม"><div class="cpeople" id="csPeople"></div><button class="btn btn-primary w-100 mt-2" id="csAddGo" disabled><i class="fa-solid fa-user-plus"></i> เพิ่ม (<span>0</span> คน)</button></div>
+      <button class="btn btn-outline-danger w-100 mt-2" id="csLeave"><i class="fa-solid fa-right-from-bracket"></i> ออกจากกลุ่ม</button>` : ''}
+    <button class="btn btn-soft text-danger w-100 mt-2" id="csHide"><i class="fa-solid fa-trash"></i> ลบแชทออกจากรายการของฉัน</button></div>`;
+    $('#csSave').onclick = async () => { const nm = $('#csName').value.trim(); if (team && !nm) return toast('กรุณาตั้งชื่อแชทกลุ่ม', 'warning');
+      const o = await call('chatRename', [r.id, nm], { loader: false }); room.title = r.title = o.title || nm || room.title; toast('บันทึกชื่อแชทแล้ว'); };
+    $('#csHide').onclick = async () => { if (!await confirmBox({ title: 'ลบแชทออกจากรายการ?', html: '<small>ข้อความไม่ถูกลบสำหรับคนอื่น และจะกลับมาแสดงเมื่อมีข้อความใหม่</small>', danger: true, confirmText: 'ลบ' })) return; await call('chatHide', [r.id], { loader: false }); toast('ลบออกจากรายการแล้ว'); chatHome(); };
+    if (!team) return;
+    const upd = async (add, rm, msg) => { const o = await call('chatTeamMembers', [r.id, add, rm], { loader: false }); toast(msg); if (o.left) return chatHome(); Object.assign(r, o); Object.assign(room, { sub: 'ทีม · ' + o.memberList.length + ' คน', memberList: o.memberList }); ml.splice(0, ml.length, ...o.memberList); draw(); };
+    $('#csMem').onclick = async e => { const b = e.target.closest('[data-csrm]'); if (!b) return; if (!await confirmBox({ title: 'นำสมาชิกออกจากกลุ่ม?', html: `<b>${esc(b.dataset.name)}</b>`, danger: true, confirmText: 'นำออก' })) return; upd([], [b.dataset.csrm], 'นำสมาชิกออกแล้ว'); };
+    $('#csLeave').onclick = async () => { if (!await confirmBox({ title: 'ออกจากกลุ่มนี้?', html: `<b>${esc(r.title)}</b><br><small>คุณจะไม่เห็นข้อความในกลุ่มนี้อีก</small>`, danger: true, confirmText: 'ออกจากกลุ่ม' })) return; upd([], [S.user.id], 'ออกจากกลุ่มแล้ว'); };
+    const pick = new Set(), inTeam = new Set(ml.map(m => m.id));
+    const drawP = () => { const q = ($('#csQ').value || '').trim().toLowerCase();
+      $('#csPeople').innerHTML = people.filter(p => !inTeam.has(p.id) && (!q || (p.name + (p.nickname || '')).toLowerCase().includes(q))).slice(0, 200).map(p => `<label class="crow"><input type="checkbox" class="form-check-input m-0 flex-none" value="${esc(p.id)}" ${pick.has(p.id) ? 'checked' : ''}><span class="cav ${p.role}"><i class="fa-solid ${ROLE_IC[p.role] || 'fa-user'}"></i></span><span class="flex-fill text-start" style="min-width:0"><b class="d-block text-truncate">${esc(p.name)}</b><small class="text-muted">${p.role === 'student' ? esc(p.grade + '/' + p.room) : (ROLE_CHIP[p.role] || ['-'])[0]}</small></span></label>`).join('') || '<div class="p-3 text-muted small">ไม่พบรายชื่อ</div>'; };
+    $('#csAdd').onclick = () => { $('#csPick').classList.toggle('hidden'); drawP(); $('#csQ').focus(); };
+    $('#csQ').addEventListener('input', debounce(drawP, 200));
+    $('#csPeople').onchange = e => { if (e.target.type !== 'checkbox') return; e.target.checked ? pick.add(e.target.value) : pick.delete(e.target.value); $('#csAddGo').disabled = !pick.size; $('#csAddGo span').textContent = pick.size; };
+    $('#csAddGo').onclick = () => upd([...pick], [], `เพิ่มสมาชิกแล้ว ${pick.size} คน`);
+  };
+  draw();
+}
 async function chatRoomView(room) {
   chatStop(); CHAT.room = room; CHAT.after = '';
   $('#chatHead').innerHTML = `<button class="cbtn" data-cback="home" aria-label="ย้อนกลับ"><i class="fa-solid fa-arrow-left"></i></button><span class="cav ${room.type} sm"><i class="fa-solid ${room.type === 'class' ? 'fa-door-open' : room.type === 'team' ? 'fa-people-group' : 'fa-user'}"></i></span>
-    <span class="flex-fill" style="min-width:0"><b class="d-block text-truncate" id="cTitle">${esc(room.title)}</b><small class="d-block text-truncate opacity-75">${esc(room.sub || '')}</small></span><button class="cbtn" data-cset aria-label="ตั้งค่าแชท" title="ตั้งค่า (เปลี่ยนชื่อ / ลบออกจากรายการ)"><i class="fa-solid fa-gear"></i></button><button class="cbtn" data-cclose aria-label="ปิดแชท"><i class="fa-solid fa-xmark"></i></button>`;
+    <span class="flex-fill" style="min-width:0"><b class="d-block text-truncate" id="cTitle">${esc(room.title)}</b><small class="d-block text-truncate opacity-75">${esc(room.sub || '')}</small></span><button class="cbtn" data-cset aria-label="ตั้งค่าแชท" title="ตั้งค่าแชท (เปลี่ยนชื่อ${room.type === 'team' ? ' / สมาชิก' : ''})"><i class="fa-solid fa-gear"></i></button><button class="cbtn" data-cclose aria-label="ปิดแชท"><i class="fa-solid fa-xmark"></i></button>`;
   $('#chatBody').innerHTML = `<div class="cmsgs" id="cMsgs"><div class="text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin"></i></div></div>
     <div class="cattach hidden" id="cAtt"></div>
-    <form class="cinput" id="cForm"><button type="button" class="btn btn-soft btn-icon flex-none catt-btn" id="cAttBtn" aria-label="แนบไฟล์" title="แนบไฟล์"><i class="fa-solid fa-paperclip"></i></button><input type="file" id="cFile" multiple hidden><textarea id="cText" rows="1" maxlength="1000" placeholder="พิมพ์ข้อความ... (Enter ส่ง · Shift+Enter ขึ้นบรรทัด)" aria-label="ข้อความ"></textarea><button class="btn btn-primary btn-icon flex-none" aria-label="ส่ง"><i class="fa-solid fa-paper-plane"></i></button></form>`;
+    <form class="cinput" id="cForm"><button type="button" class="btn btn-soft btn-icon flex-none catt-btn" id="cAttBtn" aria-label="แนบไฟล์" title="แนบไฟล์"><i class="fa-solid fa-paperclip"></i></button><input type="file" id="cFile" multiple hidden><textarea id="cText" rows="1" maxlength="1000" placeholder="พิมพ์ข้อความ..." title="Enter = ส่ง · Shift+Enter = ขึ้นบรรทัดใหม่" aria-label="ข้อความ"></textarea><button class="btn btn-primary btn-icon flex-none" aria-label="ส่ง"><i class="fa-solid fa-paper-plane"></i></button></form>`;
   const box = $('#cMsgs'); let first = true, lastDay = '';
   const msgBody = m => m.deleted ? '<i class="opacity-75"><i class="fa-solid fa-ban"></i> ข้อความถูกลบ</i>' : (m.text ? linkify(m.text) : '') + (m.files && m.files.length ? `<div class="cfiles" data-vfiles='${esc(JSON.stringify(m.files))}'>${m.files.map((f, i) => kindOf(f) === 'image' && (f.id || driveId(f.url)) ? `<img src="${safeUrl(thumbUrl(f))}" alt="${esc(f.name)}" data-vw="${i}" loading="lazy">` : `<a class="cfile" href="${safeUrl(f.url)}" target="_blank" rel="noopener" data-vw="${i}"><i class="fa-solid ${fileIcon(f.name)}"></i> ${esc(f.name)}</a>`).join('')}</div>` : '');
   const bubble = m => { const day = String(m.at).slice(0, 10), sep = day !== lastDay ? `<div class="cday">${thDate(day)}</div>` : ''; lastDay = day;
-    return sep + `<div class="cmsg ${m.mine ? 'me' : ''} ${m.deleted ? 'del' : ''}" data-mid="${esc(m.id)}">${!m.mine && room.type !== 'dm' ? `<small class="cname">${esc(m.sender)} <span class="chip ${ROLE_CHIP[m.role]?.[1] || ''}" style="font-size:.62rem;padding:0 6px">${ROLE_CHIP[m.role]?.[0] || ''}</span></small>` : ''}<div class="cb">${msgBody(m)}</div><small class="ct">${m.edited ? 'แก้ไขแล้ว · ' : ''}${chatTime(m.at)}${m.mine && !m.deleted ? ` <button class="cmact" data-cedit="${esc(m.id)}" title="แก้ไข" aria-label="แก้ไขข้อความ"><i class="fa-solid fa-pen"></i></button><button class="cmact" data-cdel="${esc(m.id)}" title="ลบ" aria-label="ลบข้อความ"><i class="fa-solid fa-trash"></i></button>` : ''}</small></div>`; };
+    return sep + `<div class="cmsg ${m.mine ? 'me' : ''} ${m.deleted ? 'del' : ''}" data-mid="${esc(m.id)}">${!m.mine && room.type !== 'dm' ? `<small class="cname">${esc(m.sender)} <span class="chip ${ROLE_CHIP[m.role]?.[1] || ''}" style="font-size:.62rem;padding:0 6px">${ROLE_CHIP[m.role]?.[0] || ''}</span></small>` : ''}<div class="cb">${msgBody(m)}</div><small class="ct">${m.edited ? 'แก้ไขแล้ว · ' : ''}${chatTime(m.at)}${(m.can || m.mine) && !m.deleted ? ` <button class="cmact" data-cedit="${esc(m.id)}" title="แก้ไข" aria-label="แก้ไขข้อความ"><i class="fa-solid fa-pen"></i></button><button class="cmact" data-cdel="${esc(m.id)}" title="ลบ" aria-label="ลบข้อความ"><i class="fa-solid fa-trash"></i></button>` : ''}</small></div>`; };
   const msgs = {}; let since = '';
   const seen = new Set(); let loading = false, again = false;
   /** เพิ่มเฉพาะข้อความที่ยังไม่เคยแสดง (กันข้อความซ้ำเมื่อการดึงข้อมูลกับการส่งเกิดพร้อมกัน) */
@@ -3664,7 +3786,7 @@ async function chatRoomView(room) {
     const ed = e.target.closest('[data-cedit]'), dl = e.target.closest('[data-cdel]');
     if (ed) { const m = msgs[ed.dataset.cedit]; const r = await Sw.fire({ title: 'แก้ไขข้อความ', input: 'textarea', inputValue: m ? m.text : '', showCancelButton: true, confirmButtonText: 'บันทึก', customClass: Object.assign({}, SW_CLASS(false), { container: 'swal-top' }), inputValidator: v => String(v).trim() ? null : 'กรุณาพิมพ์ข้อความ' });
       if (!r.isConfirmed) return; await call('chatEdit', [ed.dataset.cedit, r.value.trim()], { loader: false }); load(); }
-    if (dl) { if (!await confirmBox({ title: 'ลบข้อความนี้?', html: 'ทุกคนในแชทจะเห็นว่าข้อความถูกลบ', danger: true, confirmText: 'ลบ' })) return; await call('chatDelete', [dl.dataset.cdel], { loader: false }); load(); }
+    if (dl) { const m = msgs[dl.dataset.cdel]; if (!await confirmBox({ title: 'ลบข้อความนี้?', html: (m && !m.mine ? `ข้อความของ <b>${esc(m.sender)}</b><br>` : '') + 'ทุกคนในแชทจะเห็นว่าข้อความถูกลบ', danger: true, confirmText: 'ลบ' })) return; await call('chatDelete', [dl.dataset.cdel], { loader: false }); load(); }
   };
   $('#cForm').onsubmit = async e => {
     e.preventDefault(); const t = ta.value.trim(); if ((!t && !att.length) || CHAT.sending) return;
@@ -3683,10 +3805,7 @@ document.addEventListener('click', async e => {
   if (e.target.closest('[data-cnew]')) return chatNew('type');
   const ty = e.target.closest('[data-ctype]'); if (ty) return chatNew('pick', ty.dataset.ctype);
   const hd = e.target.closest('[data-chide]'); if (hd) { if (!await confirmBox({ title: 'ลบแชทออกจากรายการ?', html: `<b>${esc(hd.dataset.name)}</b><br><small>ข้อความไม่ถูกลบสำหรับคนอื่น และจะกลับมาแสดงเมื่อมีข้อความใหม่</small>`, danger: true, confirmText: 'ลบ' })) return; await call('chatHide', [hd.dataset.chide], { loader: false }); return chatHome(); }
-  if (e.target.closest('[data-cset]') && CHAT.room) { const room = CHAT.room;
-    const r = await Sw.fire({ title: 'ตั้งค่าแชท', input: 'text', inputLabel: room.type === 'team' ? 'ชื่อทีม (เปลี่ยนให้สมาชิกทุกคน)' : 'ชื่อที่แสดง (เห็นเฉพาะคุณ · เว้นว่าง = ชื่อเดิม)', inputValue: room.title, showCancelButton: true, showDenyButton: true, denyButtonText: '<i class="fa-solid fa-trash"></i> ลบออกจากรายการ', confirmButtonText: 'บันทึกชื่อ', customClass: Object.assign({}, SW_CLASS(false), { container: 'swal-top', denyButton: 'btn btn-outline-danger px-4' }) });
-    if (r.isDenied) { await call('chatHide', [room.id], { loader: false }); toast('ลบออกจากรายการแล้ว'); return chatHome(); }
-    if (r.isConfirmed) { const o = await call('chatRename', [room.id, r.value.trim()], { loader: false }); room.title = o.title || room.title; if ($('#cTitle')) $('#cTitle').textContent = room.title; toast('บันทึกแล้ว'); } return; }
+  if (e.target.closest('[data-cset]') && CHAT.room) return chatSettings(CHAT.room);
   const rm = e.target.closest('[data-croom]'); if (rm) return chatRoomView(J(rm.dataset.croom, {}));
   const cl = e.target.closest('[data-cclass]'); if (cl) { const [g, r] = cl.dataset.cclass.split('|'); return chatRoomView(await apiQ('chatOpen', { type: 'class', grade: g, room: r })); }
   const dm = e.target.closest('[data-cdm]'); if (dm) return chatRoomView(await apiQ('chatOpen', { type: 'dm', target: dm.dataset.cdm }));
