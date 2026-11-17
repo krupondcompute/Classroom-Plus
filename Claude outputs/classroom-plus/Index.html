@@ -295,7 +295,11 @@ a.navlink{text-decoration:none}
 .cp-swal{border-radius:26px!important;padding:26px 22px 22px!important;background:var(--surface)!important;color:var(--text)!important;box-shadow:var(--shadow-lg)!important;font-family:'Sarabun',sans-serif!important;width:min(460px,92vw)!important}
 .cp-swal .swal2-title{font-weight:800;font-size:1.45rem;color:var(--text);padding:.3em 1em 0;line-height:1.45}
 .cp-swal .swal2-html-container{color:var(--muted);font-size:1rem;line-height:1.65;margin:.8em 1.2em 0}
-.cp-swal .swal2-actions{gap:10px;margin-top:1.4em;flex-wrap:wrap}
+.cp-swal .swal2-actions{gap:12px;margin-top:1.5em;flex-wrap:wrap;padding:0 .4em}
+.cp-swal.swal2-popup{width:min(94vw,34em)!important}.cp-swal .swal2-html-container b{color:var(--text)}
+.cp-swal .swal2-html-container .sw-1l{white-space:nowrap;font-size:.95rem;margin-top:6px}
+@media(max-width:480px){.cp-swal .swal2-html-container .sw-1l{white-space:normal}}
+.cp-swal .swal2-html-container{padding:0 .4em!important}.cp-swal .swal2-title+.swal2-html-container{margin-top:.7em}
 .cp-swal .swal2-actions .btn{min-width:120px}
 .cp-swal .swal2-input,.cp-swal .swal2-textarea,.cp-swal .swal2-select{width:auto;margin:1.1em 1.2em 0;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:16px;height:52px;box-shadow:none;padding:0 16px;font-family:inherit}
 .cp-swal .swal2-textarea{height:auto;min-height:110px;padding:12px 16px;line-height:1.6}.cp-swal .swal2-input{line-height:52px}
@@ -437,6 +441,10 @@ a.navlink{text-decoration:none}
 /* =================== v4.6 =================== */
 /* ปุ่มโค้งมนสวยงามทั้งระบบ */
 .btn{border-radius:999px;padding-inline:18px;letter-spacing:.1px}
+/* v5.3: ปุ่มทุกปุ่ม ไอคอนอยู่หน้า ข้อความอยู่หลัง ในบรรทัดเดียวกัน */
+.btn:not(.btn-close):not(.dropdown-item){display:inline-flex;align-items:center;justify-content:center;gap:.4em;white-space:nowrap;flex-wrap:nowrap;vertical-align:middle}
+.btn.d-block,.btn.w-100{display:flex}.btn>i,.btn>.fa-solid,.btn>.fa-brands{flex:none}
+.btn-icon{gap:0}
 .btn-sm{min-height:36px;padding-inline:14px;font-size:.9rem}
 .btn-lg{min-height:52px}
 .btn-icon,.btn-sm.btn-icon{padding:0;border-radius:50%}
@@ -651,11 +659,20 @@ a.navlink{text-decoration:none}
 .mini-table{width:100%;font-size:.92rem}.mini-table td,.mini-table th{padding:6px 8px;border-bottom:1px dashed var(--border)}
 .ucard .d-flex.justify-content-end{justify-content:flex-start!important}
 .room-tile b{font-size:1.3rem}
+.lesson-side{position:sticky;top:84px}.lnav{display:grid;grid-template-columns:1fr 1fr;gap:12px}.lnav .btn{min-height:46px}
+.ss-ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#dcfce7;color:#15803d;flex:none}
+.has-fb{background:#e0f2fe!important;color:#0369a1!important;position:relative}.has-fb::after{content:'';position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:#f59e0b}
+.focus-card{border:2px solid #f59e0b}.ann-hl{box-shadow:0 0 0 3px #f59e0b,0 10px 24px rgba(245,158,11,.25)!important}
 .pv-list{display:flex;flex-direction:column;gap:14px;margin-top:12px}
 .pv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));align-items:start}
 .pv-grid .pv-item img{max-height:48vh;width:100%;object-fit:contain;background:var(--surface-2)}
 .pv-item{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface-2)}
-.pv-head{display:flex;align-items:center;gap:8px;padding:8px 12px;font-weight:600;background:var(--surface);border-bottom:1px solid var(--border)}
+.pv-head{display:flex;align-items:center;gap:10px;padding:8px 10px 8px 12px;font-weight:600;background:var(--surface);border-bottom:1px solid var(--border);min-height:58px}
+.pv-ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none;background:var(--blue-light);color:var(--blue)}.pv-ic.k-pdf{background:#fee2e2;color:#dc2626}.pv-ic.k-video{background:#ede9fe;color:#7c3aed}.pv-ic.k-image{background:#dcfce7;color:#15803d}
+.pv-name{flex:1;min-width:0;font-size:.86rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}.pv-name small{display:block;font-weight:500;color:var(--muted);font-size:.72rem}
+.pv-acts{display:flex;gap:6px;flex:none}.pv-acts .btn{min-height:34px;padding:4px 10px;font-size:.8rem;border-radius:10px}
+@container (max-width:380px){.pv-acts .btn span{display:none}}
+.pv-item{container-type:inline-size}
 .pv-item img{display:block;max-width:100%;max-height:70vh;margin:0 auto;cursor:zoom-in}
 .pv-item iframe{border:0;background:#000}
 .empty .btn i{font-size:inherit;display:inline;opacity:1;color:inherit;margin:0}
@@ -668,8 +685,13 @@ a.navlink{text-decoration:none}
 a.contact-row:hover{background:var(--surface-2);color:var(--text)}
 .contact-row .ci{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;font-size:1.15rem;flex:none}
 .grade-card{border-left:6px solid var(--blue)}.grade-ic{min-width:56px;height:56px;padding:0 10px;border-radius:16px;display:grid;place-items:center;font-weight:900;font-size:1.15rem;color:#fff;background:linear-gradient(135deg,var(--blue),var(--blue-dark))}
-.help-box{margin:auto 6px 6px;padding:12px;border-radius:16px;background:linear-gradient(135deg,var(--blue-light),var(--surface));border:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
-.help-box small{font-size:.78rem;line-height:1.35;color:var(--muted)}.help-box .btn{font-size:.74rem;white-space:nowrap;line-height:1.2;padding:8px 6px;letter-spacing:-.1px;overflow:hidden;text-overflow:ellipsis}
+.help-box{margin:auto 6px 6px;padding:14px 12px 12px;border-radius:18px;background:linear-gradient(135deg,#f97316,#ec4899 55%,#8b5cf6);color:#fff;border:0;display:flex;flex-direction:column;gap:8px;box-shadow:0 10px 24px rgba(236,72,153,.35);position:relative;overflow:hidden}
+.help-box::before{content:'';position:absolute;right:-24px;top:-24px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.15)}
+.help-box .hb-t{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.95rem;position:relative}.help-box .hb-t i{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.25);display:grid;place-items:center;animation:hbPulse 2s ease-in-out infinite}
+@keyframes hbPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.5)}50%{box-shadow:0 0 0 7px rgba(255,255,255,0)}}
+.help-box small{font-size:.78rem;line-height:1.4;color:rgba(255,255,255,.92);position:relative}.help-box .btn{font-size:.78rem;line-height:1.2;padding:8px 8px;letter-spacing:-.1px;background:#fff!important;color:#be185d!important;border:0;font-weight:800;position:relative;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.help-box .btn span{overflow:hidden;text-overflow:ellipsis}
+.term-chip.static{cursor:default;margin-top:6px}
 body.collapsed .help-box{display:none}
 .cls-grid>.card-x{display:flex;flex-direction:column;min-width:0}.cls-grid>.card-x>[id]{flex:1}
 @media (max-width:767.98px){.cls-grid{grid-template-columns:1fr}}
@@ -773,6 +795,14 @@ body.live-mode footer,body.live-mode .chat-btn{display:none!important}
 .ad-sec{border:1px solid var(--border);border-radius:20px;padding:14px 16px;margin-bottom:14px;background:var(--surface)}
 .ad-sub{border:2px solid color-mix(in srgb,var(--blue) 35%,transparent);background:linear-gradient(180deg,var(--blue-light),var(--surface) 140px)}
 .ad-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-weight:800;margin-bottom:10px}.ad-h>i{color:var(--blue)}
+.ad-grade{display:grid;grid-template-columns:auto 1fr;gap:14px;margin-bottom:12px}
+.ad-scorecard{background:var(--surface);border-radius:18px;padding:14px 18px;box-shadow:inset 0 0 0 1px var(--border),0 6px 16px rgba(15,23,42,.06);display:flex;flex-direction:column;align-items:center;gap:6px;min-width:150px}
+.ad-scorecard .ring{width:112px;height:112px;border-radius:50%;display:grid;place-content:center;text-align:center;background:radial-gradient(closest-side,var(--surface) 78%,transparent 80% 100%),conic-gradient(var(--blue) calc(var(--pc)*1%),var(--surface-2) 0)}
+.ad-scorecard .ring b{font-size:2.1rem;line-height:1;color:var(--blue);font-weight:800}.ad-scorecard .ring span{font-size:.85rem;color:var(--muted);font-weight:700}.ad-scorecard small{color:var(--muted);font-weight:700}
+.ad-fb{background:var(--surface);border-radius:18px;padding:14px 16px;box-shadow:inset 0 0 0 1px var(--border);display:flex;flex-direction:column;gap:6px;min-width:0}
+.ad-fb-h{font-weight:800;color:var(--blue)}.ad-fb-b{flex:1;font-size:1.02rem;white-space:pre-wrap;word-break:break-word}
+.ad-files-h{font-weight:700;margin:10px 0 0;color:var(--muted);font-size:.9rem}
+@media(max-width:575px){.ad-grade{grid-template-columns:1fr}}
 .ad-score{display:flex;gap:16px;align-items:stretch;background:var(--surface);border-radius:16px;padding:12px 14px;margin-bottom:10px;box-shadow:inset 0 0 0 1px var(--border)}
 .ad-score small{display:block;color:var(--muted);font-weight:600}.ad-score b{font-size:2rem;color:var(--blue);line-height:1.1}.ad-score b span{font-size:1rem;color:var(--muted);margin-left:4px}
 .ad-text{background:var(--surface);border-radius:14px;padding:10px 12px;margin-bottom:6px;box-shadow:inset 0 0 0 1px var(--border)}
@@ -1457,7 +1487,8 @@ function resizeImage(file, w, h, png) {
       const k = Math.min(1, w / img.width, h / img.height), c = document.createElement('canvas');
       c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-      let q = .85, out = png ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', q);
+      c.getContext('2d').imageSmoothingQuality = 'high';
+      let q = w > 1280 ? .92 : .85, out = png ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', q);
       if (w <= 480) while (out.length > 44000 && q > .3) { q -= .1; out = c.toDataURL(png ? 'image/webp' : 'image/jpeg', q); }
       res(out);
     };
@@ -1586,7 +1617,7 @@ function heroHtml(sub) {
     <h4 class="m-0 fw-bold text-truncate">${esc(u.prefix + u.fullName)}</h4>
     <small class="opacity-75">${stu ? `นักเรียน · รหัส ${esc(u.studentCode)} · ${esc(u.grade || '-')}${u.room ? '/' + esc(u.room) : ''}` : `${roleTh(u) || 'ครูผู้สอน'} · ${esc(u.username)}`}${sub ? ' · ' + sub : ''}</small>
     <div class="mt-2"><span class="online"><i></i> กำลังใช้งาน</span></div></div></div>
-    <div class="clock"><b data-clock-time></b><small data-clock-date class="opacity-75 d-block"></small>${S.user && S.user.role !== 'student' ? '<button type="button" class="term-chip" data-term data-termpick title="ดูข้อมูลภาคเรียนอื่น"></button>' : ''}</div></div>`; // นักเรียนไม่เห็นตัวเลือกภาคเรียน (ข้อมูลตามที่ครู/แอดมินกำหนด)
+    <div class="clock"><b data-clock-time></b><small data-clock-date class="opacity-75 d-block"></small>${S.user && S.user.role !== 'student' ? '<button type="button" class="term-chip" data-term data-termpick title="ดูข้อมูลภาคเรียนอื่น"></button>' : S.user && S.user.myTerm ? `<span class="term-chip static" title="ภาคเรียน/ปีการศึกษาของคุณ (ครู/ผู้ดูแลระบบเป็นผู้กำหนด)"><i class="fa-solid fa-graduation-cap"></i> ภาคเรียนที่ ${esc(S.user.myTerm.split('/')[1])} ปีการศึกษา ${esc(S.user.myTerm.split('/')[0])}</span>` : ''}</div></div>`; // นักเรียนไม่เห็นตัวเลือกภาคเรียน (ข้อมูลตามที่ครู/แอดมินกำหนด)
 }
 
 /* ---------------- Theme ---------------- */
@@ -2001,7 +2032,7 @@ function renderShell() {
     : `<button data-go="${it.go}" ${it.id ? `data-id="${esc(it.id)}"` : ''} aria-label="${esc(it.label)}" title="${esc(it.label)}"><i class="${esc(it.icon)}"></i><span>${esc(dock ? it.short : it.label)}</span></button>`;
   $('#sideNav').innerHTML = `<div class="nav-label">${S.mode === 'admin' ? 'โหมด' + (roleTh(S.user) || 'ครู') : 'โหมดนักเรียน'}</div>` + items.map(it => btn(it)).join('')
     + `<button class="nav-logout" data-logout aria-label="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i><span>ออกจากระบบ</span></button>`
-    + (S.mode === 'student' && S.user.role === 'student' ? `<div class="help-box"><small>หากนักเรียนมีข้อสงสัยหรือพบปัญหาในการใช้งานต่าง ๆ</small><button type="button" class="btn btn-sm btn-primary w-100" data-helpbox><i class="fa-solid fa-headset"></i> ติดต่อผู้ดูแลระบบหรือคุณครูที่นี่</button></div>` : '');
+    + (S.mode === 'student' && S.user.role === 'student' ? `<div class="help-box"><div class="hb-t"><i class="fa-solid fa-circle-question"></i> ต้องการความช่วยเหลือ?</div><small>หากนักเรียนมีข้อสงสัยหรือพบปัญหาในการใช้งานต่าง ๆ</small><button type="button" class="btn btn-sm w-100" data-helpbox><i class="fa-solid fa-headset"></i><span>ติดต่อครู / ผู้ดูแลระบบ</span></button></div>` : '');
   $('#dock').innerHTML = items.map(it => btn(it, true)).join('');   // Dock แสดงเมนูครบเหมือนแถบด้านข้าง
 
   const ms = $('#modeSwitch');
@@ -2025,7 +2056,7 @@ addEventListener('resize', debounce(fixToggleIcon, 150));
 document.addEventListener('click', e => { if (e.target.closest('[data-logout]')) doLogout(); });
 $('#logoutBtn').onclick = () => doLogout();
 async function doLogout() {
-  if (!await confirmBox({ title: 'ออกจากระบบ?', html: `<b>${esc(S.user.prefix + S.user.fullName)}</b><br>ต้องการออกจากระบบใช่หรือไม่ ข้อมูลที่บันทึกแล้วจะยังอยู่ครบ`, danger: true, faIcon: 'fa-right-from-bracket', confirmText: '<i class="fa-solid fa-right-from-bracket me-1"></i> ออกจากระบบ' })) return;
+  if (!await confirmBox({ title: 'ออกจากระบบ?', html: `<b>${esc(S.user.prefix + S.user.fullName)}</b><div class="sw-1l">ต้องการออกจากระบบใช่หรือไม่? ข้อมูลที่บันทึกไว้ยังอยู่ครบ</div>`, danger: true, faIcon: 'fa-right-from-bracket', confirmText: '<i class="fa-solid fa-right-from-bracket me-1"></i> ออกจากระบบ' })) return;
   call('logout', [], { loader: false, retry: 0 }).catch(() => {}); // ส่งคำสั่งเบื้องหลัง (อ่าน token ทันที)
   localLogout(); toast('ออกจากระบบแล้ว', 'info');              // ออกทันที ไม่ต้องรอ server
 }
@@ -2127,18 +2158,21 @@ $('#notifList').addEventListener('click', e => {
     const n = $$('#notifList .unread').length; $('#bellDot').textContent = n > 9 ? '9+' : n; $('#bellDot').classList.toggle('hidden', !n);
     apiQ('markRead', [d.dataset.nid]).catch(() => {});
   }
-  const [k, id] = d.dataset.link.split(':');
-  if (k === 'grade' && isStaff()) { S.mode = 'admin'; renderShell(); return go('grade', { id }); }
+  const [k, id, sub] = d.dataset.link.split(':');
+  bootstrap.Dropdown.getInstance($('#bellBtn'))?.hide();
+  if (k === 'grade' && isStaff()) { if (S.mode !== 'admin') { S.mode = 'admin'; store.set('cp_mode', 'admin'); renderShell(); } return go('grade', sub ? { id, sub } : { id }, { force: true }); }
   if (S.mode === 'admin' && k !== 'grade') { S.mode = 'student'; renderShell(); }
-  ({ lesson: () => go('lesson', { id }), assignment: () => go('assignments', { tab: 'todo' }), announcement: () => go('announcements'),  }[k] || (() => {}))();
+  ({ lesson: () => go('lesson', { id }), assignment: () => go('assignments', { open: id }), announcement: () => go('announcements', { id }) }[k] || (() => {}))();
 });
 
 /* =========================================================
  * หน้าสำหรับนักเรียน (และ Admin ในโหมด User)
  * ========================================================= */
+/** รูปจาก Drive แบบความละเอียดสูง (ค่าเริ่มต้นของ lh3 ย่อรูปจนไม่คมชัด) */
+const hiRes = (u, w = 1920) => { u = String(u || ''); if (/^https:\/\/lh3\.googleusercontent\.com\/d\/[\w-]+$/.test(u)) return u + '=w' + w; return u.replace(/([?&]sz=)w\d+/, '$1w' + w); };
 const coverHtml = (c, icon = 'fa-book-open') => {
   const v = parseVideo(c.videoUrl);
-  const src = c.cover || (v && v.type === 'youtube' ? `https://img.youtube.com/vi/${v.id}/hqdefault.jpg` : '');
+  const src = hiRes(c.cover) || (v && v.type === 'youtube' ? `https://img.youtube.com/vi/${v.id}/hqdefault.jpg` : '');
   return src ? `<div class="cover full"><img src="${safeUrl(src)}" alt="" loading="lazy"></div>` : `<div class="cover"><i class="fa-solid ${icon}"></i></div>`;
 };
 const statCard = (icon, val, label, color = '', goTo = '', tab = '') => goTo
@@ -2146,10 +2180,15 @@ const statCard = (icon, val, label, color = '', goTo = '', tab = '') => goTo
   : `<div class="card-x stat"><div class="ic" style="${color}"><i class="fa-solid ${icon}"></i></div><div><b>${val}</b><small>${label}</small></div></div>`;
 /** การ์ด "รวมคะแนนทั้งหมด" — ดึงจากเมนูผลการเรียน (Google Sheet ที่ครูแนบ) แตะเพื่อเปิดเมนูผลการเรียน */
 function resultCard(total) {
+  if (total && total.items) { // จากที่มาของคะแนนเก็บที่ตั้งค่าไว้ → แตะเพื่อดูคะแนนรายแหล่ง
+    S.scoreItems = total.items;
+    return `<button type="button" class="card-x stat link" data-scoreitems aria-label="รวมคะแนนทั้งหมด — ดูรายละเอียด"><div class="ic" style="background:#fee2e2;color:#b91c1c"><i class="fa-solid fa-trophy"></i></div><div><b>${esc(total.value)}</b><small>รวมคะแนนทั้งหมด${total.items.length > 1 ? ` (${total.items.length} วิชา)` : ''}</small></div><i class="fa-solid fa-chevron-right go"></i></button>`; }
   const m = studentNavItems().find(x => /ผลการเรียน|คะแนน/.test(x.label) && x.key.startsWith('c:'));
   const html = statCard('fa-trophy', total ? esc(total.value) : '-', 'รวมคะแนนทั้งหมด' + (m ? '' : ''), 'background:#fee2e2;color:#b91c1c', m ? (m.href ? 'assignments' : 'web') : 'assignments', m ? '' : 'graded');
   return m && !m.href ? html.replace('data-go="web"', `data-go="web" data-id="${esc(m.id)}"`) : m && m.href ? html.replace(/^<button type="button"/, `<a href="${safeUrl(m.href)}" target="_blank" rel="noopener"`).replace(/<\/button>$/, '</a>').replace(/data-go="assignments"\s*/, '') : html;
 }
+document.addEventListener('click', e => { if (!e.target.closest('[data-scoreitems]') || !S.scoreItems) return;
+  modal('รวมคะแนนทั้งหมด', `<div class="d-flex flex-column gap-2">${S.scoreItems.map(x => `<div class="file-row m-0"><span class="ss-ic" style="background:#fee2e2;color:#b91c1c"><i class="fa-solid fa-trophy"></i></span><span class="flex-fill"><b class="d-block">${esc(x.menu || 'คะแนนเก็บ')}</b><small class="text-muted">${esc(x.header || 'รวมคะแนนทั้งหมด')}</small></span><b class="fs-3 text-primary">${esc(x.value)}</b></div>`).join('')}</div>`, '', 'modal-md'); });
 const secHead = (icon, title, goTo, tab, label = 'ดูทั้งหมด') => `<div class="d-flex align-items-center gap-2 mb-3"><h5 class="fw-bold m-0 flex-fill">${icon}${title}</h5>${goTo ? `<a href="#" class="sec-link" data-go="${goTo}" ${tab ? `data-tab="${tab}"` : ''}>${label} <i class="fa-solid fa-chevron-right"></i></a>` : ''}</div>`;
 
 PAGES.home = { async render(el) {
@@ -2262,13 +2301,12 @@ PAGES.lesson = { parent: 'courses', async render(el, p) {
     <div class="card-x mb-3"><small class="text-primary fw-semibold">${esc(l.unit)}</small><h3 class="fw-bold">${esc(l.title)}</h3>
       <div class="d-flex flex-wrap gap-2 mb-3">${l.duration ? `<span class="chip"><i class="fa-solid fa-clock"></i> ${esc(l.duration)} นาที</span>` : ''}${l.videoDuration ? `<span class="chip"><i class="fa-solid fa-film"></i> ${esc(l.videoDuration)}</span>` : ''}<span class="chip"><i class="fa-solid fa-calendar"></i> ${thDate(l.createdAt)}</span></div>
       <div>${linkify(l.description) || '<span class="text-muted">ไม่มีคำอธิบาย</span>'}</div></div>
-    ${files.some(f => f.id || driveId(f.url)) ? `<div class="card-x mb-3"><h6 class="fw-bold mb-0"><i class="fa-solid fa-photo-film text-primary me-1"></i> ไฟล์ประกอบบทเรียน</h6>${previewsHtml(files.filter(f => f.id || driveId(f.url)), true)}</div>` : ''}
-  </div><div class="col-lg-4">
-    <div class="card-x mb-3"><h6 class="fw-bold">เอกสาร / ไฟล์ดาวน์โหลด</h6>${files.length ? filesHtml(files) : '<div class="text-muted small">ไม่มีไฟล์แนบ</div>'}</div>
-    <div class="card-x mb-3"><h6 class="fw-bold">ลิงก์ภายนอก</h6>${links.length ? links.map(x => `<a class="file-row text-decoration-none" href="${safeUrl(x.url)}" target="_blank" rel="noopener"><i class="fa-solid fa-link"></i><span class="flex-fill">${esc(x.name)}</span><i class="fa-solid fa-up-right-from-square small"></i></a>`).join('') : '<div class="text-muted small">ไม่มีลิงก์</div>'}</div>
-    <div class="card-x"><button class="btn ${done ? 'btn-success' : 'btn-primary'} w-100 mb-2" id="lDone"><i class="fa-solid fa-circle-check"></i> ${done ? 'เรียนจบแล้ว (แตะเพื่อยกเลิก)' : 'ทำเครื่องหมายว่าเรียนจบ'}</button>
-      <div class="d-flex gap-2"><button class="btn btn-soft flex-fill" ${d.prevId ? `data-go="lesson" data-id="${esc(d.prevId)}"` : 'disabled'}><i class="fa-solid fa-chevron-left"></i> ก่อนหน้า</button><button class="btn btn-soft flex-fill" ${d.nextId ? `data-go="lesson" data-id="${esc(d.nextId)}"` : 'disabled'}>ถัดไป <i class="fa-solid fa-chevron-right"></i></button></div></div>
-  </div></div>`;
+    ${files.length ? `<div class="card-x mb-3"><h6 class="fw-bold mb-0"><i class="fa-solid fa-photo-film text-primary me-1"></i> ไฟล์ประกอบบทเรียน <span class="chip">${files.length} ไฟล์</span></h6>${filesShow(files)}</div>` : ''}
+  </div><div class="col-lg-4"><div class="lesson-side">
+    <div class="card-x mb-3"><h6 class="fw-bold"><i class="fa-solid fa-link text-primary me-1"></i> ลิงก์ภายนอก</h6>${links.length ? links.map(x => `<a class="file-row text-decoration-none" href="${safeUrl(x.url)}" target="_blank" rel="noopener"><i class="fa-solid fa-link"></i><span class="flex-fill">${esc(x.name)}</span><i class="fa-solid fa-up-right-from-square small"></i></a>`).join('') : '<div class="text-muted small">ไม่มีลิงก์</div>'}</div>
+    <div class="card-x"><button class="btn ${done ? 'btn-success' : 'btn-primary'} w-100 mb-3" id="lDone"><i class="fa-solid fa-circle-check"></i> ${done ? 'เรียนจบแล้ว (แตะเพื่อยกเลิก)' : 'ทำเครื่องหมายว่าเรียนจบ'}</button>
+      <div class="lnav"><button class="btn btn-soft flex-fill" ${d.prevId ? `data-go="lesson" data-id="${esc(d.prevId)}"` : 'disabled'}><i class="fa-solid fa-chevron-left"></i> ก่อนหน้า</button><button class="btn btn-soft flex-fill" ${d.nextId ? `data-go="lesson" data-id="${esc(d.nextId)}"` : 'disabled'}>ถัดไป <i class="fa-solid fa-chevron-right"></i></button></div></div>
+  </div></div></div>`;
   if (l.videoUrl) mountVideo($('#vBox'), l.videoUrl, d.progress, l.id);
   $('#lDone').onclick = async () => { await api('saveProgress', l.id, { completed: !done }); toast(done ? 'ยกเลิกสถานะเรียนจบ' : 'บันทึกว่าเรียนจบแล้ว'); go('lesson', { id: l.id }); };
 } };
@@ -2299,18 +2337,23 @@ PAGES.assignments = { async render(el, p = {}) {
   };
   $$('[data-t]').forEach(b => b.onclick = () => { tab = b.dataset.t; $$('[data-t]').forEach(x => x.classList.toggle('active', x === b)); draw(); });
   draw();
+  if (p.open) { const oa = all.find(x => x.id === p.open); if (oa) assignmentDetail(oa); else toast('ไม่พบงานนี้ (อาจถูกลบแล้ว)', 'warning'); }
 } };
 /** รายละเอียดงาน: คำสั่ง ไฟล์ กำหนดส่ง สถานะ เวลาส่ง คะแนน ความคิดเห็น สมาชิกกลุ่ม ประวัติ */
 /** ไฟล์แนบ: แสดงตัวอย่างรูป/วิดีโอ/PDF ทั้งหมดในหน้า (ไม่ต้องกดเปิด) + รายการดาวน์โหลดแบบย่อ */
 const filesShow = files => { const fs = J(files), pv = fs.filter(f => f.id || driveId(f.url)), other = fs.filter(f => !(f.id || driveId(f.url)));
-  return (pv.length ? previewsHtml(pv, true) : '') + (other.length ? filesHtml(other) : '') + (pv.length ? `<details class="mt-2 small"><summary class="text-muted">ดาวน์โหลดไฟล์ (${pv.length})</summary>${filesHtml(pv)}</details>` : ''); };
+  return (pv.length ? previewsHtml(pv, true) : '') + (other.length ? `<div class="mt-2">${filesHtml(other)}</div>` : ''); };
+/** ไฟล์ที่นักเรียนส่ง + ไฟล์จากลิงก์ Google Drive (แสดงตัวอย่างได้เลย ไม่ต้องกดเปิดลิงก์) */
+const subShowFiles = s => J(s.files).concat(s.driveLink && driveId(s.driveLink) && !/\/folders\//.test(s.driveLink) ? [{ name: 'ไฟล์จากลิงก์ Google Drive', url: s.driveLink, id: driveId(s.driveLink), mime: 'application/drive' }] : []);
 /** รายละเอียดงาน (นักเรียน): งานที่ส่ง + คะแนน อยู่บนสุด → ข้อมูลการส่ง → คำสั่งและไฟล์จากครู */
 function assignmentDetail(a) {
   const s = a.sub, row = (k, v) => `<div><span class="text-muted">${k}</span><b class="text-end">${v}</b></div>`;
   const subBox = s ? `<section class="ad-sec ad-sub"><div class="ad-h"><i class="fa-solid fa-paper-plane"></i> งานที่ส่ง ${statusChip(a.status)}</div>
-      ${s.score !== '' ? `<div class="ad-score"><div><small>คะแนนที่ได้</small><b>${esc(s.score)}<span>/ ${esc(a.maxScore)}</span></b></div><div class="flex-fill"><small><i class="fa-solid fa-comment-dots"></i> ความคิดเห็นจากครู</small><div>${linkify(s.feedback || '-')}</div></div></div>` : ''}
+      ${s.score !== '' ? (() => { const pc = Math.max(0, Math.min(100, Math.round(+s.score * 100 / (+a.maxScore || 100))));
+        return `<div class="ad-grade"><div class="ad-scorecard" style="--pc:${pc}"><div class="ring"><b>${fmtN(s.score)}</b><span>/ ${fmtN(a.maxScore)}</span></div><small>คะแนนที่ได้ · ${pc}%</small></div>
+        <div class="ad-fb"><div class="ad-fb-h"><i class="fa-solid fa-comment-dots"></i> ความคิดเห็นจากครู</div><div class="ad-fb-b">${s.feedback ? linkify(s.feedback) : '<span class="text-muted">ไม่มีความคิดเห็นเพิ่มเติม</span>'}</div>${s.gradedAt ? `<small class="text-muted"><i class="fa-solid fa-check-double"></i> ตรวจเมื่อ ${thDate(s.gradedAt, true)}</small>` : ''}</div></div>`; })() : ''}
       ${s.memberList.length ? `<div class="mb-2"><span class="chip info"><i class="fa-solid fa-crown"></i> ${esc(s.leaderName)}</span> ${s.memberList.map(m => `<span class="chip">${esc(m.name)}${m.classNo ? ' (' + esc(m.classNo) + ')' : ''}</span>`).join(' ')}</div>` : ''}
-      ${s.text ? `<div class="ad-text">${linkify(s.text)}</div>` : ''}${filesShow(s.files)}${s.driveLink ? `<a class="file-row text-decoration-none mt-2" href="${safeUrl(s.driveLink)}" target="_blank" rel="noopener"><i class="fa-brands fa-google-drive fa-lg text-success"></i><span class="flex-fill text-truncate">${esc(s.driveLink)}</span><span class="btn btn-sm btn-soft">เปิด</span></a>` : ''}
+      ${s.text ? `<div class="ad-text">${linkify(s.text)}</div>` : ''}${(() => { const fs = subShowFiles(s); return fs.length ? `<div class="ad-files-h"><i class="fa-solid fa-paperclip"></i> ไฟล์ที่ส่ง (${fs.length})</div>${filesShow(fs)}` : ''; })()}${s.driveLink ? `<a class="file-row text-decoration-none mt-2" href="${safeUrl(s.driveLink)}" target="_blank" rel="noopener"><i class="fa-brands fa-google-drive fa-lg text-success"></i><span class="flex-fill text-truncate">${esc(s.driveLink)}</span><span class="btn btn-sm btn-soft">เปิด</span></a>` : ''}
       ${!s.text && !J(s.files).length && !s.driveLink && !s.answers ? '<div class="text-muted small">ไม่มีข้อความหรือไฟล์</div>' : ''}
       ${a.quiz && s.answers ? `<h6 class="fw-bold mt-3"><i class="fa-solid fa-square-check text-primary"></i> ผลแบบทดสอบ</h6>${quizReviewHtml(J(a.quiz, { questions: [] }), J(s.answers, {}), J(s.autoScore, {}), false)}` : ''}</section>` : '';
   modal(a.title, `<div class="d-flex gap-2 flex-wrap mb-3"><span class="chip info">${esc(a.type)}</span>${a.isGroup ? '<span class="chip"><i class="fa-solid fa-people-group"></i> งานกลุ่ม</span>' : ''}${s ? '' : statusChip(a.status)}</div>
@@ -2326,8 +2369,9 @@ function submitModal(a, after) {
   let members = (s.memberList || []).map(m => ({ id: m.id, name: m.name, classNo: m.classNo }));
   const gMax = +a.groupMax >= 2 ? +a.groupMax : 16; // จำนวนสมาชิกสูงสุด (รวมตัวแทน)
   const QZ = a.quiz ? J(a.quiz, null) : null;
-  const F = [{ k: 'text', label: QZ ? 'ข้อความเพิ่มเติม (ถ้ามี)' : 'ข้อความ / คำตอบ', type: 'textarea', rows: QZ ? 2 : 5 }, { k: 'files', label: 'แนบไฟล์', type: 'files', folder: (a.type || 'งาน') + '/งานที่นักเรียนส่ง' },
-    { k: 'driveLink', label: 'ลิงก์ Google Drive (ไฟล์ใหญ่ให้แนบเป็นลิงก์)', valid: v => v && !/^https:\/\/(drive|docs)\.google\.com\//.test(v) ? 'ต้องเป็นลิงก์ Google Drive/Docs' : '' }];
+  const F = [{ k: 'files', label: '<i class="fa-solid fa-paperclip text-primary"></i> แนบไฟล์', type: 'files', folder: (a.type || 'งาน') + '/งานที่นักเรียนส่ง' },
+    { k: 'driveLink', label: '<i class="fa-brands fa-google-drive text-success"></i> ลิงก์ Google Drive (ไฟล์ใหญ่ให้แนบเป็นลิงก์)', attrs: 'placeholder="https://drive.google.com/..."', valid: v => v && !/^https:\/\/(drive|docs)\.google\.com\//.test(v) ? 'ต้องเป็นลิงก์ Google Drive/Docs' : '' },
+    { k: 'text', label: '<i class="fa-solid fa-message text-primary"></i> ' + (QZ ? 'ข้อความเพิ่มเติม (ถ้ามี)' : 'ข้อความ / คำตอบ'), type: 'textarea', rows: QZ ? 2 : 4 }];
   const groupBox = a.isGroup ? `<div class="card-x mb-3" style="background:var(--surface-2)"><h6 class="fw-bold mb-1"><i class="fa-solid fa-people-group text-primary"></i> สมาชิกในกลุ่ม <span class="chip info" id="gCount"></span></h6>
     <p class="small text-muted mb-2">คุณเป็นตัวแทนกลุ่ม เลือกชั้น/ห้อง แล้วเพิ่มเพื่อนเข้ากลุ่ม — สมาชิกทุกคนจะเห็นงานนี้และได้คะแนนเท่ากัน</p>
     <div id="gMembers" class="d-flex flex-wrap gap-2 mb-2"></div>
@@ -2377,7 +2421,7 @@ function submitModal(a, after) {
 }
 
 /* ---------------- ประกาศ (Infinite Scroll) ---------------- */
-PAGES.announcements = { async render(el) {
+PAGES.announcements = { async render(el, p) {
   const list = await apiC('listAnnouncements');
   let shown = 0;
   el.innerHTML = `<div class="page-head"><h3>ประกาศ</h3></div><div id="annList" class="d-flex flex-column gap-3"></div><div id="annMore" class="py-3 text-center text-muted"></div>`;
@@ -2387,6 +2431,7 @@ PAGES.announcements = { async render(el) {
     shown += 8; $('#annMore').textContent = shown >= list.length ? 'แสดงครบแล้ว' : 'เลื่อนลงเพื่อโหลดเพิ่ม...';
   };
   more();
+  if (p && p.id) { const ix = list.findIndex(x => x.id === p.id); if (ix >= 0) { while (shown <= ix) more(); const c = $$('#annList > .card-x')[ix]; if (c) { c.classList.add('ann-hl'); setTimeout(() => c.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120); } } }
   const io = new IntersectionObserver(es => es[0].isIntersecting && shown < list.length && more());
   io.observe($('#annMore')); S.onLeave.push(() => io.disconnect());
 } };
@@ -2473,12 +2518,12 @@ const FIELDS = {
     { k: 'acadYear', label: 'ปีการศึกษา', type: 'select', col: 'col-md-6', def: termOf().year, opts: () => { const y = +termOf().year; return [['', '— ไม่ระบุ —']].concat([y + 1, y, y - 1, y - 2, y - 3].map(v => [String(v), String(v)])); } },
     { k: 'term', label: 'ภาคเรียน', type: 'select', col: 'col-md-6', def: termOf().term, opts: [['', 'ทั้งปีการศึกษา'], ['1', 'ภาคเรียนที่ 1'], ['2', 'ภาคเรียนที่ 2']] },
     { k: 'teachers', label: 'ครูผู้สอนร่วม — แก้ไขรายวิชา บทเรียน งาน ตรวจงาน และประกาศในวิชานี้ได้เหมือนครูเจ้าของรายวิชา', type: 'multi', noAll: true, noAdd: true, opts: () => (S.cache.users || []).filter(u => u.id !== S.user.id && u.role === 'teacher').map(u => [u.id, u.fullName]), help: 'ไม่เลือก = สอนคนเดียว · ครูร่วมสอนลบรายวิชาหรือแก้รายชื่อครูไม่ได้' },
-    { k: 'description', label: 'คำอธิบายรายวิชา', type: 'textarea' }, { k: 'cover', label: 'รูปปก', type: 'image', folder: 'รูปภาพ/ปกรายวิชา' }]
+    { k: 'description', label: 'คำอธิบายรายวิชา', type: 'textarea' }, { k: 'cover', label: 'รูปปก', type: 'image', w: 1920, h: 1080, folder: 'รูปภาพ/ปกรายวิชา' }]
     .concat([]),
   Lessons: () => [{ k: 'courseId', label: 'รายวิชา', type: 'select', req: true, opts: () => S.cache.courses.map(c => [c.id, c.name]) },
     { k: 'unit', label: 'หน่วยการเรียน', col: 'col-md-8', help: 'เช่น หน่วยที่ 1 แนวคิดเชิงคำนวณ (บทเรียนในหน่วยเดียวกันจะถูกจัดกลุ่ม)' }, { k: 'order', label: 'ลำดับบทเรียน', type: 'number', col: 'col-md-4' },
     { k: 'title', label: 'ชื่อบทเรียน (หัวข้อย่อย)', req: true }, { k: 'description', label: 'คำอธิบาย / เนื้อหา', type: 'textarea', rows: 6 },
-    { k: 'cover', label: 'รูปปก', type: 'image', folder: 'รูปภาพ/ปกบทเรียน' }, { k: 'videoUrl', label: 'วิดีโอ', type: 'video', folder: 'วิดีโอ/{course}', help: 'รองรับ YouTube, Vimeo, Google Drive หรืออัปโหลดไฟล์วิดีโอ (สูงสุด 2 GB)' },
+    { k: 'cover', label: 'รูปปก', type: 'image', w: 1920, h: 1080, folder: 'รูปภาพ/ปกบทเรียน' }, { k: 'videoUrl', label: 'วิดีโอ', type: 'video', folder: 'วิดีโอ/{course}', help: 'รองรับ YouTube, Vimeo, Google Drive หรืออัปโหลดไฟล์วิดีโอ (สูงสุด 2 GB)' },
     { k: 'videoDuration', label: 'ความยาววิดีโอ', col: 'col-md-6', attrs: 'placeholder="เช่น 12:30"' }, { k: 'duration', label: 'ระยะเวลาเรียน (นาที)', type: 'number', col: 'col-md-6' },
     { k: 'attachments', label: 'เอกสารประกอบ / ไฟล์ดาวน์โหลด (PDF, Word, PowerPoint, รูป, ZIP)', type: 'files', folder: 'บทเรียน/{course}' }, { k: 'links', label: 'ลิงก์ภายนอก (เว็บไซต์ / Google Drive / YouTube)', type: 'links' },
     { k: 'publishAt', label: 'วันที่เผยแพร่ (เว้นว่าง = ทันที)', type: 'datetime', col: 'col-md-6' }, { k: 'closeAt', label: 'วันที่ปิดการเข้าถึง (เว้นว่าง = ไม่ปิด)', type: 'datetime', col: 'col-md-6', valid: (v, o) => v && o.publishAt && v <= o.publishAt ? 'ต้องหลังวันเผยแพร่' : '' }],
@@ -2947,6 +2992,7 @@ PAGES.aassign = { admin: true, async render(el) {
   bindActs($('#al'), asg, 'Assignments', 'งานที่นักเรียนส่งทั้งหมดของงานนี้จะถูกลบด้วย', () => go('aassign'));
   fab('สร้างงาน', () => crudForm('Assignments', {}, () => go('aassign')));
 } };
+const gStat = (k, icon, val, label, color = '') => `<button type="button" class="card-x stat link" data-gstat="${k}" aria-label="${esc(label)} — ดูรายชื่อ"><div class="ic" style="${color}"><i class="fa-solid ${icon}"></i></div><div><b>${val}</b><small>${label}</small></div><i class="fa-solid fa-chevron-right go"></i></button>`;
 PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
   const d = await apiC('listSubmissions', p.id), a = d.assignment, QZ = a.quiz ? J(a.quiz, null) : null;
   $('#pageTitle').textContent = 'ตรวจงาน: ' + a.title;
@@ -2956,7 +3002,7 @@ PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
   const gList = [...new Set(d.rows.map(r => r.user.grade).filter(Boolean))].sort(natural), rList = [...new Set(d.rows.map(r => r.user.room).filter(Boolean))].sort(natural);
   el.innerHTML = `<button class="btn btn-soft mb-3" data-go="aassign"><i class="fa-solid fa-arrow-left"></i> งานทั้งหมด</button>
   <div class="card-x mb-3"><h4 class="fw-bold">${esc(a.title)}</h4><div class="text-muted small mb-2">${esc(d.course.name)} · กำหนดส่ง ${thDate(a.dueAt, true)} · คะแนนเต็ม ${esc(a.maxScore)}</div>
-  <div class="grid g5">${statCard('fa-users', d.rows.length, 'นักเรียน')}${statCard('fa-door-open', `${roomsSent}/${roomKeys.length}`, 'ห้องที่ส่งแล้ว', 'background:#e0f2fe;color:#0369a1')}${statCard('fa-paper-plane', sent, 'ส่งแล้ว', 'background:#dcfce7;color:#15803d')}${statCard('fa-hourglass', d.rows.length - sent, 'ยังไม่ส่ง', 'background:#fef3c7;color:#b45309')}${statCard('fa-check-double', graded, 'ตรวจแล้ว')}</div>
+  <div class="grid g5">${gStat('all', 'fa-users', d.rows.length, 'นักเรียน')}${gStat('rooms', 'fa-door-open', `${roomsSent}/${roomKeys.length}`, 'ห้องที่ส่งแล้ว', 'background:#e0f2fe;color:#0369a1')}${gStat('sent', 'fa-paper-plane', sent, 'ส่งแล้ว', 'background:#dcfce7;color:#15803d')}${gStat('none', 'fa-hourglass', d.rows.length - sent, 'ยังไม่ส่ง', 'background:#fef3c7;color:#b45309')}${gStat('graded', 'fa-check-double', graded, 'ตรวจแล้ว')}</div>
   ${QZ ? (() => { const subs = d.rows.filter(r => r.sub && r.sub.answers && r.group !== 'member').map(r => J(r.sub.autoScore, {}));
     return `<details class="mt-3"><summary class="fw-bold"><i class="fa-solid fa-chart-column text-primary"></i> สถิติรายข้อของแบบทดสอบ (${subs.length} คนที่ส่ง)</summary><div class="mt-2">${tableHtml(['ข้อ', 'คำถาม', 'คะแนน', 'ตอบถูกเต็มคะแนน', 'คะแนนเฉลี่ย'], QZ.questions.map((q, i) => {
       const v = subs.map(x => x[q.id]).filter(x => x !== null && x !== undefined), full = v.filter(x => Number(x) >= q.points).length;
@@ -2969,29 +3015,33 @@ PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
   const stuRow = r => `<div class="stu-row"><div class="d-flex align-items-center" style="min-width:0"><span class="no">${esc(r.user.classNo || '-')}</span><div style="min-width:0"><b class="d-block text-truncate">${esc(r.user.fullName)}</b><small class="text-muted">รหัส ${esc(r.user.studentCode)}</small>${r.group ? `<div><span class="chip info" style="font-size:.72rem"><i class="fa-solid fa-people-group"></i> ${r.group === 'leader' ? 'ตัวแทนกลุ่ม' : 'กลุ่มของ ' + esc(r.leaderName)} · ${r.groupSize} คน</span></div>` : ''}</div></div>
     <div>${statusChip(r.status)}${QZ && r.sub && r.sub.answers && r.sub.score === '' ? ' <span class="chip warn">ข้อเขียนรอตรวจ</span>' : ''}${r.sub ? `<div class="small text-muted">${thDate(r.sub.submittedAt, true)}</div>` : ''}</div>
     <div class="d-flex gap-1 flex-wrap">${r.sub ? `<button class="btn btn-sm btn-soft" data-view="${esc(r.user.id)}"><i class="fa-solid fa-eye"></i> ดูงาน</button>${subFiles(r.sub).length ? `<button class="btn btn-sm btn-success dl" data-dlsub="${esc(r.user.id)}"><i class="fa-solid fa-download"></i> ดาวน์โหลด${subFiles(r.sub).length > 1 ? ` (${subFiles(r.sub).length})` : ''}</button>` : ''}` : '<span class="text-muted small">ยังไม่มีงาน</span>'}</div>
-    <div>${r.sub ? `<div class="score-box"><div class="input-group"><input class="form-control text-center" type="number" min="0" max="${esc(a.maxScore)}" step="0.5" value="${esc(r.sub.score)}" data-score="${esc(r.sub.id)}" aria-label="คะแนนที่ได้" placeholder="0"><span class="input-group-text">/ ${esc(a.maxScore)} คะแนน</span></div><input class="form-control fb" value="${esc(r.sub.feedback)}" data-fb="${esc(r.sub.id)}" placeholder="ความคิดเห็นถึงนักเรียน" aria-label="ความคิดเห็น"></div>` : ''}</div>
-    <div>${r.sub ? subActs(r.sub.id, r.user.fullName, r.group === 'member') : ''}</div>
+    <div>${r.sub ? `<div class="score-box"><div class="input-group"><input class="form-control text-center" type="number" min="0" max="${esc(a.maxScore)}" step="0.5" value="${esc(r.sub.score)}" data-score="${esc(r.sub.id)}" aria-label="คะแนนที่ได้" placeholder="0"><span class="input-group-text">/ ${esc(a.maxScore)} คะแนน</span></div><input type="hidden" value="${esc(r.sub.feedback)}" data-fb="${esc(r.sub.id)}"></div>` : ''}</div>
+    <div>${r.sub ? subActs(r.sub.id, r.user.fullName, r.group === 'member', r.sub.feedback) : ''}</div>
     </div>`;
   const isGrp = a.group === 'true' || /กลุ่ม/.test(a.type || '');
   /** การ์ดงานกลุ่ม: 1 การ์ด = 1 กลุ่ม (ตัวแทน + สมาชิก + การส่ง + คะแนน + ความคิดเห็น) */
   const memsOf = r => d.rows.filter(x => x.sub && x.sub.id === r.sub.id && x.user.id !== r.user.id);
   const memLine = (x, lead) => `<div class="gm-row ${lead ? 'lead' : ''}"><i class="fa-solid ${lead ? 'fa-crown' : 'fa-user'}"></i><span class="gm-name">${esc(x.user.fullName)}</span><span class="gm-meta">${esc(x.user.grade || '')}/${esc(x.user.room || '')} · ${esc(x.user.classNo || '-')}</span></div>`;
   const scoreBox = (s2, ph) => `<div class="score-box"><div class="input-group"><input class="form-control text-center" type="number" min="0" max="${esc(a.maxScore)}" step="0.5" value="${esc(s2.score)}" data-score="${esc(s2.id)}" aria-label="คะแนนที่ได้" placeholder="0"><span class="input-group-text">/ ${esc(a.maxScore)}</span></div>
-      <input class="form-control fb" value="${esc(s2.feedback || '')}" data-fb="${esc(s2.id)}" placeholder="${ph}" aria-label="ความคิดเห็น"></div>`;
+      <input type="hidden" value="${esc(s2.feedback || '')}" data-fb="${esc(s2.id)}" data-ph="${esc(ph)}"></div>`;
   const fileBtns = r => `<button class="btn btn-sm btn-soft" data-view="${esc(r.user.id)}"><i class="fa-solid fa-eye"></i> ดูงาน</button>${subFiles(r.sub).length ? `<button class="btn btn-sm btn-success" data-dlsub="${esc(r.user.id)}"><i class="fa-solid fa-download"></i> ${subFiles(r.sub).length}</button>` : ''}`;
   /** การ์ดงานกลุ่ม: 1 การ์ด = 1 กลุ่ม — รายชื่อบรรทัดละคน · การส่ง · คะแนนและความคิดเห็นชุดเดียว */
   const groupCard = (r, i) => { const s2 = r.sub, mem = memsOf(r);
     return `<div class="gcard2"><div class="gc-top"><span class="gno">${i + 1}</span><div class="flex-fill" style="min-width:0"><b class="d-block text-truncate">กลุ่มของ ${esc(r.user.fullName)}</b><small class="text-muted">${mem.length + 1} คน · ส่ง ${thDate(s2.submittedAt, true)}</small></div>${statusChip(r.status)}</div>
       <div class="gm-list">${memLine(r, true)}${mem.map(x => memLine(x)).join('')}</div>
       ${s2.text ? `<div class="gc-text"><i class="fa-solid fa-message"></i> ${esc(String(s2.text).slice(0, 160))}</div>` : ''}
-      <div class="gc-foot"><div class="d-flex gap-1 flex-wrap">${fileBtns(r)}</div>${scoreBox(s2, 'ความคิดเห็นถึงกลุ่ม')}${subActs(s2.id, 'กลุ่มของ ' + r.user.fullName, false)}</div></div>`; };
+      <div class="gc-foot"><div class="d-flex gap-1 flex-wrap">${fileBtns(r)}</div>${scoreBox(s2, 'ความคิดเห็นถึงกลุ่ม')}${subActs(s2.id, 'กลุ่มของ ' + r.user.fullName, false, s2.feedback)}</div></div>`; };
   /** แถวงานกลุ่มในมุมมองรายห้อง: รวมสมาชิกไว้แถวเดียว คะแนน/ความคิดเห็นชุดเดียว */
   const groupRow = r => { const mem = memsOf(r);
     return `<div class="stu-row grp"><div style="min-width:0"><div class="small fw-bold text-primary mb-1"><i class="fa-solid fa-people-group"></i> กลุ่ม ${mem.length + 1} คน</div><div class="gm-list compact">${memLine(r, true)}${mem.map(x => memLine(x)).join('')}</div></div>
-      <div>${statusChip(r.status)}<div class="small text-muted">${thDate(r.sub.submittedAt, true)}</div></div><div class="d-flex gap-1 flex-wrap">${fileBtns(r)}</div><div>${scoreBox(r.sub, 'ความคิดเห็นถึงกลุ่ม')}</div><div>${subActs(r.sub.id, 'กลุ่มของ ' + r.user.fullName, false)}</div></div>`; };
-  let OPEN = '', GVIEW = isGrp;
+      <div>${statusChip(r.status)}<div class="small text-muted">${thDate(r.sub.submittedAt, true)}</div></div><div class="d-flex gap-1 flex-wrap">${fileBtns(r)}</div><div>${scoreBox(r.sub, 'ความคิดเห็นถึงกลุ่ม')}</div><div>${subActs(r.sub.id, 'กลุ่มของ ' + r.user.fullName, false, r.sub.feedback)}</div></div>`; };
+  let OPEN = '', GVIEW = isGrp, FOCUS = p.sub || '';
   if (isGrp) $('#gl').insertAdjacentHTML('beforebegin', `<div class="d-flex gap-2 mb-3 flex-wrap"><div class="btn-group" role="group" aria-label="มุมมอง"><button class="btn btn-sm btn-primary" data-gview="1"><i class="fa-solid fa-people-group"></i> แยกตามกลุ่ม</button><button class="btn btn-sm btn-soft" data-gview="0"><i class="fa-solid fa-door-open"></i> แยกตามห้อง</button></div></div>`);
   const drawRooms = () => {
+    if (FOCUS) { // เปิดจากการแจ้งเตือน: แสดงเฉพาะงานที่นักเรียนส่งมา
+      const fr = d.rows.filter(r => r.sub && r.sub.id === FOCUS && r.group !== 'member');
+      if (fr.length) { $('#gl').innerHTML = `<div class="card-x room-card focus-card"><div class="room-head"><h5 class="fw-bold m-0 flex-fill"><i class="fa-solid fa-bell text-warning me-2"></i>งานที่ส่งจากการแจ้งเตือน</h5><button class="btn btn-soft btn-sm" data-focusoff><i class="fa-solid fa-users"></i> ดูนักเรียนทั้งหมด</button></div>${fr.map(r => isGrp && r.group === 'leader' ? groupRow(r) : stuRow(r)).join('')}</div>`; return; }
+      FOCUS = ''; toast('ไม่พบงานที่ส่งนี้ (อาจถูกลบหรือยกเลิกการส่งแล้ว)', 'warning'); }
     if (GVIEW) { const q2 = $('#gq').value.trim().toLowerCase(), leaders = d.rows.filter(r => r.sub && r.group !== 'member' && (!q2 || d.rows.some(x => x.sub && x.sub.id === r.sub.id && (x.user.fullName + x.user.studentCode).toLowerCase().includes(q2))))
         .sort((x, y) => String(x.sub.submittedAt).localeCompare(String(y.sub.submittedAt))), none = d.rows.filter(r => !r.sub);
       $('#gl').innerHTML = (leaders.length ? `<div class="grid g3">${leaders.map(groupCard).join('')}</div>` : empty('fa-people-group', 'ยังไม่มีกลุ่มที่ส่งงาน'))
@@ -3015,7 +3065,33 @@ PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
         <div class="progress flex-fill" style="min-width:120px"><div class="progress-bar" style="width:${all.length ? Math.round(sn * 100 / all.length) : 0}%"></div></div></div>${byRoom(k).filter(r => !(isGrp && r.sub && r.group === 'member' && d.rows.some(x => x.sub && x.sub.id === r.sub.id && x.group !== 'member'))).map(r => isGrp && r.sub && r.group === 'leader' ? groupRow(r) : stuRow(r)).join('')}</div>`; }).join('') : empty('fa-users-slash', 'ไม่พบนักเรียนตามเงื่อนไข'));
   };
   $('#gq').addEventListener('input', debounce(drawRooms, 300)); ['#gst', '#gG', '#gR'].forEach(x => $(x).onchange = drawRooms); drawRooms();
+  /** บันทึกคะแนนแล้ว: อัปเดตข้อมูลในหน้า (ไม่โหลดใหม่ คะแนนที่พิมพ์ค้างในแถวอื่นไม่หาย) */
+  const markGraded = (sid, score, fb) => { d.rows.forEach(r => { if (r.sub && r.sub.id === sid) { r.sub.score = String(score); r.sub.feedback = fb; r.status = 'graded'; } });
+    const gd = d.rows.filter(r => r.status === 'graded').length, b = $('[data-gstat=graded] b', el); if (b) b.textContent = gd; };
+  /** การ์ดสรุปด้านบน → รายชื่อนักเรียนตามหมวด */
+  const statList = k => {
+    if (k === 'rooms') { const m = modal('ห้องที่ส่งแล้ว', tableHtml(['ห้อง', 'ส่งแล้ว', 'ตรวจแล้ว', 'ยังไม่ส่ง', ''], roomKeys.map(rkey => { const all = d.rows.filter(r => rk(r) === rkey), sn = all.filter(r => r.sub).length, gd = all.filter(r => r.status === 'graded').length;
+        return [`<b>${esc(rkey)}</b>`, `${sn}/${all.length}`, gd, all.length - sn, `<button class="btn btn-sm btn-soft" data-mroom="${esc(rkey)}"><i class="fa-solid fa-door-open"></i> เปิดห้อง</button>`]; })), '', 'modal-lg');
+      $('#modal .modal-content').onclick = e => { const b = e.target.closest('[data-mroom]'); if (!b) return; m.hide(); FOCUS = ''; GVIEW = false; $('#gq').value = ''; OPEN = b.dataset.mroom; drawRooms(); window.scrollTo({ top: $('#gl').offsetTop - 90, behavior: 'smooth' }); }; return; }
+    const T = { all: 'นักเรียนทั้งหมด', sent: 'นักเรียนที่ส่งแล้ว', none: 'นักเรียนที่ยังไม่ส่ง', graded: 'นักเรียนที่ตรวจแล้ว' };
+    const list = d.rows.filter(r => k === 'all' || (k === 'sent' && r.sub) || (k === 'none' && !r.sub) || (k === 'graded' && r.status === 'graded'))
+      .sort((x, y) => natural(rk(x), rk(y)) || (Number(x.user.classNo) || 999) - (Number(y.user.classNo) || 999));
+    const m = modal(`${T[k]} (${list.length} คน)`, `<input class="form-control mb-2" type="search" id="gsq" placeholder="ค้นหาชื่อ / รหัส..." aria-label="ค้นหา"><div id="gsl"></div>`, '', 'modal-xl');
+    const drawL = () => { const q = $('#gsq').value.trim().toLowerCase(); $('#gsl').innerHTML = tableHtml(['เลขที่', 'ชื่อ-สกุล', 'ชั้น/ห้อง', 'สถานะ', 'ส่งเมื่อ', 'คะแนน', ''], list.filter(r => !q || (r.user.fullName + r.user.studentCode).toLowerCase().includes(q)).map(r => [esc(r.user.classNo || '-'), `<b>${esc(r.user.fullName)}</b><div class="small text-muted">รหัส ${esc(r.user.studentCode)}</div>`, `<span class="chip info">${esc(rk(r))}</span>`, statusChip(r.status),
+      r.sub ? thDate(r.sub.submittedAt, true) : '-', r.sub && r.sub.score !== '' ? `<b class="text-primary">${fmtN(r.sub.score)}</b>/${fmtN(a.maxScore)}` : '-', r.sub ? `<button class="btn btn-sm btn-primary" data-mfocus="${esc(r.sub.id)}"><i class="fa-solid fa-pen-to-square"></i> ตรวจ</button>` : ''])); };
+    $('#gsq').addEventListener('input', debounce(drawL, 200)); drawL();
+    $('#modal .modal-content').onclick = e => { const b = e.target.closest('[data-mfocus]'); if (!b) return; m.hide(); FOCUS = b.dataset.mfocus; drawRooms(); window.scrollTo({ top: $('#gl').offsetTop - 90, behavior: 'smooth' }); };
+  };
   el.onclick = async e => {
+    const gs = e.target.closest('[data-gstat]'); if (gs) return statList(gs.dataset.gstat);
+    if (e.target.closest('[data-focusoff]')) { FOCUS = ''; drawRooms(); return; }
+    const fbb = e.target.closest('[data-fbbtn]'); if (fbb) { const id = fbb.dataset.fbbtn, inp = $(`[data-fb="${id}"]`), sc = $(`[data-score="${id}"]`);
+      const r = await Sw.fire({ title: 'ความเห็นของครู', html: `<div class="small text-muted mb-1">${esc(fbb.dataset.name)}</div>`, input: 'textarea', inputValue: inp ? inp.value : '', inputPlaceholder: 'พิมพ์ความคิดเห็นถึงนักเรียน...', showCancelButton: true, confirmButtonText: sc && sc.value !== '' ? '<i class="fa-solid fa-floppy-disk"></i> บันทึกความเห็น' : 'ตกลง', customClass: SW_CLASS(false) });
+      if (!r.isConfirmed) return; const fb = String(r.value || '').trim(); if (inp) inp.value = fb;
+      fbb.classList.toggle('btn-info', !!fb); fbb.classList.toggle('has-fb', !!fb); fbb.classList.toggle('btn-soft', !fb); fbb.title = fb ? 'ความเห็นของครู: ' + fb.slice(0, 80) : 'เพิ่มความเห็นของครู';
+      if (sc && sc.value !== '' && +sc.value >= 0 && +sc.value <= +a.maxScore) { await api('gradeSubmission', id, sc.value, fb); toast('บันทึกความเห็นแล้ว — แจ้งเตือนนักเรียนแล้ว'); markGraded(id, sc.value, fb); }
+      else toast('ใส่คะแนนแล้วกด "บันทึก" เพื่อบันทึกคะแนนพร้อมความเห็น', 'info');
+      return; }
     const gv = e.target.closest('[data-gview]'); if (gv) { GVIEW = gv.dataset.gview === '1'; $$('[data-gview]', el).forEach(b => { b.classList.toggle('btn-primary', b === gv); b.classList.toggle('btn-soft', b !== gv); }); drawRooms(); return; }
     const se = e.target.closest('[data-sedit]'), sd = e.target.closest('[data-sdel]');
     if (sd) { const r = d.rows.find(x => x.sub && x.sub.id === sd.dataset.sdel);
@@ -3041,7 +3117,7 @@ PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
       const mm = modal(r.user.fullName, `<div class="summary mb-3"><div><span>ส่งเมื่อ</span><b>${thDate(s.submittedAt, true)}</b></div><div><span>สถานะ</span>${statusChip(s.status)}</div>${s.score !== '' ? `<div><span>คะแนน</span><b class="text-primary">${fmtN(s.score)} / ${fmtN(a.maxScore)}</b></div>` : ''}</div>
         ${QZ && s.answers ? `<h6 class="fw-bold"><i class="fa-solid fa-list-check text-primary"></i> คำตอบแบบทดสอบ</h6>${quizReviewHtml(QZ, J(s.answers, {}), J(s.autoScore, {}), true)}
           ${QZ.questions.some(q => q.type === 'text' && !q.answer) ? `<div class="d-flex flex-wrap gap-2 align-items-center mb-3"><input class="form-control flex-fill" style="width:auto" id="qzFb" value="${esc(s.feedback || '')}" placeholder="ความคิดเห็นถึงนักเรียน"><button class="btn btn-primary" id="qzSave"><i class="fa-solid fa-floppy-disk"></i> บันทึกคะแนนรายข้อ</button></div>` : ''}<hr>` : ''}
-        <p>${linkify(s.text) || '<span class="text-muted">ไม่มีข้อความ</span>'}</p>${filesHtml(J(s.files))}${previewsHtml(subFiles(s).filter(f => f.id || driveId(f.url)))}${s.driveLink ? `<a class="file-row" href="${safeUrl(s.driveLink)}" target="_blank" rel="noopener"><i class="fa-brands fa-google-drive"></i> ${esc(s.driveLink)}</a>` : ''}
+        <p>${linkify(s.text) || '<span class="text-muted">ไม่มีข้อความ</span>'}</p>${filesShow(subShowFiles(s))}${s.driveLink ? `<a class="file-row" href="${safeUrl(s.driveLink)}" target="_blank" rel="noopener"><i class="fa-brands fa-google-drive"></i> ${esc(s.driveLink)}</a>` : ''}
         ${J(s.history).length ? `<details class="mt-3"><summary>ประวัติการแก้ไข (${J(s.history).length})</summary>${J(s.history).map(h => `<div class="small text-muted">${thDate(h.at, true)} · ไฟล์ ${h.files} รายการ ${h.text ? '· ' + esc(String(h.text).slice(0, 80)) : ''}</div>`).join('')}</details>` : ''}`, '', 'modal-xl');
       $('#qzSave') && ($('#qzSave').onclick = async () => {
         const qs = {}; let bad = '';
@@ -3054,12 +3130,13 @@ PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
       const id = g.dataset.grade, score = $(`[data-score="${id}"]`).value, fb = $(`[data-fb="${id}"]`).value;
       if (score === '' || +score < 0 || +score > +a.maxScore) return toast(`คะแนนต้องอยู่ระหว่าง 0–${a.maxScore}`, 'warning');
       if (!await confirmBox({ title: 'ยืนยันบันทึกคะแนน', html: `<b>${esc(g.dataset.name)}</b> ได้ ${esc(score)}/${esc(a.maxScore)} คะแนน` })) return;
-      await api('gradeSubmission', id, score, fb); toast('บันทึกคะแนนแล้ว — แจ้งเตือนนักเรียนแล้ว');
+      await api('gradeSubmission', id, score, fb); toast('บันทึกคะแนนแล้ว — แจ้งเตือนนักเรียนแล้ว'); markGraded(id, score, fb);
     }
   };
 } };
 
-const subActs = (id, name, member) => member ? '<small class="text-muted">สมาชิกกลุ่ม</small>' : `<div class="d-flex gap-1 flex-wrap justify-content-end"><button class="btn btn-sm btn-primary" data-grade="${esc(id)}" data-name="${esc(name)}"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button><button class="btn btn-sm btn-icon btn-soft" data-sedit="${esc(id)}" data-name="${esc(name)}" title="แก้ไขงานที่ส่ง" aria-label="แก้ไขงานที่ส่ง"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-icon btn-soft text-danger" data-sdel="${esc(id)}" data-name="${esc(name)}" title="ลบงานที่ส่ง" aria-label="ลบงานที่ส่ง"><i class="fa-solid fa-trash"></i></button></div>`;
+const fbBtn = (id, name, fb) => `<button class="btn btn-sm btn-icon ${fb ? 'btn-info has-fb' : 'btn-soft'}" data-fbbtn="${esc(id)}" data-name="${esc(name)}" title="${fb ? 'ความเห็นของครู: ' + esc(String(fb).slice(0, 80)) : 'เพิ่มความเห็นของครู'}" aria-label="ความเห็นของครู"><i class="fa-solid fa-comment-dots"></i></button>`;
+const subActs = (id, name, member, fb = '') => member ? '<small class="text-muted">สมาชิกกลุ่ม</small>' : `<div class="d-flex gap-1 flex-nowrap justify-content-end sub-acts"><button class="btn btn-sm btn-primary" data-grade="${esc(id)}" data-name="${esc(name)}"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>${fbBtn(id, name, fb)}<button class="btn btn-sm btn-icon btn-soft" data-sedit="${esc(id)}" data-name="${esc(name)}" title="แก้ไขงานที่ส่ง" aria-label="แก้ไขงานที่ส่ง"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-icon btn-soft text-danger" data-sdel="${esc(id)}" data-name="${esc(name)}" title="ลบงานที่ส่ง" aria-label="ลบงานที่ส่ง"><i class="fa-solid fa-trash"></i></button></div>`;
 const subFiles = sub => J(sub.files).concat(sub.driveLink ? [{ name: 'Google Drive', url: sub.driveLink }] : []);
 const dlUrl = f => 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(f.id || driveId(f.url));
 
@@ -3111,9 +3188,9 @@ function printTable(title, headers, rows) {
 
 /* ---------------- ตั้งค่าระบบ ---------------- */
 PAGES.settings = { admin: true, async render(el, p) {
-  if (!isAdm() && !['general', 'look', 'menus', 'account'].includes(p.tab)) p = Object.assign({}, p, { tab: 'general' });
+  if (!isAdm() && !['general', 'look', 'menus', 'scores', 'account'].includes(p.tab)) p = Object.assign({}, p, { tab: 'general' });
   const s = isAdm() ? await apiQ('getSettings') : { config: Object.assign({}, S.config) }, c = s.config;
-  const tabs = !isAdm() ? [['general', 'ทั่วไป', 'fa-school'], ['look', 'สีระบบ', 'fa-palette'], ['menus', 'เมนูนักเรียน', 'fa-bars'], ['account', 'บัญชีของฉัน', 'fa-key']] : [['general', 'ทั่วไป', 'fa-school'], ['look', 'สีระบบ', 'fa-palette'], ['menus', 'เมนูนักเรียน', 'fa-bars'], ['system', 'ระบบ/ความปลอดภัย', 'fa-shield-halved'], ['notify', 'การแจ้งเตือน', 'fa-bell'], ['db', 'ฐานข้อมูล', 'fa-database'], ['backup', 'สำรอง/กู้คืน', 'fa-cloud-arrow-up'], ['account', 'บัญชีของฉัน', 'fa-key'], ['audit', 'Audit Log', 'fa-clipboard-list']];
+  const tabs = !isAdm() ? [['general', 'ทั่วไป', 'fa-school'], ['look', 'สีระบบ', 'fa-palette'], ['menus', 'เมนูนักเรียน', 'fa-bars'], ['scores', 'คะแนนเก็บ', 'fa-star-half-stroke'], ['account', 'บัญชีของฉัน', 'fa-key']] : [['general', 'ทั่วไป', 'fa-school'], ['look', 'สีระบบ', 'fa-palette'], ['menus', 'เมนูนักเรียน', 'fa-bars'], ['scores', 'คะแนนเก็บ', 'fa-star-half-stroke'], ['system', 'ระบบ/ความปลอดภัย', 'fa-shield-halved'], ['notify', 'การแจ้งเตือน', 'fa-bell'], ['db', 'ฐานข้อมูล', 'fa-database'], ['backup', 'สำรอง/กู้คืน', 'fa-cloud-arrow-up'], ['account', 'บัญชีของฉัน', 'fa-key'], ['audit', 'Audit Log', 'fa-clipboard-list']];
   if (s.needsDb) tabs.splice(0, tabs.length, ['db', 'ฐานข้อมูล', 'fa-database'], ['account', 'บัญชีของฉัน', 'fa-key']);
   let tab = s.needsDb && p.tab !== 'account' ? 'db' : p.tab || 'general';
   el.innerHTML = `<div class="page-head"><h3>ตั้งค่าระบบ</h3></div><ul class="nav nav-pills gap-2 mb-3 flex-nowrap overflow-auto pb-1">${tabs.map(t => `<li class="nav-item"><button class="nav-link text-nowrap" data-st="${t[0]}"><i class="fa-solid ${t[2]}"></i> ${t[1]}</button></li>`).join('')}</ul><div class="card-x" id="sBody"></div>`;
@@ -3130,6 +3207,7 @@ PAGES.settings = { admin: true, async render(el, p) {
     if (!B) return;
     if (tab === 'look') return drawLook(B, c);
     if (tab === 'menus') return drawMenus(B, c);
+    if (tab === 'scores') return drawScores(B, c);
     applyColor(effCfg().themeColor); // ยกเลิกสีที่ลองดูแต่ยังไม่บันทึก
     if (tab === 'general' && !isAdm()) { // ครู: ชื่อระบบ/โลโก้ที่แสดงเฉพาะบัญชีตนเอง
       const F = [{ k: 'schoolName', label: 'ชื่อระบบ / ชื่อห้องเรียนที่แสดงในบัญชีของฉัน', help: 'เว้นว่าง = ใช้ชื่อของระบบ' }, GF.general.find(f => f.k === 'logo')];
@@ -3291,6 +3369,47 @@ function drawLook(B, c0) {
   S.onLeave.push(() => applyColor(effCfg().themeColor));
 }
 /* ---------- ตั้งค่า: เมนูฝั่งนักเรียน ---------- */
+/* ---------- ตั้งค่า: ที่มาของคะแนนเก็บ ("รวมคะแนนทั้งหมด" จาก Google Sheet) ---------- */
+const SCORE_TPL = 'https://docs.google.com/spreadsheets/d/13pPDL-WYNp5LU24b4_MzDvYsuumjVGtwpI1Gp6ubUzw/edit?gid=0#gid=0';
+function drawScores(B, c0) {
+  let list = (isAdm() ? J(c0.scoreSources, []) : (myPrefs().scoreSources || [])).map(x => Object.assign({ terms: [], courseIds: [], grades: [], rooms: [] }, x));
+  const nextT = (() => { const t = termOf(); return t.term === '1' ? { year: t.year, term: '2' } : { year: String(+t.year + 1), term: '1' }; })();
+  const termOpts = () => [nextT].concat(termList(8)).map(t => [tk(t), `ภาคเรียนที่ ${t.term}/${t.year}`]);
+  const cName = id => (S.cache.courses || []).find(k => k.id === id)?.name || 'รายวิชา';
+  const scope = x => [x.terms.length ? 'ภาคเรียน ' + x.terms.map(k => k.split('/')[1] + '/' + k.split('/')[0]).join(', ') : 'ทุกภาคเรียน', x.courseIds.length ? 'วิชา ' + x.courseIds.map(cName).join(', ') : 'ทุกรายวิชา',
+    x.grades.length ? 'ชั้น ' + x.grades.join(', ') : 'ทุกชั้น', x.rooms.length ? 'ห้อง ' + x.rooms.join(', ') : 'ทุกห้อง'];
+  const save = async msg => { const v = list.map(x => ({ id: x.id, name: x.name, url: x.url, terms: x.terms, courseIds: x.courseIds, grades: x.grades, rooms: x.rooms }));
+    if (isAdm()) { await api('saveSettings', { config: { scoreSources: JSON.stringify(v) } }); c0.scoreSources = JSON.stringify(v); }
+    else { const pr = Object.assign(myPrefs(), { scoreSources: v }); S.user = await api('updateProfile', { prefs: pr }); }
+    toast(msg); draw(); };
+  const edit = async i => { await lists(); const x = i >= 0 ? list[i] : { id: '', name: 'คะแนนเก็บ', url: '', terms: [tk(termOf())], courseIds: [], grades: [], rooms: [] };
+    const F = [{ k: 'name', label: 'ชื่อที่แสดงในหน้าหลักนักเรียน', req: true }, { k: 'url', label: 'Google Sheet ID หรือ URL (ต้องมีคอลัมน์ "รวมคะแนนทั้งหมด")', req: true, attrs: 'placeholder="https://docs.google.com/spreadsheets/d/..."', valid: v => /docs\.google\.com\/spreadsheets\/d\/|^[\w-]{25,}$/.test(v) ? '' : 'กรุณาวางลิงก์ Google Sheet หรือ Sheet ID' },
+      { k: 'terms', label: 'ภาคเรียน / ปีการศึกษา', type: 'multi', noAdd: true, opts: termOpts }, { k: 'courseIds', label: 'รายวิชา', type: 'multi', noAdd: true, opts: () => (S.cache.courses || []).map(k => [k.id, k.name + (k.subjectCode ? ' (' + k.subjectCode + ')' : '')]) },
+      { k: 'grades', label: 'ระดับชั้น', type: 'multi', noAdd: true, opts: grades }, { k: 'rooms', label: 'ห้องเรียน', type: 'multi', noAdd: true, opts: rooms }];
+    const m = modal(i >= 0 ? 'แก้ไขที่มาของคะแนนเก็บ' : 'เพิ่มที่มาของคะแนนเก็บ', `<div class="gb-alert info mb-3"><i class="fa-solid fa-circle-info"></i><div>ระบบอ่านคอลัมน์ <b>"รวมคะแนนทั้งหมด"</b> และค้นหานักเรียนจาก <b>รหัสนักเรียน</b> หรือ <b>ชื่อ-สกุล</b> · เลือก "ทั้งหมด" = ไม่จำกัด · แชร์ชีตให้บัญชีที่ deploy เว็บแอปอ่านได้ (หรือเปิดลิงก์ให้ทุกคนดูได้) · <a href="${SCORE_TPL}" target="_blank" rel="noopener">ดูแม่แบบ Google Sheet</a></div></div>${formHtml(F, { name: x.name, url: x.url, terms: x.terms.join(','), courseIds: x.courseIds.join(','), grades: x.grades.join(','), rooms: x.rooms.join(',') })}`,
+      '<button class="btn btn-soft" data-bs-dismiss="modal">ยกเลิก</button><button class="btn btn-primary" id="ssOk"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>');
+    bindForm(m.body, F);
+    $('#ssOk').onclick = async () => { const d = validate(m.body, F); if (!d) return; const arr = v => String(v || '').split(',').map(t => t.trim()).filter(Boolean);
+      const nx = { id: x.id || 's' + Date.now().toString(36), name: d.name, url: d.url, terms: arr(d.terms), courseIds: arr(d.courseIds), grades: arr(d.grades), rooms: arr(d.rooms) };
+      if (i >= 0) list[i] = nx; else list.push(nx); m.hide(); await save('บันทึกที่มาของคะแนนเก็บแล้ว'); };
+  };
+  const draw = () => {
+    if (!$('#sBody') || B !== $('#sBody')) return;
+    B.innerHTML = `${isAdm() ? '' : '<div class="gb-alert info mb-3"><i class="fa-solid fa-user-gear"></i><div>ตั้งค่าเฉพาะของคุณ — แสดงกับนักเรียนในรายวิชาที่คุณสอนเท่านั้น</div></div>'}
+      <h5 class="fw-bold mb-1"><i class="fa-solid fa-star-half-stroke text-warning me-2"></i>ที่มาของคะแนนเก็บ</h5>
+      <p class="text-muted small">ดึงค่าในคอลัมน์ <b>"รวมคะแนนทั้งหมด"</b> จาก Google Sheet มาแสดงในการ์ด "รวมคะแนนทั้งหมด" ที่หน้าหลักของนักเรียน — กำหนดได้ว่าใช้กับภาคเรียน ปีการศึกษา รายวิชา ชั้น และห้องใด (แยกจากเมนูนักเรียน)
+        · <a href="${SCORE_TPL}" target="_blank" rel="noopener"><i class="fa-solid fa-table"></i> แม่แบบ Google Sheet</a></p>
+      <div class="d-flex flex-column gap-2 mb-3">${list.map((x, i) => `<div class="file-row m-0 flex-wrap" style="gap:10px"><span class="ss-ic"><i class="fa-solid fa-table"></i></span><div class="flex-fill" style="min-width:200px"><b class="d-block">${esc(x.name)}</b>
+        <a class="small text-truncate d-block" style="max-width:520px" href="${safeUrl(/^https:/.test(x.url) ? x.url : 'https://docs.google.com/spreadsheets/d/' + x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>
+        <div class="d-flex flex-wrap gap-1 mt-1">${scope(x).map(t => `<span class="chip">${esc(t)}</span>`).join('')}</div></div>
+        <div class="d-flex gap-1"><button class="btn btn-sm btn-soft" data-sse="${i}"><i class="fa-solid fa-pen"></i> แก้ไข</button><button class="btn btn-sm btn-icon btn-soft text-danger" data-ssd="${i}" aria-label="ลบ"><i class="fa-solid fa-trash"></i></button></div></div>`).join('') || empty('fa-table', 'ยังไม่ได้ตั้งค่าที่มาของคะแนนเก็บ')}</div>
+      <button class="btn btn-primary" id="ssAdd"><i class="fa-solid fa-plus"></i> เพิ่มที่มาของคะแนน</button>`;
+    $('#ssAdd').onclick = () => edit(-1);
+    $$('[data-sse]', B).forEach(b => b.onclick = () => edit(+b.dataset.sse));
+    $$('[data-ssd]', B).forEach(b => b.onclick = async () => { const x = list[+b.dataset.ssd]; if (!await confirmBox({ title: 'ลบที่มาของคะแนน?', html: `<b>${esc(x.name)}</b>`, danger: true, confirmText: 'ลบ' })) return; list.splice(+b.dataset.ssd, 1); await save('ลบแล้ว'); });
+  };
+  draw(); lists().then(draw).catch(() => {});
+}
 function drawMenus(B, c0) {
   const c = isAdm() ? c0 : { studentMenus: JSON.stringify({ hidden: [], custom: myPrefs().menus || [], order: [] }) };
   const m = J(c.studentMenus, {}); let hidden = m.hidden || [], custom = (m.custom || []).map((x, i) => Object.assign({ icon: 'auto', mode: 'app', id: 'm' + Date.now().toString(36) + i }, x)), order = m.order || [];
@@ -3378,9 +3497,10 @@ function thumbsHtml(files) {
 function previewsHtml(files, grid) {
   if (!files || !files.length) return '';
   return `<div class="pv-list ${grid ? 'pv-grid' : ''}" data-vfiles='${esc(JSON.stringify(files))}'>${files.map((f, i) => { const k = kindOf(f), id = f.id || driveId(f.url);
-    const body = k === 'image' ? `<img src="${safeUrl('https://lh3.googleusercontent.com/d/' + id)}" alt="${esc(f.name)}" loading="lazy" data-vw="${i}" onerror="this.onerror=null;this.src='https://drive.google.com/thumbnail?id=${esc(id)}&sz=w1600'">`
+    const body = k === 'image' ? `<img src="${safeUrl('https://lh3.googleusercontent.com/d/' + id + '=w1600')}" alt="${esc(f.name)}" loading="lazy" data-vw="${i}" onerror="this.onerror=null;this.src='https://drive.google.com/thumbnail?id=${esc(id)}&sz=w1600'">`
       : `<div class="ratio ${k === 'audio' ? '' : 'ratio-16x9'}" ${k === 'audio' ? 'style="height:90px"' : ''}><iframe src="https://drive.google.com/file/d/${esc(id)}/preview" loading="lazy" allow="autoplay; fullscreen" allowfullscreen title="${esc(f.name)}"></iframe></div>`;
-    return `<div class="pv-item"><div class="pv-head"><i class="fa-solid ${fileIcon(f.name)}"></i><span class="flex-fill text-truncate">${esc(f.name)}</span><span class="chip">${KIND_TH[k]}</span><button type="button" class="btn btn-sm btn-soft" data-vw="${i}"><i class="fa-solid fa-expand"></i> เต็มจอ</button></div>${body}</div>`; }).join('')}</div>`;
+    return `<div class="pv-item"><div class="pv-head"><span class="pv-ic k-${k}"><i class="fa-solid ${fileIcon(f.name)}"></i></span><span class="pv-name" title="${esc(f.name)}">${esc(f.name)}<small>${KIND_TH[k] || 'ไฟล์'}${f.size ? ' · ' + fmtSize(f.size) : ''}</small></span>
+      <span class="pv-acts">${id ? `<a class="btn btn-sm btn-success" href="${esc(dlUrl({ id }))}" target="_blank" rel="noopener" aria-label="ดาวน์โหลด ${esc(f.name)}" title="ดาวน์โหลด"><i class="fa-solid fa-download"></i><span>ดาวน์โหลด</span></a>` : ''}<button type="button" class="btn btn-sm btn-soft" data-vw="${i}" aria-label="เต็มจอ ${esc(f.name)}" title="เต็มจอ"><i class="fa-solid fa-expand"></i><span>เต็มจอ</span></button></span></div>${body}</div>`; }).join('')}</div>`;
 }
 function viewer(files, start = 0, opt = {}) {
   $('#viewer')?.remove();
@@ -3391,7 +3511,7 @@ function viewer(files, start = 0, opt = {}) {
   const draw = () => {
     const f = files[i], k = kindOf(f), id = f.id || driveId(f.url); z = 1; px = py = 0;
     let body;
-    if (k === 'image') body = `<img src="${safeUrl(id ? 'https://lh3.googleusercontent.com/d/' + id : f.url)}" alt="${esc(f.name)}" data-alt="${id ? esc('https://drive.google.com/thumbnail?id=' + id + '&sz=w2400') : ''}" draggable="false">`;
+    if (k === 'image') body = `<img src="${safeUrl(id ? 'https://lh3.googleusercontent.com/d/' + id + '=w2400' : f.url)}" alt="${esc(f.name)}" data-alt="${id ? esc('https://drive.google.com/thumbnail?id=' + id + '&sz=w2400') : ''}" draggable="false">`;
     else if (id) body = `<iframe src="https://drive.google.com/file/d/${esc(id)}/preview" allow="autoplay; fullscreen" allowfullscreen title="${esc(f.name)}"></iframe>`;
     else if (k === 'video') body = `<video src="${safeUrl(f.url)}" controls autoplay playsinline></video>`;
     else body = `<iframe src="${safeUrl(embedUrl(f.url))}" title="${esc(f.name)}"></iframe>`;

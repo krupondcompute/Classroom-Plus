@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '5.2.0';
+const APP_VERSION = '5.3.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -20,9 +20,10 @@ const CONFIG_DEFAULTS = {
   emailNotify: 'false', lineToken: '', autoBackup: 'true', webNotify: 'true', siteUrl: '',
   assignmentTypes: 'การบ้าน,ใบงาน,แบบฝึกหัด,สรุปเนื้อหา,งานเดี่ยว,งานกลุ่ม',
   themeColor: '#2563eb',   // สีหลักของระบบ
-  studentMenus: ''         // JSON {hidden:[...], custom:[{name,url,icon}]} เมนูฝั่งนักเรียน
+  studentMenus: '',        // JSON {hidden:[...], custom:[{name,url,icon}]} เมนูฝั่งนักเรียน
+  scoreSources: '[]'       // JSON [{id,name,url,terms:[ปี/ภาค],courseIds,grades,rooms}] ที่มาของ "รวมคะแนนทั้งหมด"
 };
-const PRIVATE_CONFIG = ['lineToken'];
+const PRIVATE_CONFIG = ['lineToken', 'scoreSources'];
 const SCHEMA = {
   Config: ['key','value','updatedAt'],
   Users: ['id','role','username','studentCode','passSalt','passHash','prefix','fullName','birthDate','grade','room',
@@ -478,6 +479,7 @@ function auth_(token) {
 /** ข้อมูลผู้ใช้ที่ส่งให้หน้าเว็บ */
 function userOut_(u) {
   const pu = pub_(u); pu.tenantSetup = !!tenant_().unset;
+  if (u.role === 'student') { try { const k = termDb_().key; pu.myTerm = /^25\d\d\/[12]$/.test(k || '') ? k : curTermKey_(); } catch (e) {} } // ภาคเรียนของนักเรียน (แสดงในหน้าหลัก — เปลี่ยนเองไม่ได้)
   try { pu.courseIds = myCourseIds_(u); pu.extraMenus = teacherMenus_(u); pu.termDbs = staff_(u) ? Object.keys(dbMap_()) : []; } catch (e) { pu.courseIds = []; pu.extraMenus = []; pu.termDbs = []; }
   return pu;
 }
@@ -656,7 +658,25 @@ function prefs_(v) {
   if (o.schoolName) out.schoolName = str_(o.schoolName, 100);
   if (o.logo) { const l = str_(o.logo, 48000); if (!(imgOk_(l) || /^data:image\/svg\+xml;base64,/.test(l))) throw err_('โลโก้ไม่ถูกต้อง'); out.logo = l; }
   if (o.menus) out.menus = json_(menus_(Array.isArray(o.menus) ? { custom: o.menus } : o.menus), {}).custom || [];
+  if (o.scoreSources) out.scoreSources = json_(scoreSources_(o.scoreSources), []);
   return JSON.stringify(out);
+}
+/** ที่มาของคะแนนเก็บ (Google Sheet ที่มีคอลัมน์ "รวมคะแนนทั้งหมด") + ขอบเขต ภาคเรียน/รายวิชา/ชั้น/ห้อง */
+function scoreSources_(v) {
+  const a = typeof v === 'string' ? json_(v, []) : v, L = (x, n) => (Array.isArray(x) ? x : []).map(y => str_(y, 40)).filter(Boolean).slice(0, n);
+  return JSON.stringify((Array.isArray(a) ? a : []).slice(0, 30).map(x => ({ id: str_(x.id, 20) || id_(), name: str_(x.name, 80) || 'คะแนนเก็บ', url: str_(x.url, 300),
+    terms: L(x.terms, 12).filter(k => /^25\d\d\/[12]$/.test(k)), courseIds: L(x.courseIds, 60), grades: L(x.grades, 20), rooms: L(x.rooms, 30) }))
+    .filter(x => /docs\.google\.com\/spreadsheets\/d\/|^[\w-]{25,}$/.test(x.url)));
+}
+/** ที่มาของคะแนนเก็บที่ครูแต่ละคนตั้งไว้ (เฉพาะรายวิชาที่ครูคนนั้นสอนนักเรียนคนนี้) */
+function teacherScoreSources_(u) {
+  const mine = rows_('Courses').filter(c => courseOk_(u, c)), out = [];
+  rows_('Users').filter(t => t.role !== 'student' && t.prefs).forEach(t => {
+    const ss = (json_(t.prefs, {}) || {}).scoreSources || []; if (!ss.length) return;
+    const cids = mine.filter(c => teaches_(t, c)).map(c => c.id); if (!cids.length) return;
+    ss.forEach(x => out.push(Object.assign({}, x, { courseIds: x.courseIds && x.courseIds.length ? x.courseIds.filter(c => cids.indexOf(c) >= 0) : cids })));
+  });
+  return out.filter(x => x.courseIds.length).slice(0, 20);
 }
 /** เมนูลิงก์ที่ครูแต่ละคนตั้งไว้ (ตั้งค่าแยกรายครู) → นักเรียนในรายวิชาของครูคนนั้นเห็น */
 function teacherMenus_(u) {
@@ -681,7 +701,7 @@ function updateProfile_(ctx, d) {
   if (d.contacts !== undefined) patch.contacts = contacts_(d.contacts);
   if (d.birthDate !== undefined) { const b = str_(d.birthDate, 10); if (b && !/^\d{4}-\d{2}-\d{2}$/.test(b)) throw err_('วันเกิดไม่ถูกต้อง'); patch.birthDate = b; }
   if (d.nickname !== undefined) patch.nickname = str_(d.nickname, 40);
-  if (d.prefs !== undefined && staff_(u)) patch.prefs = prefs_(d.prefs);
+  if (d.prefs !== undefined && staff_(u)) { patch.prefs = prefs_(d.prefs); props_().setProperty('SCORE_V', id_().slice(0, 6)); }
   return lock_(() => {
     if (u.role === 'student' && d.studentCode !== undefined && d.studentCode !== u.studentCode) {
       const code = str_(d.studentCode, 5);
@@ -740,11 +760,18 @@ function viewFilters_(view) {
 /** "รวมคะแนนทั้งหมด" ของนักเรียน จากเมนู "ผลการเรียน" (ลิงก์ Google Sheet ที่ครู/แอดมินแนบไว้) */
 function totalScore_(u) {
   if (!u || u.role !== 'student') return null;
-  const ck = 'ts_' + u.id, hit = cache_().get(ck); if (hit) return json_(hit, null);
+  const ck = 'ts_' + (props_().getProperty('SCORE_V') || '') + u.id, hit = cache_().get(ck); if (hit) return json_(hit, null);
   const sys = (json_(cfg_().studentMenus, {}) || {}).custom || [], cids = myCourseIds_(u);
   const ok = m => (!m.courseIds || !m.courseIds.length || m.courseIds.some(c => cids.indexOf(c) >= 0)) && (!m.grades || !m.grades.length || m.grades.indexOf(u.grade) >= 0) && (!m.rooms || !m.rooms.length || m.rooms.indexOf(u.room) >= 0);
-  const menus = sys.concat(teacherMenus_(u)).filter(m => ok(m) && /ผลการเรียน|รวมคะแนน|คะแนนรวม/.test(m.name || '') && /docs\.google\.com\/spreadsheets\/d\//.test(m.url || ''));
-  let out = null;
+  // 1) ที่มาของคะแนนเก็บที่ตั้งค่าไว้ (ผู้ดูแลระบบ + ครูของรายวิชา) ตามภาคเรียน/รายวิชา/ชั้น/ห้อง
+  let tk = ''; try { tk = termDb_().key; } catch (e) {} if (!/^25\d\d\/[12]$/.test(tk || '')) tk = curTermKey_();
+  const srcs = json_(cfg_().scoreSources, []).concat(teacherScoreSources_(u));
+  const items = [];
+  srcs.filter(x => ok(x) && (!x.terms || !x.terms.length || x.terms.indexOf(tk) >= 0)).slice(0, 8).forEach(x => {
+    try { const r = sheetTotal_(/^[\w-]{25,}$/.test(x.url) ? 'https://docs.google.com/spreadsheets/d/' + x.url + '/edit' : x.url, u); if (r) items.push(Object.assign(r, { menu: x.name })); } catch (e) {} });
+  let out = items.length ? Object.assign({}, items[0], { items: items }) : null;
+  // 2) แบบเดิม: เมนูลิงก์ชื่อ "ผลการเรียน"
+  const menus = out ? [] : sys.concat(teacherMenus_(u)).filter(m => ok(m) && /ผลการเรียน|รวมคะแนน|คะแนนรวม/.test(m.name || '') && /docs\.google\.com\/spreadsheets\/d\//.test(m.url || ''));
   for (let i = 0; i < menus.length && !out; i++) { try { out = sheetTotal_(menus[i].url, u); if (out) out.menu = menus[i].name; } catch (e) {} }
   try { cache_().put(ck, JSON.stringify(out), out ? 600 : 180); } catch (e) {}
   return out;
@@ -978,15 +1005,21 @@ function submitWork_(ctx, assignmentId, d) {
       purge_(removed);
       if (added.length) notifyUsers_(added, 'คุณถูกเพิ่มเข้ากลุ่มงาน', u.fullName + ' เพิ่มคุณในกลุ่ม "' + a.title + '"', 'assignment:' + a.id);
       log_(u.id, 'edit_submission', a.id);
+      notifyUsers_(teachersOf_(a), 'นักเรียนแก้ไขงานที่ส่ง', u.fullName + ' แก้ไข "' + a.title + '"', 'grade:' + a.id + ':' + s.id);
       return subPub_(s, u.id);
     }
     const n = insert_('Submissions', Object.assign({ id: id_(), assignmentId: a.id, ownerId: u.id, text: text, files: files, driveLink: link,
       status: late ? 'late' : 'ontime', submittedAt: now_(), score: '', feedback: '', history: '[]', updatedAt: now_(), members: members }, qPatch));
     log_(u.id, 'submit', a.id);
     if (added.length) notifyUsers_(added, 'คุณถูกเพิ่มเข้ากลุ่มงาน', u.fullName + ' เพิ่มคุณในกลุ่ม "' + a.title + '"', 'assignment:' + a.id);
-    if (a.ownerId && a.ownerId !== u.id) notifyUsers_([a.ownerId], 'มีงานส่งใหม่', u.fullName + ' ส่ง "' + a.title + '"' + (late ? ' (ส่งช้า)' : ''), 'grade:' + a.id);
+    notifyUsers_(teachersOf_(a), 'มีงานส่งใหม่', u.fullName + ' ส่ง "' + a.title + '"' + (late ? ' (ส่งช้า)' : ''), 'grade:' + a.id + ':' + n.id);
     return subPub_(n, u.id);
   });
+}
+/** ครูที่ควรได้รับแจ้งเตือนงานส่ง: ผู้สร้างงาน + เจ้าของ/ครูร่วมของรายวิชา */
+function teachersOf_(a) {
+  const c = find_('Courses', a.courseId) || {}, ids = [a.ownerId, c.ownerId].concat(String(c.teachers || '').split(','));
+  return ids.filter((x, i, arr) => x && arr.indexOf(x) === i && allStaff_().some(t => t.id === x && t.status === 'active'));
 }
 function deleteSubmission_(ctx, assignmentId) {
   const a = find_('Assignments', assignmentId);
@@ -1943,10 +1976,11 @@ function saveSettings_(ctx, d) {
   lock_(() => {
     Object.keys(CONFIG_DEFAULTS).forEach(k => {
       if (d.config && d.config[k] !== undefined) {
-        let v = typeof d.config[k] === 'boolean' ? String(d.config[k]) : str_(d.config[k], k === 'logo' ? 48000 : k === 'studentMenus' ? 30000 : 500);
+        let v = typeof d.config[k] === 'boolean' ? String(d.config[k]) : str_(d.config[k], k === 'logo' ? 48000 : k === 'studentMenus' || k === 'scoreSources' ? 30000 : 500);
         if (k === 'logo' && v && !(imgOk_(v) || /^data:image\/svg\+xml;base64,/.test(v))) throw err_('โลโก้ไม่ถูกต้อง');
         if (k === 'themeColor' && !/^#[0-9a-f]{6}$/i.test(v)) throw err_('รหัสสีไม่ถูกต้อง');
         if (k === 'studentMenus') v = menus_(d.config[k]);
+        if (k === 'scoreSources') { v = scoreSources_(d.config[k]); props_().setProperty('SCORE_V', id_().slice(0, 6)); }
         if (k === 'assignmentTypes') v = v.split(',').map(cleanSeg_).filter((x, i, a) => x && a.indexOf(x) === i).slice(0, 30).join(',') || CONFIG_DEFAULTS.assignmentTypes;
         const old = cfg_()[k];
         setCfg_(k, v);

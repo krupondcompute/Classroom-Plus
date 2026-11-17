@@ -373,5 +373,16 @@ ok(R('deleteUsers', KA2 || s1, { all: true, confirm: before.length }).ok === fal
 const dr = R('deleteUsers', AD, { grade: 'ม.6', room: '*', confirm: victims.length }); ok(dr.ok && dr.data.Users === victims.length && !R('listUsers', AD).data.some(u => u.grade === 'ม.6'), 'bulk delete by grade ' + dr.error);
 const two = R('listUsers', AD).data.filter(u => u.role === 'student').slice(0, 2).map(u => u.id);
 ok(R('deleteUsers', AD, { ids: two, confirm: 2 }).data.Users === 2, 'bulk delete selected');
+// ---------- v5.3 ----------
+const bk2 = ctx.SpreadsheetApp.create('คะแนนเก็บ'); const sh2 = bk2.insertSheet('Sheet1'); sh2.appendRow(['เลขที่', 'รหัสนักเรียน', 'ชื่อ - สกุล', 'รวมคะแนนทั้งหมด']); sh2.appendRow(['1', '80901', 'เด็กชายคะแนน', '42']); sh1.appendRow(['2', '80901', 'x', '87.5']);
+R('saveUser', AD, { prefix: 'เด็กชาย', fullName: 'คะแนน ดี', grade: 'ม.1', room: '1', studentCode: '80901', birthDate: '2013-01-01' }); const s9 = R('login', null, { mode: 'student', studentCode: '80901' }).data.token;
+const curK = R('getSettings', AD).data.curTerm;
+ok(R('saveSettings', AD, { config: { scoreSources: [{ name: 'คะแนนเก็บ ภาค 2', url: 'https://docs.google.com/spreadsheets/d/' + bk2.getId() + '/edit', terms: ['2501/1'] }] } }).ok, 'save score sources');
+ok(!('scoreSources' in R('bootstrap', null).data.config), 'score sources private');
+ok((R('studentHome', s9).data.total || {}).value === '87.5', 'source of other term ignored (falls back to menu)');
+R('saveSettings', AD, { config: { scoreSources: [{ name: 'คะแนนเก็บ ภาค 2', url: bk2.getId(), terms: [curK], grades: [] }] } });
+const th = R('studentHome', s9).data.total; ok(th && th.value === '42' && th.menu === 'คะแนนเก็บ ภาค 2', 'total from score source ' + JSON.stringify(th));
+R('saveSettings', AD, { config: { scoreSources: [{ name: 'x', url: bk2.getId(), grades: ['ม.6'] }] } }); ok((R('studentHome', s9).data.total || {}).value === '87.5', 'score source grade filter');
+ok(R('me', s9).data.user.myTerm === curK, 'student term label');
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

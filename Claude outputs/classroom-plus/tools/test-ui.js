@@ -232,6 +232,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('#bellBtn'); await page.waitForTimeout(400);
   const un0 = await page.$$eval('#notifList .unread', x => x.length); if (un0) { await page.click('#notifList .unread >> nth=0'); await idle(); await page.waitForTimeout(500); }
   ok(!un0 || (await page.$$eval('#notifList .unread', x => x.length)) === un0 - 1, 'notification marked read (' + un0 + ')');
+  if (await page.isVisible('#modal.show')) { ok(true, 'notification opened detail'); await page.click('#modal .btn-close'); await page.waitForTimeout(500); }
   await page.click('#chatBtn'); await page.waitForSelector('#chatPanel:not(.hidden)'); await page.click('#chatPanel [data-cnew] >> nth=0'); await page.click('[data-ctype=dm]'); await page.waitForSelector('[data-cdm]');
   await page.click('[data-cdm]:has-text("ผู้ดูแลระบบ")'); await page.waitForSelector('#cText'); await page.fill('#cText', 'สวัสดีครับ ส่งงานแล้ว'); await page.press('#cText', 'Enter'); await page.waitForTimeout(600);
   ok(await page.isVisible('.cmsg.me:has-text("สวัสดีครับ")'), 'chat send');
@@ -283,6 +284,29 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.fill('#dbS', nsid); await page.fill('#dbD', 'https://drive.google.com/drive/folders/' + 'g'.repeat(33)); await page.click('#dbSave'); await confirm(); await page.waitForTimeout(400); await confirm(); await page.waitForTimeout(600);
   ok(await page.evaluate(() => S.page === 'dash' && !S.user.tenantSetup), 'tenant db saved → dashboard');
   ok((await page.evaluate(async () => (await api('listUsers')).length)) === 1, 'tenant has separate data');
+  await page.evaluate(() => localLogout()); await idle();
+  await page.click('[data-tab=admin]'); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle();
+  // ---------- v5.3 ----------
+  await page.evaluate(async () => { await api('saveUser', { prefix: 'เด็กหญิง', fullName: 'ทดสอบ ห้าสาม', grade: 'ม.1', room: '1', studentCode: '53530', birthDate: '2013-01-01' }); });
+  await page.evaluate(() => localLogout()); await idle(); await page.fill('#lgCode', '53530'); await page.click('#loginForm button[type=submit]'); await idle();
+  ok(await page.isVisible('.hero .term-chip.static'), 'student term chip');
+  ok(await page.isVisible('.help-box .hb-t'), 'help box prominent');
+  const a53 = await page.evaluate(async () => { const l = await api('listAssignments'); const a = l.find(x => !x.sub && !x.quiz && !x.isGroup); await api('submitWork', a.id, { text: 'ส่งงาน v5.3', files: [], driveLink: 'https://drive.google.com/open?id=1UNuakjiIilL1aGk9drAMiT2RssftmvrZ' }); return a; });
+  await page.evaluate(() => localLogout()); await idle();
+  await page.click('[data-tab=admin]'); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle();
+  await page.click('#bellBtn'); await page.waitForTimeout(400); await page.click('#notifList [data-link^="grade:"] >> nth=0'); await idle(); await page.waitForTimeout(500);
+  ok(await page.isVisible('.focus-card') && (await page.$$eval('.focus-card .stu-row', x => x.length)) === 1, 'notification opens submitted work only');
+  await page.fill('.focus-card [data-score]', String(Math.min(8, +a53.maxScore))); await page.click('.focus-card [data-fbbtn]'); await page.fill('.swal2-textarea', 'ดีมากครับ'); await confirm(); await page.waitForTimeout(500);
+  ok(await page.isVisible('.focus-card .has-fb'), 'teacher comment button');
+  await page.click('[data-focusoff]'); await page.click('[data-gstat=graded]'); await page.waitForSelector('#gsl tbody tr'); ok((await page.textContent('#gsl')).includes('ห้าสาม'), 'stat card opens student list');
+  await page.click('#modal .btn-close'); await page.waitForTimeout(600);
+  await page.evaluate(() => go('settings', { tab: 'scores' })); await idle(); await page.click('#ssAdd'); await page.waitForSelector('#modal.show');
+  await page.fill('[name=url]', 'https://docs.google.com/spreadsheets/d/13pPDL-WYNp5LU24b4_MzDvYsuumjVGtwpI1Gp6ubUzw/edit'); await page.click('#ssOk'); await idle(); await page.waitForTimeout(400);
+  ok(await page.isVisible('[data-sse="0"]'), 'score source saved');
+  await page.evaluate(() => localLogout()); await idle(); await page.fill('#lgCode', '53530'); await page.click('#loginForm button[type=submit]'); await idle();
+  await page.evaluate(() => go('assignments', { tab: 'graded' })); await idle(); await page.click('[data-view]'); await page.waitForSelector('.ad-scorecard');
+  ok((await page.textContent('.ad-fb-b')).includes('ดีมากครับ') && await page.isVisible('.ad-sub .pv-item'), 'graded card + drive link preview');
+  await page.screenshot({ path: SHOT + '/40-graded-detail.png' }); await page.keyboard.press('Escape'); await page.waitForTimeout(400);
   await page.evaluate(() => localLogout()); await idle();
   await page.click('[data-tab=admin]'); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle();
   // mobile
