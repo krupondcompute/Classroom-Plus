@@ -296,6 +296,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('[data-tab=admin]'); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle();
   await page.click('#bellBtn'); await page.waitForTimeout(400); await page.click('#notifList [data-link^="grade:"] >> nth=0'); await idle(); await page.waitForTimeout(500);
   ok(await page.isVisible('.focus-card') && (await page.$$eval('.focus-card .stu-row', x => x.length)) === 1, 'notification opens submitted work only');
+  await page.waitForSelector('#modal.show .vw-ans'); ok((await page.textContent('#modal .vw-ans')).includes('ส่งงาน v5.3'), 'notification opens view modal with answer'); await page.click('#modal .btn-close'); await page.waitForTimeout(600);
   await page.fill('.focus-card [data-score]', String(Math.min(8, +a53.maxScore))); await page.click('.focus-card [data-fbbtn]'); await page.fill('.swal2-textarea', 'ดีมากครับ'); await confirm(); await page.waitForTimeout(500);
   ok(await page.isVisible('.focus-card .has-fb'), 'teacher comment button');
   await page.click('[data-focusoff]'); await page.click('[data-gstat=graded]'); await page.waitForSelector('#gsl tbody tr'); ok((await page.textContent('#gsl')).includes('ห้าสาม'), 'stat card opens student list');
@@ -309,6 +310,28 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.screenshot({ path: SHOT + '/40-graded-detail.png' }); await page.keyboard.press('Escape'); await page.waitForTimeout(400);
   await page.evaluate(() => localLogout()); await idle();
   await page.click('[data-tab=admin]'); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle();
+  // ---------- v5.4: ตารางสอน + เช็คชื่อ ----------
+  await page.evaluate(async () => { const rows = []; for (let i = 0; i < 6; i++) rows.push({ studentCode: String(43000 + i), prefix: 'เด็กชาย', fullName: 'เช็ค ชื่อ' + i, grade: 'ม.3', room: '1', classNo: String(i + 1), acadYear: termOf().year }); await api('importStudents', rows, {});
+    await api('ttSaveCfg', { periods: 12, minutes: 120, start: '00:00', breakAfter: 0, breakMin: 0, days: 7, lateMin: 600 }); });
+  await page.evaluate(() => go('attendance')); await idle();
+  ok(await page.isVisible('.tt') && (await page.$$eval('.att-stat', x => x.length)) === 7, 'attendance page + timetable + 7 status cards');
+  const nw = new Date(), dw = nw.getDay() || 7, pr = Math.floor((nw.getHours() * 60 + nw.getMinutes()) / 120) + 1;
+  await page.click(`[data-add="${dw}|${pr}"]`); await page.waitForSelector('#sfC'); await page.selectOption('#sfC', { index: 1 }); await page.selectOption('#sfG', 'ม.3'); await page.selectOption('#sfR', '1'); await page.waitForTimeout(300);
+  ok((await page.textContent('#sfCnt')).includes('6'), 'slot form pulls students');
+  await page.click('#sfOk'); await idle(); await page.waitForTimeout(400); ok(await page.isVisible('[data-slot]'), 'slot shown in timetable');
+  await page.evaluate(() => localLogout()); await idle(); await page.fill('#lgCode', '43002'); await page.click('#loginForm button[type=submit]'); await idle();
+  await page.evaluate(() => go('attend')); await idle(); ok(await page.isVisible('.qr-box svg'), 'student QR');
+  await page.click('[data-ci]'); await idle(); await page.waitForTimeout(300); ok((await page.textContent('.swal2-popup')).includes('มาเรียน'), 'student self check-in'); await confirm();
+  await page.screenshot({ path: SHOT + '/41-student-attend.png' });
+  await page.evaluate(() => localLogout()); await idle();
+  await page.click('[data-tab=admin]'); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle();
+  await page.evaluate(() => go('attendance')); await idle(); await page.click('[data-slot]'); await page.waitForSelector('#atAll');
+  ok((await page.textContent('#modal')).includes('เช็คชื่อเอง'), 'teacher sees self check-in');
+  await page.click('#atAll'); await page.click('#atSave'); await confirm(); await page.waitForTimeout(500);
+  await page.click('[data-slot]'); await page.waitForSelector('.swal2-popup'); ok((await page.textContent('.swal2-popup')).includes('มีการเช็คชื่อเรียบร้อยแล้ว'), 'already checked notice'); await page.click('.swal2-confirm'); await page.waitForTimeout(300);
+  await page.screenshot({ path: SHOT + '/42-attendance-check.png' });
+  await page.click('#modal .btn-close'); await page.waitForTimeout(500);
+  await page.evaluate(() => go('dash')); await idle(); ok(await page.isVisible('.att-dash'), 'dashboard attendance card');
   // mobile
   const m = await browser.newContext({ ...require('playwright').devices['iPhone 13'], ignoreHTTPSErrors: true });
   const mp = await m.newPage(); mp.on('pageerror', e => errs.push('m: ' + e.message));

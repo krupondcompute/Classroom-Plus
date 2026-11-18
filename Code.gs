@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '5.3.0';
+const APP_VERSION = '5.4.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -48,7 +48,11 @@ const SCHEMA = {
   // ---------- v5: ค่าตั้งค่าระดับภาคเรียน + กิจกรรมตอบปัญหา/แบบสอบถาม ----------
   TermConfig: ['key','value','updatedAt'],
   LiveSessions: ['id','kind','title','pin','ownerId','data','settings','status','startedAt','endsAt','createdAt','updatedAt'],
-  LiveAnswers: ['id','sessionId','pid','name','userId','answers','score','correct','timeMs','finishedAt','createdAt','updatedAt']
+  LiveAnswers: ['id','sessionId','pid','name','userId','answers','score','correct','timeMs','finishedAt','createdAt','updatedAt'],
+  // ---------- v5.4: ตารางสอน + เช็คชื่อ (แยกตามภาคเรียน) ----------
+  Timetables: ['id','ownerId','cfg','updatedAt'],
+  TtSlots: ['id','ownerId','day','period','span','courseId','grade','room','students','note','createdAt','updatedAt'],
+  Attendance: ['id','slotId','date','ownerId','courseId','records','checkedBy','checkedAt','createdAt','updatedAt']
 };
 // ตารางที่ Admin แก้ไขผ่าน save()/remove() ได้ และฟิลด์ที่อนุญาต
 const EDITABLE = {
@@ -132,6 +136,10 @@ const ROUTES = {
   auditLog: ['admin', auditLog_], backupNow: ['admin', function () { return backup_(); }],
   listBackups: ['admin', listBackups_], liveList: ['staff', liveList_], liveGet: ['staff', liveGet_], liveSave: ['staff', liveSave_], liveRemove: ['staff', liveRemove_],
   liveControl: ['staff', liveControl_], liveStatus: ['staff', liveStatus_], liveInfo: ['public', liveInfo_], liveJoin: ['public', liveJoin_], liveSubmit: ['public', liveSubmit_], termSources: ['staff', termSources_], peekTerm: ['staff', peekTerm_], importTerm: ['staff', importTerm_], saveTermDb: ['admin', saveTermDb_], createTermDb: ['admin', createTermDb_], removeTermDb: ['admin', removeTermDb_],
+  fileData: ['user', fileData_],
+  ttGet: ['staff', ttGet_], ttSaveCfg: ['staff', ttSaveCfg_], ttSaveSlot: ['staff', ttSaveSlot_], ttDeleteSlot: ['staff', ttDeleteSlot_],
+  attOpen: ['staff', attOpen_], attSave: ['staff', attSave_], attHistory: ['staff', attHistory_], attSummary: ['staff', attSummary_], attDecode: ['staff', attDecode_],
+  myAttend: ['user', myAttend_], attCheckIn: ['user', attCheckIn_],
   editSubmission: ['staff', editSubmission_], removeSubmission: ['staff', removeSubmission_], renameClass: ['admin', renameClass_], restoreBackup: ['admin', restoreBackup_], installTriggers: ['admin', installTriggers_]
 };
 
@@ -1690,6 +1698,7 @@ function adminDashboard_(ctx, view) {
     days: d, logins: count(logs.filter(l => l.action === 'login'), 'createdAt'), views: count(logs.filter(l => l.action === 'view_lesson' && (admin || lid[l.detail])), 'createdAt'),
     submissions: count(subs, 'submittedAt'),
     status: { ontime: subs.filter(s => s.status === 'ontime').length, late: subs.filter(s => s.status === 'late').length, graded: subs.filter(s => s.score !== '').length },
+    attToday: (() => { try { const a = attSummary_(ctx, ''); return { present: a.day.present + a.day.late, late: a.day.late, absent: a.day.absent + a.day.skip, sessions: a.sessions, day: a.day }; } catch (e) { return null; } })(),
     recent: logs.slice(-10).reverse().map(l => ({ action: l.action, at: l.createdAt, user: (find_('Users', l.userId) || {}).fullName || '-' }))
   };
 }
@@ -1914,7 +1923,7 @@ function chatSend_(ctx, roomId, text, files) {
 /** เมนูฝั่งนักเรียน: ซ่อนเมนูมาตรฐาน + เมนูลิงก์ที่ครูเพิ่มเอง */
 function menus_(v) {
   const o = typeof v === 'string' ? json_(v, {}) : (v || {});
-  const KEYS = ['home', 'courses', 'assignments', 'announcements', 'search', 'profile'];
+  const KEYS = ['home', 'courses', 'assignments', 'attend', 'announcements', 'search', 'profile'];
   return JSON.stringify({
     hidden: (Array.isArray(o.hidden) ? o.hidden : []).filter(k => KEYS.indexOf(k) >= 0 && k !== 'home' && k !== 'profile'),
     custom: (Array.isArray(o.custom) ? o.custom : []).slice(0, 20).map(m => ({ id: str_(m.id, 20).replace(/[^\w]/g, '') || id_(), name: str_(m.name, 40), url: str_(m.url, 500), icon: str_(m.icon, 60).replace(/[^a-z0-9- ]/g, '') || 'auto', mode: m.mode === 'tab' ? 'tab' : 'app',
@@ -2323,4 +2332,183 @@ function dailyJob() {
   });
   deleteWhere_('Sessions', s => Number(s.expiresAt) < Date.now());
   if (cfg_().autoBackup === 'true') backup_();
+}
+
+/* ============================== v5.4 ตารางสอน + เช็คชื่อนักเรียน ============================== */
+const ATT_ST = ['present', 'late', 'absent', 'sick', 'leave', 'activity', 'skip']; // มาเรียน สาย ขาด ลาป่วย ลากิจ ไปกิจกรรม หนีเรียน
+const TT_DEF = { periods: 8, minutes: 50, start: '08:30', breakAfter: 4, breakMin: 60, days: 5, lateMin: 15 };
+const hm_ = v => { const m = String(v || '').match(/^(\d{1,2}):(\d{2})$/); return m ? Number(m[1]) * 60 + Number(m[2]) : null; };
+const fmtHm_ = n => String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0');
+function ttCfgOf_(ownerId) { const r = rows_('Timetables').find(x => x.id === ownerId); return Object.assign({}, TT_DEF, r ? json_(r.cfg, {}) : {}); }
+/** เวลาเริ่ม/จบ (นาทีของวัน) ของคาบ p (1..n) ตามค่าตั้งของเจ้าของตาราง */
+function periodTime_(cfg, p, span) {
+  const h0 = hm_(cfg.start), st = h0 === null ? 510 : h0, m = Number(cfg.minutes) || 50, ba = Number(cfg.breakAfter) || 0, bm = Number(cfg.breakMin) || 0;
+  const s0 = st + (p - 1) * m + (ba && p > ba ? bm : 0), last = p + (Number(span) || 1) - 1;
+  const e0 = st + last * m + (ba && last > ba ? bm : 0);
+  return { start: s0, end: e0 };
+}
+function todayInfo_() { const n = now_(), day = n.slice(0, 10), g = new Date(day + 'T00:00:00Z').getUTCDay(); return { date: day, dow: g || 7, min: Number(n.slice(11, 13)) * 60 + Number(n.slice(14, 16)) }; }
+function dowOf_(date) { const g = new Date(String(date).slice(0, 10) + 'T00:00:00Z').getUTCDay(); return g || 7; }
+/** คาบที่ครูคนนี้เห็น: ของตนเอง + รายวิชาที่สอนร่วม (ผู้ดูแลระบบเห็นทั้งหมด) */
+function ttVisible_(me) {
+  const cs = {}; rows_('Courses').forEach(c => cs[c.id] = c);
+  return rows_('TtSlots').filter(x => isAdmin_(me) || x.ownerId === me.id || teaches_(me, cs[x.courseId]));
+}
+function slotOut_(x, me, cs, users) {
+  const c = cs[x.courseId] || {}, cfg = ttCfgOf_(x.ownerId), t = periodTime_(cfg, Number(x.period), x.span), o = users[x.ownerId];
+  return { id: x.id, ownerId: x.ownerId, ownerName: o ? userName_(o) : '', mine: x.ownerId === me.id, day: Number(x.day), period: Number(x.period), span: Number(x.span) || 1,
+    courseId: x.courseId, courseName: c.name || '-', courseCode: c.code || '', grade: x.grade, room: x.room, students: json_(x.students, []), note: x.note,
+    start: fmtHm_(t.start), end: fmtHm_(t.end) };
+}
+function ttGet_(ctx) {
+  const me = ctx.user, cs = {}, users = {}; rows_('Courses').forEach(c => cs[c.id] = c); rows_('Users').forEach(u => users[u.id] = u);
+  return { cfg: ttCfgOf_(me.id), slots: ttVisible_(me).map(x => slotOut_(x, me, cs, users)), today: todayInfo_(), statuses: ATT_ST };
+}
+function ttSaveCfg_(ctx, d) {
+  d = d || {}; const me = ctx.user;
+  const cfg = { periods: Math.max(1, Math.min(14, Number(d.periods) || 8)), minutes: Math.max(10, Math.min(240, Number(d.minutes) || 50)), start: hm_(d.start) !== null ? str_(d.start, 5) : '08:30',
+    breakAfter: Math.max(0, Math.min(13, Number(d.breakAfter) || 0)), breakMin: Math.max(0, Math.min(180, Number(d.breakMin) || 0)), days: [5, 6, 7].indexOf(Number(d.days)) >= 0 ? Number(d.days) : 5,
+    lateMin: Math.max(0, Math.min(120, d.lateMin === undefined ? 15 : Number(d.lateMin) || 0)) };
+  return lock_(() => { delete MEM_.Timetables; const r = rows_('Timetables').find(x => x.id === me.id);
+    if (r) updateRow_('Timetables', r, { cfg: cfg, updatedAt: now_() }); else insert_('Timetables', { id: me.id, ownerId: me.id, cfg: cfg, updatedAt: now_() });
+    log_(me.id, 'tt_cfg', JSON.stringify(cfg)); return cfg; });
+}
+function ttSaveSlot_(ctx, d) {
+  d = d || {}; const me = ctx.user, c = find_('Courses', d.courseId);
+  if (!c) throw err_('กรุณาเลือกรายวิชา');
+  if (!isAdmin_(me) && !teaches_(me, c)) throw err_('เลือกได้เฉพาะรายวิชาที่คุณสอน', 'FORBIDDEN');
+  const cfg = ttCfgOf_(me.id), day = Number(d.day), period = Number(d.period), span = Math.max(1, Math.min(6, Number(d.span) || 1));
+  if (!(day >= 1 && day <= 7)) throw err_('วันไม่ถูกต้อง');
+  if (!(period >= 1 && period + span - 1 <= cfg.periods)) throw err_('คาบเรียนเกินจำนวนคาบที่ตั้งไว้ (' + cfg.periods + ' คาบ)');
+  const valid = {}; rows_('Users').forEach(u => { if (u.role === 'student') valid[u.id] = 1; });
+  const studs = (Array.isArray(d.students) ? d.students : []).map(String).filter((x, i, a) => valid[x] && a.indexOf(x) === i).slice(0, 200);
+  if (!studs.length) throw err_('กรุณาเลือกนักเรียนอย่างน้อย 1 คน');
+  return lock_(() => {
+    delete MEM_.TtSlots;
+    const old = d.id ? find_('TtSlots', d.id) : null;
+    if (d.id && !old) throw err_('ไม่พบคาบเรียนนี้');
+    if (old && old.ownerId !== me.id && !isAdmin_(me)) throw err_('แก้ไขได้เฉพาะคาบของคุณ', 'FORBIDDEN');
+    const owner = old ? old.ownerId : me.id;
+    const clash = rows_('TtSlots').find(x => x.ownerId === owner && x.id !== (old && old.id) && Number(x.day) === day && Number(x.period) < period + span && Number(x.period) + (Number(x.span) || 1) > period);
+    if (clash) throw err_('ช่วงเวลานี้มีคาบเรียนอื่นอยู่แล้ว (คาบ ' + clash.period + ')');
+    const patch = { day: String(day), period: String(period), span: String(span), courseId: c.id, grade: str_(d.grade, 20), room: str_(d.room, 20), students: studs, note: str_(d.note, 200), updatedAt: now_() };
+    const row = old ? updateRow_('TtSlots', old, patch) : insert_('TtSlots', Object.assign({ id: id_(), ownerId: owner, createdAt: now_() }, patch));
+    log_(me.id, old ? 'tt_edit' : 'tt_add', row.id);
+    const cs = {}, users = {}; rows_('Courses').forEach(k => cs[k.id] = k); rows_('Users').forEach(u => users[u.id] = u);
+    return slotOut_(row, me, cs, users);
+  });
+}
+function ttDeleteSlot_(ctx, id) {
+  const me = ctx.user;
+  return lock_(() => { delete MEM_.TtSlots; const x = find_('TtSlots', id); if (!x) throw err_('ไม่พบคาบเรียนนี้');
+    if (x.ownerId !== me.id && !isAdmin_(me)) throw err_('ลบได้เฉพาะคาบของคุณ', 'FORBIDDEN');
+    deleteWhere_('TtSlots', r => r.id === x.id); log_(me.id, 'tt_delete', id); return true; });
+}
+function slotCan_(me, x) { if (!x) return false; if (isAdmin_(me) || x.ownerId === me.id) return true; return teaches_(me, find_('Courses', x.courseId)); }
+function dateOk_(v) { v = str_(v, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) throw err_('วันที่ไม่ถูกต้อง'); return v; }
+function attStudents_(x) {
+  const ids = json_(x.students, []), users = {}; rows_('Users').forEach(u => users[u.id] = u);
+  return ids.map(id => users[id]).filter(Boolean).map(u => ({ id: u.id, classNo: u.classNo || '', studentCode: u.studentCode, name: userName_(u), grade: u.grade, room: u.room, avatar: u.avatar || '' }))
+    .sort((a, b) => String(a.grade + '/' + a.room).localeCompare(String(b.grade + '/' + b.room)) || (Number(a.classNo) || 999) - (Number(b.classNo) || 999));
+}
+/** เปิดหน้าเช็คชื่อคาบ (slot) ของวันที่กำหนด — done = ครูเช็คชื่อ/บันทึกแล้ว (ครูร่วมจะได้รับแจ้งว่า "มีการเช็คชื่อเรียบร้อยแล้ว") */
+function attOpen_(ctx, slotId, date) {
+  const me = ctx.user, x = find_('TtSlots', slotId); date = dateOk_(date);
+  if (!slotCan_(me, x)) throw err_('ไม่พบคาบเรียนนี้', 'FORBIDDEN');
+  const r = rows_('Attendance').find(a => a.slotId === x.id && a.date === date), cs = {}, users = {};
+  rows_('Courses').forEach(c => cs[c.id] = c); rows_('Users').forEach(u => users[u.id] = u);
+  return { slot: slotOut_(x, me, cs, users), date: date, dowOk: dowOf_(date) === Number(x.day), students: attStudents_(x), records: r ? json_(r.records, {}) : {},
+    done: !!(r && r.checkedBy), checkedBy: r && r.checkedBy ? userName_(users[r.checkedBy]) : '', checkedAt: r ? r.checkedAt : '', updatedAt: r ? r.updatedAt : '', statuses: ATT_ST };
+}
+function attSave_(ctx, slotId, date, records, opt) {
+  const me = ctx.user, x = find_('TtSlots', slotId); date = dateOk_(date); opt = opt || {};
+  if (!slotCan_(me, x)) throw err_('ไม่พบคาบเรียนนี้', 'FORBIDDEN');
+  if (date > now_().slice(0, 10)) throw err_('เช็คชื่อล่วงหน้าไม่ได้');
+  const ids = json_(x.students, []), recs = {};
+  Object.keys(records || {}).forEach(k => { const v = records[k] || {}; if (ids.indexOf(k) < 0 || ATT_ST.indexOf(v.st) < 0) return; recs[k] = { st: v.st, note: str_(v.note, 200), at: str_(v.at, 19), by: v.by === 'self' ? 'self' : 'teacher' }; });
+  const miss = ids.filter(k => !recs[k]); if (miss.length && !opt.partial) throw err_('ยังเช็คชื่อไม่ครบ (' + miss.length + ' คน)');
+  return lock_(() => {
+    delete MEM_.Attendance;
+    const r = rows_('Attendance').find(a => a.slotId === x.id && a.date === date);
+    if (r && r.checkedBy && !opt.edit) throw err_('มีการเช็คชื่อเรียบร้อยแล้ว (โดย ' + nameOf_(r.checkedBy) + ' เวลา ' + String(r.checkedAt).slice(11, 16) + ' น.)', 'ATT_DONE');
+    const prev = r ? json_(r.records, {}) : {}; Object.keys(prev).forEach(k => { if (!recs[k] && ids.indexOf(k) >= 0) recs[k] = prev[k]; });
+    const patch = { records: recs, checkedBy: me.id, checkedAt: now_(), updatedAt: now_() };
+    if (r) updateRow_('Attendance', r, patch); else insert_('Attendance', Object.assign({ id: id_(), slotId: x.id, date: date, ownerId: x.ownerId, courseId: x.courseId, createdAt: now_() }, patch));
+    log_(me.id, r ? 'att_edit' : 'att_save', x.id + ' ' + date);
+    return { ok: true, counts: attCount_(recs) };
+  });
+}
+function attCount_(recs) { const c = {}; ATT_ST.forEach(k => c[k] = 0); Object.keys(recs || {}).forEach(k => { const st = (recs[k] || {}).st; if (c[st] !== undefined) c[st]++; }); return c; }
+/** ประวัติการเช็คชื่อ (ภาคเรียนที่กำลังดู) */
+function attHistory_(ctx, d) {
+  d = d || {}; const me = ctx.user, vis = {}, cs = {}, users = {};
+  ttVisible_(me).forEach(x => vis[x.id] = x); rows_('Courses').forEach(c => cs[c.id] = c); rows_('Users').forEach(u => users[u.id] = u);
+  return rows_('Attendance').filter(a => vis[a.slotId] && a.checkedBy && (!d.from || a.date >= d.from) && (!d.to || a.date <= d.to))
+    .sort((a, b) => b.date.localeCompare(a.date) || String(b.checkedAt).localeCompare(String(a.checkedAt))).slice(0, 300)
+    .map(a => { const x = vis[a.slotId], so = slotOut_(x, me, cs, users); return { id: a.id, slotId: a.slotId, date: a.date, period: so.period, span: so.span, start: so.start, end: so.end, courseName: so.courseName, grade: so.grade, room: so.room,
+      counts: attCount_(json_(a.records, {})), total: so.students.length, checkedBy: userName_(users[a.checkedBy]), checkedAt: a.checkedAt }; });
+}
+/** สรุปสถานะการเช็คชื่อ: วันที่เลือก + ทั้งภาคเรียน */
+function attSummary_(ctx, date) {
+  const me = ctx.user, vis = {}; ttVisible_(me).forEach(x => vis[x.id] = 1); date = date ? dateOk_(date) : now_().slice(0, 10);
+  const rows = rows_('Attendance').filter(a => vis[a.slotId]), day = {}, term = {}; ATT_ST.forEach(k => { day[k] = 0; term[k] = 0; });
+  rows.forEach(a => { const c = attCount_(json_(a.records, {})); ATT_ST.forEach(k => { term[k] += c[k]; if (a.date === date) day[k] += c[k]; }); });
+  return { date: date, day: day, term: term, sessions: rows.filter(a => a.date === date && a.checkedBy).length, totalSessions: rows.filter(a => a.checkedBy).length };
+}
+/* ---------- ฝั่งนักเรียน: เช็คชื่อด้วยตนเอง (เฉพาะช่วงเวลาเรียน) + QR ประจำตัว ---------- */
+function attSecret_() { let s = props_().getProperty('ATT_SECRET'); if (!s) { s = id_() + id_(); props_().setProperty('ATT_SECRET', s); } return s; }
+function attToken_(u) { return 'CPA1.' + u.id + '.' + sha_(attSecret_() + ':' + u.id).replace(/[^\w]/g, '').slice(0, 12); }
+function attDecode_(ctx, token) {
+  const m = String(token || '').match(/CPA1\.([\w]+)\.([\w]+)/); if (!m) throw err_('QR นี้ไม่ใช่ QR เช็คชื่อของ Classroom +');
+  const u = find_('Users', m[1]); if (!u || u.role !== 'student' || attToken_(u) !== m[0]) throw err_('QR ไม่ถูกต้องหรือไม่พบนักเรียนในภาคเรียนนี้');
+  return { id: u.id, name: userName_(u), studentCode: u.studentCode, classNo: u.classNo || '', grade: u.grade, room: u.room };
+}
+function myAttend_(ctx) {
+  const u = ctx.user; if (u.role !== 'student') return { slots: [], history: [], token: '', today: todayInfo_() };
+  const t = todayInfo_(), cs = {}, users = {}; rows_('Courses').forEach(c => cs[c.id] = c); rows_('Users').forEach(x => users[x.id] = x);
+  const mine = rows_('TtSlots').filter(x => json_(x.students, []).indexOf(u.id) >= 0), att = rows_('Attendance').filter(a => json_(a.records, {})[u.id] !== undefined || mine.some(x => x.id === a.slotId));
+  const st = (sid, date) => { const a = att.find(r => r.slotId === sid && r.date === date); return a ? (json_(a.records, {})[u.id] || null) : null; };
+  const week = mine.map(x => { const o = slotOut_(x, u, cs, users), cfg = ttCfgOf_(x.ownerId), pt = periodTime_(cfg, o.period, o.span); delete o.students;
+    o.today = o.day === t.dow; o.open = o.today && t.min >= pt.start - 10 && t.min <= pt.end; o.past = o.today && t.min > pt.end; o.rec = o.today ? st(x.id, t.date) : null; return o; })
+    .sort((a, b) => a.day - b.day || a.period - b.period);
+  const history = att.map(a => { const rec = json_(a.records, {})[u.id]; if (!rec) return null; const x = mine.find(y => y.id === a.slotId); const c = cs[(x || a).courseId] || {};
+    return { date: a.date, period: x ? Number(x.period) : '', courseName: c.name || '-', st: rec.st, note: rec.note || '' }; }).filter(Boolean).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 100);
+  const sum = {}; ATT_ST.forEach(k => sum[k] = history.filter(h => h.st === k).length);
+  return { slots: week, history: history, summary: sum, token: attToken_(u), today: t };
+}
+function attCheckIn_(ctx, slotId) {
+  const u = ctx.user; if (u.role !== 'student') throw err_('เฉพาะนักเรียน', 'FORBIDDEN');
+  const x = find_('TtSlots', slotId), t = todayInfo_();
+  if (!x || json_(x.students, []).indexOf(u.id) < 0) throw err_('คุณไม่ได้อยู่ในคาบเรียนนี้', 'FORBIDDEN');
+  const cfg = ttCfgOf_(x.ownerId), pt = periodTime_(cfg, Number(x.period), x.span);
+  if (Number(x.day) !== t.dow || t.min < pt.start - 10 || t.min > pt.end) throw err_('เช็คชื่อได้เฉพาะช่วงเวลาเรียนของคาบนี้ (' + fmtHm_(pt.start) + '–' + fmtHm_(pt.end) + ' น.) — เช็คชื่อย้อนหลังไม่ได้');
+  throttle_('ci_' + u.id, 10, 5)();
+  return lock_(() => {
+    delete MEM_.Attendance;
+    const r = rows_('Attendance').find(a => a.slotId === x.id && a.date === t.date), recs = r ? json_(r.records, {}) : {};
+    if (recs[u.id]) throw err_('คุณเช็คชื่อคาบนี้แล้ว (' + ({ present: 'มาเรียน', late: 'สาย' }[recs[u.id].st] || 'ครูบันทึกแล้ว') + ')');
+    const stt = t.min > pt.start + (Number(cfg.lateMin) || 0) ? 'late' : 'present';
+    recs[u.id] = { st: stt, note: '', at: now_(), by: 'self' };
+    if (r) updateRow_('Attendance', r, { records: recs, updatedAt: now_() });
+    else insert_('Attendance', { id: id_(), slotId: x.id, date: t.date, ownerId: x.ownerId, courseId: x.courseId, records: recs, checkedBy: '', checkedAt: '', createdAt: now_(), updatedAt: now_() });
+    log_(u.id, 'att_self', x.id);
+    return { st: stt, at: now_() };
+  });
+}
+
+/** รูปที่แชร์สาธารณะไม่ได้ (บัญชีโรงเรียน): ส่งข้อมูลรูปผ่านระบบ — เฉพาะไฟล์ในโฟลเดอร์ของระบบเท่านั้น */
+function fileData_(ctx, id) {
+  id = str_(id, 80); if (!/^[\w-]{20,}$/.test(id)) throw err_('รหัสไฟล์ไม่ถูกต้อง');
+  const ck = 'fd_' + id, c = cache_().get(ck); if (c) return c;
+  const roots = {}; [mainDriveId_(), coreDriveId_(), driveId_()].concat(Object.keys(tenants_()).map(k => tenants_()[k].driveId)).forEach(x => { if (x) roots[x] = 1; });
+  try { Object.keys(dbMap_()).forEach(k => { const d = dbMap_()[k].driveId; if (d) roots[d] = 1; }); } catch (e) {}
+  const f = DriveApp.getFileById(id), mime = f.getMimeType();
+  if (!/^image\//.test(mime)) throw err_('ไม่ใช่ไฟล์รูปภาพ');
+  let ok = false, q = [f.getParents()], depth = 0;
+  while (q.length && !ok && depth < 8) { const nq = []; q.forEach(it => { while (it.hasNext()) { const p = it.next(); if (roots[p.getId()]) ok = true; else nq.push(p.getParents()); } }); q = nq; depth++; }
+  if (!ok) throw err_('ไม่มีสิทธิ์เข้าถึงไฟล์นี้', 'FORBIDDEN');
+  if (f.getSize() > 6 * 1024 * 1024) throw err_('ไฟล์รูปใหญ่เกินไป');
+  const out = 'data:' + mime + ';base64,' + Utilities.base64Encode(f.getBlob().getBytes());
+  if (out.length < 95000) try { cache_().put(ck, out, 21600); } catch (e) {}
+  return out;
 }
