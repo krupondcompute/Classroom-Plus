@@ -516,7 +516,7 @@ a.navlink{text-decoration:none}
 @keyframes hlGlow{0%,26%,100%{filter:none}11%{filter:drop-shadow(0 0 6px rgba(255,255,255,.95)) drop-shadow(0 0 12px color-mix(in srgb,var(--c3) 80%,transparent))}}
 .welcome-row .robot{width:clamp(80px,9vw,112px)}
 @media (max-width:767.98px),(orientation:portrait) and (max-width:1024px){
-  .auth-wrap{padding:calc(10px + var(--sat)) 10px 10px;place-items:start center}
+  .auth-wrap{padding:calc(10px + var(--sat)) 10px 10px;place-items:center;min-height:100dvh;align-content:center}
   .auth-left{padding:16px 14px 10px}.auth-left>.brand{min-height:0;padding:2px 0 0}
   .logo-wrap{width:78px;height:78px}.orbit{inset:-9px}.orbit.r2{inset:-17px}
   .brand-name{font-size:1.75rem;margin:14px 0 0}
@@ -554,8 +554,8 @@ a.navlink{text-decoration:none}
 .sidebar{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}.sidebar>*{flex-shrink:0}.nav-side{flex:1 0 auto;overflow:visible}
 .help-box{flex:none}
 @media (max-width:991.98px){
-  .banner{flex-direction:column;align-items:stretch!important;flex-wrap:nowrap!important;gap:8px;text-align:left}
-  .banner>i{display:none}.banner .btn{align-self:flex-end;width:auto}
+  .banner{flex-direction:row;flex-wrap:wrap!important;align-items:center!important;gap:8px;text-align:left}
+  .banner>i{display:none}.banner>.flex-fill{flex:1 0 100%}.banner .btn{flex:0 0 auto;width:auto;min-height:38px}.banner>.flex-fill+.btn{margin-left:auto}
   .page-head{gap:8px}.page-head>.btn,.page-head>.dropdown>.btn,.page-head>select{flex:1 1 calc(50% - 8px);min-width:0;justify-content:center}
   .page-head>.form-select,.page-head>select{flex-basis:100%}
 }
@@ -705,6 +705,7 @@ a.navlink{text-decoration:none}
 .att-pill span{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:999px;font-size:.76rem;font-weight:700;border:1px solid var(--border);color:var(--muted);background:var(--surface);white-space:nowrap;transition:all var(--t)}
 .att-pill input:checked+span{background:var(--c);border-color:var(--c);color:#fff;box-shadow:0 4px 10px color-mix(in srgb,var(--c) 35%,transparent)}
 .att-pill input:focus-visible+span{outline:3px solid color-mix(in srgb,var(--c) 40%,transparent)}
+.att-legend{display:none;flex-wrap:wrap;gap:4px;margin-bottom:8px}.att-legend .att-chip{font-size:.7rem;padding:2px 8px}
 .att-hit{animation:attHit 1.4s ease}@keyframes attHit{0%,100%{background:transparent}30%{background:#dcfce7}}
 .att-dash{display:flex;align-items:center;gap:14px;width:100%;border:1px solid var(--border)}.att-dash .ic{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:#dcfce7;color:#15803d;font-size:1.4rem;flex:none}
 .att-big{font-size:2rem;color:#15803d;line-height:1.1}
@@ -721,7 +722,34 @@ a.navlink{text-decoration:none}
 .sf-list{max-height:46vh;overflow:auto;border:1px solid var(--border);border-radius:14px;padding:6px}
 .sf-it{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;cursor:pointer;margin:0}.sf-it.on{background:var(--blue-light)}.sf-it .no{min-width:28px;font-weight:800;color:var(--blue);text-align:center}
 .sf-h{font-weight:800;font-size:.82rem;color:var(--muted);padding:8px 10px 2px}
-@media(max-width:767px){.att-table thead{display:none}}
+@media(max-width:767.98px){
+  .att-table thead{display:none}.att-table,.att-table tbody{display:block}
+  .att-table tr{display:grid!important;grid-template-columns:28px minmax(0,1fr) auto;grid-template-areas:"no name st" "nt nt nt";gap:4px 6px;padding:8px 2px!important;border-bottom:1px solid var(--border);align-items:center}
+  .att-table td{display:block!important;padding:0!important;border:0!important}.att-table td::before{display:none!important}
+  .att-table td:nth-child(1){grid-area:no}.att-table td:nth-child(2){display:none!important}.att-table td:nth-child(3){grid-area:name;font-weight:700;font-size:.9rem;align-self:center}
+  .att-table td:nth-child(4){grid-area:st}.att-table td:nth-child(5){grid-area:nt}
+  .att-table .no{min-width:28px;height:28px;font-size:.8rem}
+  .att-pills{flex-wrap:nowrap;gap:3px}
+  .att-pill span{width:29px;height:29px;padding:0;border-radius:50%;justify-content:center;font-size:0;gap:0}
+  .att-pill span i{font-size:.8rem}
+  .att-legend{display:flex!important}
+  .att-table [data-note]{min-height:32px!important;font-size:.82rem;padding:4px 10px}
+}
+/* v5.5 สมมาตร: ปุ่มเลขหน้าวงกลมขนาดเท่ากัน · ไอคอนกลม · การ์ดมุมโค้ง */
+[data-pg]{min-height:40px!important;height:40px;border-radius:999px!important;padding:0 14px!important}
+[data-pg].btn{min-width:40px!important}nav [data-pg]:not(:first-child):not(:last-child){width:40px;padding:0!important}
+#bellBtn,#chatBtn,.topbar .btn-icon{border-radius:50%!important;aspect-ratio:1}
+.card-x{border-radius:var(--r-md,20px)}
+.cover.noimg img{display:none}.cover.noimg{display:grid!important;place-items:center;aspect-ratio:16/9;background:linear-gradient(135deg,#60a5fa,#1e3a8a)}.cover.noimg::after{content:'\f03e';font:900 2rem 'Font Awesome 6 Free';color:#fff}
+.att-u{font-size:.75rem;color:var(--muted);font-weight:600}.att-bar{height:5px;border-radius:9px;background:var(--surface-2);margin-top:4px;overflow:hidden;width:100%}.att-bar span{display:block;height:100%;background:var(--c);border-radius:9px}
+.att-stat>div{flex:1;min-width:0}
+.room-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+@media(max-width:1199.98px){.room-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:767.98px){.room-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.room-card2{display:flex;flex-direction:column;align-items:stretch;text-align:left;padding:16px;border:1px solid var(--border);min-height:180px;cursor:pointer;transition:transform var(--t),box-shadow var(--t)}
+.room-card2:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(37,99,235,.16)}
+.rc-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}.rc-top .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--blue-light);color:var(--blue);flex:none}
+.rc-top b{font-size:1.15rem;flex:1;white-space:nowrap}.rc-top .go{color:var(--muted)}
+.rc-line{display:flex;justify-content:space-between;gap:8px;white-space:nowrap;font-size:.92rem;padding:2px 0}.rc-line span{color:var(--muted)}
 .room-nav{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
 .fgrp-h{display:flex;align-items:center;gap:8px;font-weight:800;margin:16px 0 0;color:var(--text)}.fgrp-h i{color:var(--blue)}
 .pv-doc{--bs-aspect-ratio:min(130%,80vh)}.pv-doc::before{padding-top:min(130%,80vh)!important}
@@ -1213,7 +1241,7 @@ function call(fn, args, o = {}) {
 const api = (fn, ...a) => call(fn, a);
 /* แคชข้อมูลฝั่งเว็บ: แสดงข้อมูลเดิมทันที แล้วอัปเดตเบื้องหลัง (เปิดหน้าเดิมซ้ำแทบไม่ต้องรอ) */
 const CACHE = new Map();
-const MUTATING = new Set(['save', 'remove', 'submitWork', 'deleteSubmission', 'saveUser', 'deleteUser', 'deleteUsers', 'chatTeamMembers', 'setCoAdmin', 'importStudents', 'setRole', 'gradeSubmission', 'saveSettings', 'updateProfile', 'saveProgress', 'restoreBackup', 'changeCredentials', 'markRead', 'login', 'logout', 'registerStudent', 'registerAdmin', 'addAssignmentType', 'saveStudentMenus', 'chatSend', 'chatCreateTeam', 'editSubmission', 'removeSubmission', 'renameClass', 'saveTermDb', 'createTermDb', 'removeTermDb', 'importTerm', 'liveSave', 'liveRemove', 'liveControl']);
+const MUTATING = new Set(['chatPurge', 'ttSaveSlot', 'ttDeleteSlot', 'ttSaveCfg', 'attSave', 'attCheckIn', 'save', 'remove', 'submitWork', 'deleteSubmission', 'saveUser', 'deleteUser', 'deleteUsers', 'chatTeamMembers', 'setCoAdmin', 'importStudents', 'setRole', 'gradeSubmission', 'saveSettings', 'updateProfile', 'saveProgress', 'restoreBackup', 'changeCredentials', 'markRead', 'login', 'logout', 'registerStudent', 'registerAdmin', 'addAssignmentType', 'saveStudentMenus', 'chatSend', 'chatCreateTeam', 'editSubmission', 'removeSubmission', 'renameClass', 'saveTermDb', 'createTermDb', 'removeTermDb', 'importTerm', 'liveSave', 'liveRemove', 'liveControl']);
 let rerenderT = 0;
 function rerender() { clearTimeout(rerenderT); rerenderT = setTimeout(() => { if (S.user && !document.querySelector('.modal.show') && !document.querySelector('.swal2-container')) go(S.page, S.params, { quiet: true }); }, 250); }
 /* แคชถาวรในเครื่อง (เปิดหน้าเว็บใหม่ก็แสดงข้อมูลล่าสุดทันที แล้วอัปเดตเบื้องหลัง) */
@@ -1353,7 +1381,7 @@ function folderOf(root, tpl) {
 }
 const dataUrlB64 = u => String(u).split(',')[1];
 /** id ไฟล์ Drive ทั้งหมดในข้อมูลฟอร์ม */
-function idsIn(o) { const ids = []; JSON.stringify(o || {}).replace(/(?:\/d\/|"id":")([-\w]{20,})/g, (m, i) => ids.push(i)); return ids; }
+function idsIn(o) { const ids = []; JSON.stringify(o || {}).replace(/(?:\/d\/|"id":"|drive:)([-\w]{20,})/g, (m, i) => ids.push(i)); return ids; }
 /** หลังบันทึก/ยกเลิก: ลบไฟล์ที่อัปโหลดในฟอร์มนี้แต่ไม่ได้ใช้ (ประหยัดพื้นที่ Drive) */
 function finalizeUploads(root, saved) {
   const up = root.__up || [], keep = saved ? idsIn(saved) : [], drop = up.filter(i => !keep.includes(i));
@@ -2239,6 +2267,9 @@ $('#notifList').addEventListener('click', e => {
   const [k, id, sub] = d.dataset.link.split(':');
   bootstrap.Dropdown.getInstance($('#bellBtn'))?.hide();
   if (k === 'grade' && isStaff()) { if (S.mode !== 'admin') { S.mode = 'admin'; store.set('cp_mode', 'admin'); renderShell(); } return go('grade', sub ? { id, sub, view: 1 } : { id }, { force: true }); }
+  if ((k === 'settings' || k === 'attendance') && isStaff()) { if (S.mode !== 'admin') { S.mode = 'admin'; store.set('cp_mode', 'admin'); renderShell(); }
+    if (k === 'settings') return go('settings', { tab: id || 'general' }, { force: true });
+    go('attendance', { date: sub || '' }, { force: true }); if (id && sub) setTimeout(() => attCheck(id, sub, () => go('attendance', { date: sub }, { quiet: true, force: true }), { fromHistory: true }), 700); return; }
   if (S.mode === 'admin' && k !== 'grade') { S.mode = 'student'; renderShell(); }
   ({ lesson: () => go('lesson', { id }), assignment: () => go('assignments', { open: id }), announcement: () => go('announcements', { id }) }[k] || (() => {}))();
 });
@@ -2254,7 +2285,7 @@ const imgSrc = (u, w = 1920) => /^drive:[\w-]{20,}$/.test(String(u || '')) ? `sr
 const DIMG = new Map();
 function hydrateImgs(root = document) {
   $$('img[data-dimg]:not([data-dl])', root).forEach(img => { const id = img.dataset.dimg; img.dataset.dl = '1';
-    const p = DIMG.get(id) || apiQ('fileData', id).catch(() => ''); DIMG.set(id, p); p.then(src => { if (src) img.src = src; }); }); }
+    const p = DIMG.get(id) || apiQ('fileData', id).catch(() => ''); DIMG.set(id, p); p.then(src => { if (src) img.src = src; else img.closest('.cover')?.classList.add('noimg'); }); }); }
 new MutationObserver(ms => { if (ms.some(m => m.addedNodes.length)) hydrateImgs(); }).observe(document.documentElement, { childList: true, subtree: true });
 const coverHtml = (c, icon = 'fa-book-open') => {
   const v = parseVideo(c.videoUrl);
@@ -2707,8 +2738,11 @@ PAGES.dash = { admin: true, async render(el) {
     ${c.pendingUsers ? `<div class="banner mx-0 mb-3"><i class="fa-solid fa-user-clock"></i><div class="flex-fill">มีผู้สมัครรออนุมัติ ${c.pendingUsers} คน</div><button class="btn btn-sm btn-dark" data-go="users">ตรวจสอบ</button></div>` : ''}
     <div class="grid g6 mb-3">${statCard('fa-book', c.courses, 'รายวิชา', '', 'acourses')}${statCard('fa-book-open-reader', c.lessons, 'บทเรียน', 'background:#ede9fe;color:#7c3aed', 'acourses')}${statCard('fa-user-graduate', c.students, 'ผู้เรียน', 'background:#dcfce7;color:#15803d', isAdm() ? 'users' : 'aassign')}
       ${statCard('fa-clipboard-list', c.assignments, 'งานที่มอบหมาย', 'background:#e0f2fe;color:#0369a1', 'aassign')}${statCard('fa-clipboard-question', c.ungraded, 'งานรอตรวจ', 'background:#fee2e2;color:#b91c1c', 'aassign')}${statCard('fa-bullhorn', c.announcements ?? '-', 'ประกาศ', 'background:#fef3c7;color:#b45309', 'aann')}</div>
-    ${d.attToday ? `<button type="button" class="card-x att-dash mb-3" data-go="attendance"><div class="ic"><i class="fa-solid fa-user-check"></i></div><div class="flex-fill text-start"><small class="text-muted fw-bold">เช็คชื่อวันนี้ · ${d.attToday.sessions} คาบ</small><div class="d-flex flex-wrap align-items-baseline gap-2"><b class="att-big">${d.attToday.present}</b><span class="fw-bold">คน มาเรียน</span></div>
-      <div class="d-flex flex-wrap gap-1 mt-1">${ATT_KEYS.filter(k => d.attToday.day[k]).map(k => attChip(k, d.attToday.day[k])).join('') || '<span class="small text-muted">ยังไม่มีการเช็คชื่อวันนี้</span>'}</div></div><i class="fa-solid fa-chevron-right go"></i></button>` : ''}
+    ${d.attToday ? (() => { const dy = d.attToday.day, tot = ATT_KEYS.reduce((t, k) => t + (dy[k] || 0), 0), pc = k => tot ? Math.round((dy[k] || 0) * 1000 / tot) / 10 : 0;
+      return `<div class="card-x mb-3 att-dash2"><div class="d-flex align-items-center gap-2 mb-3 flex-wrap"><h5 class="fw-bold m-0 flex-fill"><i class="fa-solid fa-user-check text-success me-2"></i>สถานะการเช็คชื่อวันนี้</h5><span class="chip info">${d.attToday.sessions} คาบ · ${tot} รายการ</span><a href="#" class="sec-link" data-go="attendance">ไปที่เช็คชื่อ <i class="fa-solid fa-chevron-right"></i></a></div>
+      <div class="att-sum">${ATT_KEYS.map(k => `<div class="att-stat" style="--c:${ATT[k][1]}"><i class="fa-solid ${ATT[k][2]}"></i><div><b>${dy[k] || 0} <span class="att-u">คน</span></b><small>${ATT[k][0]} · ${pc(k)}%</small><div class="att-bar"><span style="width:${pc(k)}%"></span></div></div></div>`).join('')}</div>
+      ${tot ? '' : '<div class="small text-muted mt-2">ยังไม่มีการเช็คชื่อวันนี้</div>'}</div>`; })() : ''}
+
     <div class="grid g2"><div class="card-x">${secHead('', 'สถิติการเข้าเรียน (14 วัน)', 'reports', '', 'ดูรายงาน')}<canvas id="chLogin" height="200"></canvas></div>
     <div class="card-x">${secHead('', 'กราฟการส่งงาน (14 วัน)', 'aassign', '', 'ดูงาน')}<canvas id="chSub" height="200"></canvas></div>
     <div class="card-x">${secHead('', 'สถานะงานที่ส่ง', 'aassign', '', 'ตรวจงาน')}<div style="max-width:280px;margin:auto"><canvas id="chStat"></canvas></div></div>
@@ -2797,9 +2831,9 @@ PAGES.users = { admin: true, async render(el, p = {}) {
       + (u.role === 'teacher' && ownerAdm() && u.id !== S.user.id ? `<button class="btn btn-sm btn-icon ${u.coAdmin === 'true' ? 'btn-danger' : 'btn-soft'}" data-coadmin="${esc(u.id)}" aria-label="ผู้ดูแลระบบร่วม" title="${u.coAdmin === 'true' ? 'ถอนสิทธิ์ผู้ดูแลระบบร่วม' : 'ตั้งเป็นผู้ดูแลระบบร่วม'}"><i class="fa-solid fa-user-shield"></i></button>` : ''));
   };
   const personCard = u => `<div class="card-x ucard"><div class="d-flex gap-3 align-items-center">${avatarHtml(u, 56)}<div class="flex-fill" style="min-width:0"><b class="d-block">${esc(u.prefix + u.fullName)}</b>
-    <small class="text-muted d-block">${esc(roleTh(u))}${u.username ? ' · ' + esc(u.username) : ''}</small><div class="mt-1">${stChip(u)}</div></div></div><div class="mt-2">${acts(u)}</div></div>`;
+    <small class="text-muted d-block">${esc(roleTh(u))}${u.username && u.role === 'teacher' && u.coAdmin !== 'true' ? ' · ' + esc(u.username) : ''}</small><div class="mt-1 d-flex flex-wrap gap-1">${stChip(u)}${u.role === 'teacher' && u.coAdmin === 'true' ? '<span class="chip danger"><i class="fa-solid fa-user-shield"></i> ผู้ดูแลระบบ</span><span class="chip info"><i class="fa-solid fa-chalkboard-user"></i> ครูผู้สอน</span>' : ''}</div></div></div><div class="mt-2">${acts(u)}</div></div>`;
   el.innerHTML = `<div class="page-head"><h3>จัดการผู้ใช้งาน</h3>${termSelect()}${importBtn('students')}<button class="btn btn-soft" id="impBtn"><i class="fa-solid fa-file-import"></i> นำเข้า / วางตาราง</button>${adm ? '<button class="btn btn-soft" id="expBtn"><i class="fa-solid fa-file-excel"></i> ส่งออก</button>' : ''}<button class="btn btn-soft" id="tplBtn"><i class="fa-solid fa-file-arrow-down"></i> ไฟล์ตัวอย่าง</button></div>
-  <div class="grid g3 mb-4">${statCard('fa-user-shield', admins.length, 'ผู้ดูแลระบบ', 'background:#fee2e2;color:#b91c1c')}${statCard('fa-chalkboard-user', teachers.length, 'ครูผู้สอน', 'background:#e0f2fe;color:#0369a1')}${statCard('fa-user-graduate', studs.length, 'นักเรียน (ปีการศึกษา ' + (S.viewAll ? 'ทั้งหมด' : viewT().year) + ')', 'background:#dcfce7;color:#15803d')}</div>
+  <div class="grid g3 mb-4">${statCard('fa-user-shield', admins.length, 'ผู้ดูแลระบบ', 'background:#fee2e2;color:#b91c1c')}${statCard('fa-chalkboard-user', users.filter(u => u.role === 'teacher').length, 'ครูผู้สอน', 'background:#e0f2fe;color:#0369a1')}${statCard('fa-user-graduate', studs.length, 'นักเรียน (ปีการศึกษา ' + (S.viewAll ? 'ทั้งหมด' : viewT().year) + ')', 'background:#dcfce7;color:#15803d')}</div>
   <h5 class="fw-bold mb-2"><i class="fa-solid fa-user-shield text-danger me-2"></i>ผู้ดูแลระบบ</h5><div class="grid g3 mb-4">${admins.map(personCard).join('')}</div>
   <h5 class="fw-bold mb-2"><i class="fa-solid fa-chalkboard-user text-primary me-2"></i>ครูผู้สอน <span class="chip info">${teachers.length} คน</span></h5>
   <div class="grid g3 mb-4">${teachers.map(personCard).join('') || '<div class="text-muted">ยังไม่มีครูผู้สอน</div>'}</div>
@@ -3149,9 +3183,10 @@ PAGES.grade = { admin: true, parent: 'aassign', async render(el, p) {
     const byRoom = k => groups[k].slice().sort((x, y) => (y.sub ? 1 : 0) - (x.sub ? 1 : 0) || (x.sub && y.sub ? String(x.sub.submittedAt).localeCompare(String(y.sub.submittedAt)) : 0) || (Number(x.user.classNo) || 999) - (Number(y.user.classNo) || 999));
     let keys = Object.keys(groups).sort(natural);
     if (!q && !fg && !fr && !st && !(OPEN && groups[OPEN])) { // การ์ดสรุปรายห้อง → คลิกเพื่อดูรายชื่อ (เลือกชั้น/ห้อง/สถานะ = แสดงรายชื่อทันที)
-      $('#gl').innerHTML = keys.length ? `<div class="grid g4">${keys.map(k => { const all = d.rows.filter(r => rk(r) === k), sn = all.filter(r => r.sub).length, gd = all.filter(r => r.status === 'graded').length;
-        return `<button type="button" class="card-x stat link room-tile" data-openroom="${esc(k)}"><div class="ic"><i class="fa-solid fa-door-open"></i></div><div style="min-width:0"><b>ห้อง ${esc(k)}</b><small class="d-block">ส่งแล้ว ${sn}/${all.length} · ตรวจแล้ว ${gd}</small>
-          <div class="progress mt-1" style="width:140px;max-width:100%"><div class="progress-bar" style="width:${all.length ? Math.round(sn * 100 / all.length) : 0}%"></div></div></div><i class="fa-solid fa-chevron-right go"></i></button>`; }).join('')}</div>` : empty('fa-users-slash', 'ไม่พบนักเรียนตามเงื่อนไข');
+      $('#gl').innerHTML = keys.length ? `<div class="room-grid">${keys.map(k => { const all = d.rows.filter(r => rk(r) === k), sn = all.filter(r => r.sub).length, gd = all.filter(r => r.status === 'graded').length, pc = all.length ? Math.round(sn * 100 / all.length) : 0;
+        return `<button type="button" class="card-x link room-card2" data-openroom="${esc(k)}"><div class="rc-top"><span class="ic"><i class="fa-solid fa-door-open"></i></span><b>ห้อง ${esc(k)}</b><i class="fa-solid fa-chevron-right go"></i></div>
+          <div class="rc-line"><span>ส่งแล้ว</span><b>${sn}/${all.length}</b></div><div class="rc-line"><span>ตรวจแล้ว</span><b>${gd}</b></div><div class="rc-line"><span>ยังไม่ส่ง</span><b>${all.length - sn}</b></div>
+          <div class="progress mt-2"><div class="progress-bar" style="width:${pc}%"></div></div><small class="text-muted mt-1 d-block">ส่งแล้ว ${pc}%</small></button>`; }).join('')}</div>` : empty('fa-users-slash', 'ไม่พบนักเรียนตามเงื่อนไข');
       return;
     }
     if (OPEN && !q && !fg && !fr && !st) keys = [OPEN];
@@ -3481,12 +3516,18 @@ function drawScores(B, c0) {
     if (isAdm()) { await api('saveSettings', { config: { scoreSources: JSON.stringify(v) } }); c0.scoreSources = JSON.stringify(v); }
     else { const pr = Object.assign(myPrefs(), { scoreSources: v }); S.user = await api('updateProfile', { prefs: pr }); }
     toast(msg); draw(); };
-  const edit = async i => { await lists(); const x = i >= 0 ? list[i] : { id: '', name: 'คะแนนเก็บ', url: '', terms: [tk(termOf())], courseIds: [], grades: [], rooms: [] };
+  const edit = async i => { await lists(); const x = i >= 0 ? list[i] : { id: '', name: 'คะแนนเก็บ', url: '', terms: [], courseIds: [], grades: [], rooms: [] };
     const F = [{ k: 'name', label: 'ชื่อที่แสดงในหน้าหลักนักเรียน', req: true }, { k: 'url', label: 'Google Sheet ID หรือ URL (ต้องมีคอลัมน์ "รวมคะแนนทั้งหมด")', req: true, attrs: 'placeholder="https://docs.google.com/spreadsheets/d/..."', valid: v => /docs\.google\.com\/spreadsheets\/d\/|^[\w-]{25,}$/.test(v) ? '' : 'กรุณาวางลิงก์ Google Sheet หรือ Sheet ID' },
-      { k: 'terms', label: 'ภาคเรียน / ปีการศึกษา', type: 'checkdrop', allText: 'ทุกภาคเรียน', opts: termOpts }, { k: 'courseIds', label: 'รายวิชา', type: 'multi', noAdd: true, opts: () => (S.cache.courses || []).map(k => [k.id, k.name + (k.subjectCode ? ' (' + k.subjectCode + ')' : '')]) },
+      { k: 'terms', label: 'ภาคเรียน / ปีการศึกษา', type: 'checkdrop', allText: 'ทุกภาคเรียน', opts: termOpts, help: 'เลือกภาคเรียนของนักเรียน (ตามฐานข้อมูลที่นักเรียนอยู่) — ถ้าไม่แน่ใจให้เลือก "ทุกภาคเรียน"' }, { k: 'courseIds', label: 'รายวิชา', type: 'multi', noAdd: true, opts: () => (S.cache.courses || []).map(k => [k.id, k.name + (k.subjectCode ? ' (' + k.subjectCode + ')' : '')]) },
       { k: 'grades', label: 'ระดับชั้น', type: 'multi', noAdd: true, opts: grades }, { k: 'rooms', label: 'ห้องเรียน', type: 'multi', noAdd: true, opts: rooms }];
     const m = modal(i >= 0 ? 'แก้ไขที่มาของคะแนนเก็บ' : 'เพิ่มที่มาของคะแนนเก็บ', `<div class="gb-alert info mb-3"><i class="fa-solid fa-circle-info"></i><div>ระบบอ่านคอลัมน์ <b>"รวมคะแนนทั้งหมด"</b> และค้นหานักเรียนจาก <b>รหัสนักเรียน</b> หรือ <b>ชื่อ-สกุล</b> · เลือก "ทั้งหมด" = ไม่จำกัด · แชร์ชีตให้บัญชีที่ deploy เว็บแอปอ่านได้ (หรือเปิดลิงก์ให้ทุกคนดูได้) · <a href="${SCORE_TPL}" target="_blank" rel="noopener">ดูแม่แบบ Google Sheet</a></div></div>${formHtml(F, { name: x.name, url: x.url, terms: x.terms.join(','), courseIds: x.courseIds.join(','), grades: x.grades.join(','), rooms: x.rooms.join(',') })}`,
       '<button class="btn btn-soft" data-bs-dismiss="modal">ยกเลิก</button><button class="btn btn-primary" id="ssOk"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>');
+    m.body.insertAdjacentHTML('beforeend', `<div class="card-x ss-test"><b><i class="fa-solid fa-vial text-primary"></i> ทดสอบการอ่านคะแนน</b><div class="d-flex gap-2 mt-2 flex-wrap"><input class="form-control" style="max-width:220px" id="ssCode" placeholder="รหัสนักเรียน (ไม่บังคับ)" inputmode="numeric"><button type="button" class="btn btn-soft" id="ssTest"><i class="fa-solid fa-magnifying-glass"></i> ทดสอบ</button></div><div id="ssRes" class="small mt-2"></div></div>`);
+    $('#ssTest').onclick = async () => { const url = $('[name=url]', m.body).value.trim(); if (!url) return toast('กรุณาใส่ลิงก์ Google Sheet', 'warning'); $('#ssRes').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังอ่านไฟล์...';
+      try { const r = await apiQ('scoreTest', url, $('#ssCode').value.trim());
+        $('#ssRes').innerHTML = r.ok ? `<div class="gb-alert ok m-0"><i class="fa-solid fa-circle-check"></i><div>เปิดไฟล์ <b>${esc(r.name)}</b> ได้ · พบคอลัมน์ <b>"${esc(r.header)}"</b> (แถว ${r.headerRow} คอลัมน์ ${r.col}) · ข้อมูล ${r.rows} แถว${$('#ssCode').value.trim() ? (r.found ? `<br>นักเรียน ${esc(r.student || $('#ssCode').value)}: <b class="fs-5">${esc(r.value || '(ว่าง)')}</b>` : '<br><span class="text-danger">ไม่พบรหัส/ชื่อนักเรียนนี้ในไฟล์</span>') : ''}</div></div>`
+          : `<div class="gb-alert err m-0"><i class="fa-solid fa-triangle-exclamation"></i><div>${esc(r.message)}</div></div>`; }
+      catch (e) { $('#ssRes').innerHTML = `<div class="gb-alert err m-0"><i class="fa-solid fa-triangle-exclamation"></i><div>${esc(e.message)}</div></div>`; } };
     bindForm(m.body, F);
     $('#ssOk').onclick = async () => { const d = validate(m.body, F); if (!d) return; const arr = v => String(v || '').split(',').map(t => t.trim()).filter(Boolean);
       const nx = { id: x.id || 's' + Date.now().toString(36), name: d.name, url: d.url, terms: arr(d.terms), courseIds: arr(d.courseIds), grades: arr(d.grades), rooms: arr(d.rooms) };
@@ -3880,7 +3921,7 @@ async function chatHome() {
   const draw = list => {
     if (!$('#chatBody') || CHAT.room) return;
     chatSetDot(list.reduce((t, r) => t + r.unread, 0));
-    B.innerHTML = list.length ? list.map(r => `<div class="crow-wrap"><button class="crow-del" data-chide="${esc(r.id)}" data-name="${esc(r.title)}" title="ลบออกจากรายการแชท" aria-label="ลบ ${esc(r.title)} ออกจากรายการ"><i class="fa-solid fa-trash"></i></button><button class="crow ${r.unread ? 'unread' : ''}" data-croom='${esc(JSON.stringify({ id: r.id, type: r.type, title: r.title, sub: r.sub }))}'>
+    B.innerHTML = list.length ? list.map(r => `<div class="crow-wrap"><button class="crow-del" data-chide="${esc(r.id)}" data-purge="${r.canPurge ? 1 : ''}" data-type="${esc(r.type)}" data-name="${esc(r.title)}" title="ลบออกจากรายการแชท" aria-label="ลบ ${esc(r.title)} ออกจากรายการ"><i class="fa-solid fa-trash"></i></button><button class="crow ${r.unread ? 'unread' : ''}" data-croom='${esc(JSON.stringify({ id: r.id, type: r.type, title: r.title, sub: r.sub }))}'>
       <span class="cav ${r.type}"><i class="fa-solid ${r.type === 'class' ? 'fa-door-open' : r.type === 'team' ? 'fa-people-group' : 'fa-user'}"></i></span>
       <span class="flex-fill text-start" style="min-width:0"><b class="d-block text-truncate">${esc(r.title)}</b><small class="d-block text-truncate text-muted">${r.lastText ? (r.lastBy ? esc(r.lastBy.split(' ')[0]) + ': ' : '') + esc(r.lastText) : esc(r.sub)}</small></span>
       <span class="text-end flex-none"><small class="text-muted d-block">${chatTime(r.lastAt)}</small>${r.unread ? `<span class="cbadge">${r.unread}</span>` : ''}</span></button></div>`).join('')
@@ -4023,7 +4064,12 @@ document.addEventListener('click', async e => {
   const bk = e.target.closest('[data-cback]'); if (bk) return bk.dataset.cback === 'home' ? chatHome() : chatNew('type');
   if (e.target.closest('[data-cnew]')) return chatNew('type');
   const ty = e.target.closest('[data-ctype]'); if (ty) return chatNew('pick', ty.dataset.ctype);
-  const hd = e.target.closest('[data-chide]'); if (hd) { if (!await confirmBox({ title: 'ลบแชทออกจากรายการ?', html: `<b>${esc(hd.dataset.name)}</b><br><small>ข้อความไม่ถูกลบสำหรับคนอื่น และจะกลับมาแสดงเมื่อมีข้อความใหม่</small>`, danger: true, confirmText: 'ลบ' })) return; await call('chatHide', [hd.dataset.chide], { loader: false }); return chatHome(); }
+  const hd = e.target.closest('[data-chide]'); if (hd) { const pg = hd.dataset.purge === '1';
+    const r = await Sw.fire({ title: 'ลบแชทนี้?', html: `<b>${esc(hd.dataset.name)}</b><div class="small text-muted mt-2">${pg ? '<b class="text-danger">ลบถาวร</b> = ลบข้อความทั้งหมดสำหรับทุกคน ทุกคนพิมพ์ต่อไม่ได้ (ต้องเริ่มแชท/สร้างกลุ่มใหม่)<br>' : ''}<b>ซ่อนจากรายการของฉัน</b> = ซ่อนเฉพาะคุณ กลับมาเมื่อมีข้อความใหม่</div>`,
+      icon: 'warning', showCancelButton: true, showDenyButton: pg, confirmButtonText: pg ? '<i class="fa-solid fa-trash"></i> ลบถาวร (ทุกคน)' : '<i class="fa-solid fa-eye-slash"></i> ซ่อนจากรายการของฉัน', denyButtonText: '<i class="fa-solid fa-eye-slash"></i> ซ่อนจากรายการของฉัน',
+      customClass: Object.assign({}, SW_CLASS(pg), { denyButton: 'btn btn-soft px-4' }) });
+    if (r.isConfirmed && pg) { if (!await confirmBox({ title: 'ยืนยันลบถาวร?', html: 'ข้อความและไฟล์ในแชทนี้จะถูกลบสำหรับทุกคน และกู้คืนไม่ได้', danger: true, confirmText: 'ลบถาวร' })) return; await call('chatPurge', [hd.dataset.chide], { loader: false }); toast('ลบแชทถาวรแล้ว'); if (CHAT.room && CHAT.room.id === hd.dataset.chide) CHAT.room = null; return chatHome(); }
+    if (r.isConfirmed || r.isDenied) { await call('chatHide', [hd.dataset.chide], { loader: false }); toast('ซ่อนแชทจากรายการแล้ว'); return chatHome(); } return; }
   if (e.target.closest('[data-cset]') && CHAT.room) return chatSettings(CHAT.room);
   const rm = e.target.closest('[data-croom]'); if (rm) return chatRoomView(J(rm.dataset.croom, {}));
   const cl = e.target.closest('[data-cclass]'); if (cl) { const [g, r] = cl.dataset.cclass.split('|'); return chatRoomView(await apiQ('chatOpen', { type: 'class', grade: g, room: r })); }
@@ -4615,7 +4661,7 @@ PAGES.attendance = { admin: true, async render(el, p = {}) {
   $$('[data-att]', el).forEach(b => b.onclick = () => { tab = b.dataset.att; S.params = Object.assign({}, S.params, { tab }); draw(); });
   el.onclick = async e => {
     const sl = e.target.closest('[data-slot]'); if (sl) return attCheck(sl.dataset.slot, date, reload);
-    const op = e.target.closest('[data-open]'); if (op) { const [sid, dt] = op.dataset.open.split('|'); return attCheck(sid, dt, reload); }
+    const op = e.target.closest('[data-open]'); if (op) { const [sid, dt] = op.dataset.open.split('|'); return attCheck(sid, dt, reload, { fromHistory: true }); }
     const ad = e.target.closest('[data-add]'); if (ad) { const [dw, pp] = String(ad.dataset.add).split('|'); return slotForm({ day: +dw || 1, period: +pp || 1, span: 1 }, cfg, reload); }
     const ed = e.target.closest('[data-edit]'); if (ed) return slotForm(T.slots.find(x => x.id === ed.dataset.edit), cfg, reload);
     const dl = e.target.closest('[data-del]'); if (dl) { const x = T.slots.find(z => z.id === dl.dataset.del); if (!await confirmBox({ title: 'ลบคาบสอนนี้?', html: `<b>${esc(x.courseName)}</b> · ${DAY_TH[x.day]} คาบ ${x.period}<br><small>ประวัติการเช็คชื่อเดิมยังอยู่</small>`, danger: true, confirmText: 'ลบ' })) return; await api('ttDeleteSlot', x.id); toast('ลบคาบสอนแล้ว'); reload(); }
@@ -4628,7 +4674,7 @@ async function slotForm(x, cfg, done) {
   x = Object.assign({ day: 1, period: 1, span: 1, courseId: '', grade: '', room: '', students: [], note: '' }, x || {});
   await lists(); const users = (await apiC('listUsers')).filter(u => u.role === 'student' && u.status !== 'disabled');
   const courses = S.cache.courses || [];
-  let pick = new Set(x.students || []);
+  let pick = new Set(x.students || []); const extra = new Set(x.extras || []);
   const m = modal(x.id ? 'แก้ไขคาบสอน' : 'เพิ่มคาบสอน', `<div class="row g-2 mb-2">
     <div class="col-6 col-md-3"><label class="form-label">วัน</label><select class="form-select" id="sfDay">${opt(Array.from({ length: cfg.days }, (_, i) => [String(i + 1), DAY_TH[i + 1]]), String(x.day))}</select></div>
     <div class="col-6 col-md-3"><label class="form-label">เริ่มคาบที่</label><select class="form-select" id="sfP">${opt(periodTimes(cfg).map(t => [String(t.p), `คาบ ${t.p} (${t.start})`]), String(x.period))}</select></div>
@@ -4646,32 +4692,41 @@ async function slotForm(x, cfg, done) {
     $('#sfList').innerHTML = (base.length ? sortU(base).map(row).join('') : '<div class="text-muted small p-2">เลือกระดับชั้น/ห้อง เพื่อดึงรายชื่อนักเรียน</div>') + (extra.length ? `<div class="sf-h">นักเรียนจากห้องอื่น</div>${sortU(extra).map(row).join('')}` : '') + (found.length ? `<div class="sf-h">ผลการค้นหา</div>${found.map(row).join('')}` : '');
     $('#sfCnt').textContent = pick.size + ' คน'; };
   const fillClass = () => { inClass().forEach(u => pick.add(u.id)); drawL(); };
-  $('#sfG').onchange = $('#sfR').onchange = fillClass;
+  const resetClass = () => { pick = new Set(inClass().map(u => u.id).concat([...extra])); drawL(); }; // เปลี่ยนชั้น/ห้อง → เฉพาะนักเรียนห้องนั้น (+ที่เพิ่มเอง)
+  $('#sfG').onchange = $('#sfR').onchange = resetClass;
   $('#sfAll').onclick = fillClass; $('#sfQ').addEventListener('input', debounce(drawL, 200));
-  $('#sfList').onchange = e => { if (e.target.type !== 'checkbox') return; e.target.checked ? pick.add(e.target.value) : pick.delete(e.target.value); e.target.closest('.sf-it').classList.toggle('on', e.target.checked); $('#sfCnt').textContent = pick.size + ' คน'; };
+  $('#sfList').onchange = e => { if (e.target.type !== 'checkbox') return; const inC = inClass().some(u => u.id === e.target.value);
+    if (e.target.checked) { pick.add(e.target.value); if (!inC) extra.add(e.target.value); } else { pick.delete(e.target.value); extra.delete(e.target.value); } e.target.closest('.sf-it').classList.toggle('on', e.target.checked); $('#sfCnt').textContent = pick.size + ' คน'; };
+  if (x.id && x.grade) { const ids = new Set(inClass().map(u => u.id)); pick = new Set([...pick].filter(id => ids.has(id) || extra.has(id))); } // คาบเดิม: เฉพาะห้องที่ตั้งไว้
   if (!x.id && x.grade) fillClass(); else drawL();
   $('#sfOk').onclick = async () => { if (!$('#sfC').value) return toast('กรุณาเลือกรายวิชา', 'warning'); if (!pick.size) return toast('กรุณาเลือกนักเรียนอย่างน้อย 1 คน', 'warning');
-    await api('ttSaveSlot', { id: x.id, day: +$('#sfDay').value, period: +$('#sfP').value, span: +$('#sfSpan').value, courseId: $('#sfC').value, grade: $('#sfG').value, room: $('#sfR').value, note: $('#sfN').value, students: [...pick] });
+    await api('ttSaveSlot', { id: x.id, day: +$('#sfDay').value, period: +$('#sfP').value, span: +$('#sfSpan').value, courseId: $('#sfC').value, grade: $('#sfG').value, room: $('#sfR').value, note: $('#sfN').value, students: [...pick], extras: [...extra].filter(id => pick.has(id)) });
     m.hide(); toast('บันทึกคาบสอนแล้ว'); done && done(); };
 }
 
 /** หน้าต่างเช็คชื่อรายคาบ: ตาราง เลขที่ · รหัส · ชื่อ · สถานะ · หมายเหตุ → บันทึกการเช็คชื่อ */
-async function attCheck(slotId, date, done) {
+async function attCheck(slotId, date, done, opt = {}) {
   const d = await apiMsg('กำลังโหลดรายชื่อ...', 'attOpen', slotId, date), x = d.slot, rec = Object.assign({}, d.records);
-  if (d.done) Sw.fire({ icon: 'info', title: 'มีการเช็คชื่อเรียบร้อยแล้ว', html: `คาบนี้เช็คชื่อแล้วโดย <b>${esc(d.checkedBy)}</b><br>เวลา ${thDate(d.checkedAt, true)}<br><small class="text-muted">แก้ไขการเช็คชื่อได้ (ห้ามเช็คชื่อซ้ำ)</small>`, customClass: SW_CLASS(false) });
+  if (d.done && !opt.fromHistory) Sw.fire({ icon: 'info', title: 'มีการเช็คชื่อเรียบร้อยแล้ว', html: `คาบนี้เช็คชื่อแล้วโดย <b>${esc(d.checkedBy)}</b><br>เวลา ${thDate(d.checkedAt, true)}<br><small class="text-muted">แก้ไขการเช็คชื่อได้ (ห้ามเช็คชื่อซ้ำ)</small>`, customClass: SW_CLASS(false) });
   const m = modal(`เช็คชื่อ: ${x.courseName}`, `<div class="att-head"><div><b>${esc((x.courseCode ? x.courseCode + ' ' : '') + x.courseName)}</b><div class="small text-muted">${DAY_TH[x.day]} คาบ ${x.period}${x.span > 1 ? '–' + (x.period + x.span - 1) : ''} · ${x.start}–${x.end} น. · ${esc((x.grade || '-') + '/' + (x.room || '-'))} · วันที่ ${thDate(d.date)}${x.mine ? '' : ' · ครูเจ้าของคาบ ' + esc(x.ownerName)}</div></div>
       <span class="chip ${d.done ? 'ok' : 'warn'}">${d.done ? '<i class="fa-solid fa-circle-check"></i> เช็คชื่อแล้ว — โหมดแก้ไข' : 'ยังไม่ได้บันทึก'}</span></div>
     ${d.dowOk ? '' : `<div class="gb-alert warn mb-2"><i class="fa-solid fa-triangle-exclamation"></i><div>วันที่ ${thDate(d.date)} ไม่ตรงกับวันของคาบนี้ (${DAY_TH[x.day]})</div></div>`}
     <div class="d-flex flex-wrap gap-2 mb-2 align-items-center"><button type="button" class="btn btn-success btn-sm" id="atAll"><i class="fa-solid fa-check-double"></i> มาเรียนทั้งหมด</button><button type="button" class="btn btn-soft btn-sm" id="atScan"><i class="fa-solid fa-qrcode"></i> สแกน QR นักเรียน</button>
       <span class="flex-fill"></span><span class="chip info" id="atCnt"></span></div>
+    <div class="att-legend">${ATT_KEYS.map(k => attChip(k)).join('')}</div>
     <div class="table-responsive att-table-wrap"><table class="table-x att-table"><thead><tr><th>เลขที่</th><th>รหัสนักเรียน</th><th>ชื่อ-สกุล</th><th>สถานะการเช็คชื่อ</th><th>หมายเหตุ</th></tr></thead><tbody>
-    ${d.students.map(u => { const r = rec[u.id] || {}; return `<tr data-u="${esc(u.id)}"><td data-label="เลขที่"><span class="no">${esc(u.classNo || '-')}</span></td><td data-label="รหัสนักเรียน"><b>${esc(u.studentCode)}</b></td><td data-label="ชื่อ-สกุล">${esc(u.name)}${r.by === 'self' ? `<div class="small text-success"><i class="fa-solid fa-mobile-screen"></i> เช็คชื่อเอง ${esc(String(r.at || '').slice(11, 16))} น.</div>` : ''}</td>
-      <td data-label="สถานะ"><div class="att-pills" role="radiogroup" aria-label="สถานะของ ${esc(u.name)}">${ATT_KEYS.map(k => `<label class="att-pill" style="--c:${ATT[k][1]}"><input type="radio" name="st_${esc(u.id)}" value="${k}" ${r.st === k ? 'checked' : ''}><span><i class="fa-solid ${ATT[k][2]}"></i> ${ATT[k][0]}</span></label>`).join('')}</div></td>
+    ${d.students.map(u => { const r = rec[u.id] || {}; return `<tr data-u="${esc(u.id)}"><td data-label="เลขที่"><span class="no">${esc(u.classNo || '-')}</span></td><td data-label="รหัสนักเรียน"><b>${esc(u.studentCode)}</b></td><td data-label="ชื่อ-สกุล">${esc(u.name)}<div class="small text-muted d-md-none fw-normal">${esc(u.studentCode)}</div>${r.by === 'self' ? `<div class="small text-success"><i class="fa-solid fa-mobile-screen"></i> เช็คชื่อเอง ${esc(String(r.at || '').slice(11, 16))} น.</div>` : ''}</td>
+      <td data-label="สถานะ"><div class="att-pills" role="radiogroup" aria-label="สถานะของ ${esc(u.name)}">${ATT_KEYS.map(k => `<label class="att-pill" style="--c:${ATT[k][1]}" title="${ATT[k][0]}"><input type="radio" name="st_${esc(u.id)}" value="${k}" ${r.st === k ? 'checked' : ''}><span><i class="fa-solid ${ATT[k][2]}"></i> ${ATT[k][0]}</span></label>`).join('')}</div></td>
       <td data-label="หมายเหตุ"><input class="form-control form-control-sm" data-note value="${esc(r.note || '')}" maxlength="200" placeholder="รายละเอียดเพิ่มเติม"></td></tr>`; }).join('')}</tbody></table></div>`,
-    `<button class="btn btn-soft" data-bs-dismiss="modal">ปิด</button><button class="btn btn-primary" id="atSave"><i class="fa-solid fa-floppy-disk"></i> บันทึกการเช็คชื่อ</button>`, 'modal-xl modal-wide');
+    `<button class="btn btn-soft" data-bs-dismiss="modal">ปิด</button><button class="btn btn-primary" id="atSave"><i class="fa-solid fa-floppy-disk"></i> ${d.done ? 'บันทึกการแก้ไข' : 'บันทึกการเช็คชื่อ'}</button>`, 'modal-xl modal-wide',
+    `<button class="btn btn-sm btn-soft" id="atSet" title="จัดตารางสอน: รายวิชา / ห้องเรียน / นักเรียน"><i class="fa-solid fa-gear"></i> การตั้งค่า</button>`);
+  $('#atSet').onclick = () => { m.hide(); if (x.mine || isAdm()) setTimeout(async () => slotForm(x, (await apiQ('ttGet')).cfg, done), 350); else { toast('คาบนี้เป็นของ ' + x.ownerName + ' — แก้ไขได้เฉพาะเจ้าของคาบ', 'info'); go('attendance', { tab: 'setup' }); } };
   const cnt = () => { const n = $$('tr[data-u]', m.body).filter(tr => $('input[type=radio]:checked', tr)).length; $('#atCnt').textContent = `เช็คแล้ว ${n}/${d.students.length} คน`; return n; };
   cnt(); m.body.addEventListener('change', cnt);
-  $('#atAll').onclick = () => { $$('tr[data-u]', m.body).forEach(tr => { if (!$('input[type=radio]:checked', tr)) $('input[value=present]', tr).checked = true; }); cnt(); };
+  $('#atAll').onclick = () => { const trs = $$('tr[data-u]', m.body), allP = trs.every(tr => $('input[value=present]', tr).checked);
+    if (allP) { trs.forEach(tr => $$('input[type=radio]', tr).forEach(r => r.checked = false)); $('#atAll').innerHTML = '<i class="fa-solid fa-check-double"></i> มาเรียนทั้งหมด'; toast('ยกเลิกการเลือกทั้งหมดแล้ว', 'info'); }
+    else { trs.forEach(tr => { if (!$('input[type=radio]:checked', tr)) $('input[value=present]', tr).checked = true; }); $('#atAll').innerHTML = '<i class="fa-solid fa-rotate-left"></i> ยกเลิกทั้งหมด'; }
+    cnt(); };
   $('#atScan').onclick = () => qrScanner(async txt => { const st = await apiQ('attDecode', txt); const tr = $(`tr[data-u="${st.id}"]`, m.body);
     if (!tr) { toast(`${st.name} ไม่ได้อยู่ในคาบนี้`, 'warning'); return; } $('input[value=present]', tr).checked = true; tr.classList.add('att-hit'); setTimeout(() => tr.classList.remove('att-hit'), 1500); cnt(); toast(`เช็คชื่อ ${st.name} — มาเรียน`); });
   $('#atSave').onclick = async () => {

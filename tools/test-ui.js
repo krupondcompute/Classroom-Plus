@@ -87,7 +87,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('#aL'); await page.waitForSelector('#modal.show'); await page.fill('[name=title]', 'บทเรียนใหม่ทดสอบ'); await page.click('#crudSave'); await confirm(); await idle();
   ok(await page.isVisible('text=บทเรียนใหม่ทดสอบ'), 'add lesson');
   await page.click('[data-down="0"]'); await idle(); ok(true, 'reorder');
-  await page.click('[data-go=grade] >> nth=0'); await idle(); await page.click('.room-tile:has-text("ส่งแล้ว 1")'); await page.waitForSelector('[data-score]');
+  await page.click('[data-go=grade] >> nth=0'); await idle(); await page.click('.room-card2:has-text("1/")'); await page.waitForSelector('[data-score]');
   await page.fill('[data-score]', '9'); await page.click('[data-grade]'); await confirm(); await idle();
   await page.screenshot({ path: SHOT + '/07-grade.png' });
   await page.click('[data-go=reports]'); await page.waitForSelector('#rBody tr', { timeout: 15000 }).catch(() => {}); ok(await page.$$eval('#rBody tr', x => x.length) > 1, 'report');
@@ -139,7 +139,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   ok(await page.isVisible('.swal2-popup:has-text("รอครูตรวจ")'), 'quiz pending manual'); await page.click('.swal2-confirm'); await page.waitForTimeout(300);
   await page.click('#modeSwitch'); await idle(); await page.click('.dock [data-go=aassign]'); await idle();
   await page.click('tr:has-text("แบบทดสอบบทที่ 1") [data-go=grade]'); await idle();
-  await page.click('.room-tile:has-text("ส่งแล้ว 1")'); await page.click('[data-view] >> nth=0'); await page.waitForSelector('[data-qscore]');
+  await page.click('.room-card2:has-text("1/")'); await page.click('[data-view] >> nth=0'); await page.waitForSelector('[data-qscore]');
   await page.fill('[data-qscore]', '2.5'); await page.click('#qzSave'); await idle(); await page.waitForTimeout(400);
   ok(await page.isVisible('.toast-x:has-text("รวม 5.5")'), 'manual score -> total 5.5');
   await page.evaluate(() => viewer([{ name: 'รูป.png', id: 'x'.repeat(28), url: 'https://drive.google.com/file/d/' + 'x'.repeat(28) + '/view', mime: 'image/png' }, { name: 'งาน.pdf', id: 'y'.repeat(28), url: 'https://drive.google.com/file/d/' + 'y'.repeat(28) + '/view' }]));
@@ -331,7 +331,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('[data-slot]'); await page.waitForSelector('.swal2-popup'); ok((await page.textContent('.swal2-popup')).includes('มีการเช็คชื่อเรียบร้อยแล้ว'), 'already checked notice'); await page.click('.swal2-confirm'); await page.waitForTimeout(300);
   await page.screenshot({ path: SHOT + '/42-attendance-check.png' });
   await page.click('#modal .btn-close'); await page.waitForTimeout(500);
-  await page.evaluate(() => go('dash')); await idle(); ok(await page.isVisible('.att-dash'), 'dashboard attendance card');
+  await page.evaluate(() => go('dash')); await idle(); ok(await page.isVisible('.att-dash2') && (await page.textContent('.att-dash2')).includes('%'), 'dashboard attendance card with percent');
   // mobile
   const m = await browser.newContext({ ...require('playwright').devices['iPhone 13'], ignoreHTTPSErrors: true });
   const mp = await m.newPage(); mp.on('pageerror', e => errs.push('m: ' + e.message));

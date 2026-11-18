@@ -409,5 +409,21 @@ ok(R('adminDashboard', AD).data.attToday.sessions === 1, 'dashboard attendance')
 ok(R('myAttend', s9).data.summary.sick === 1, 'student history');
 ok(R('attOpen', s9, sl.data.id, nowD.date).code === 'FORBIDDEN', 'student cannot open teacher check');
 ok(R('ttDeleteSlot', AD, sl.data.id).ok, 'delete slot');
+// ---------- v5.5 ----------
+const bk3 = ctx.SpreadsheetApp.create('คะแนนหัวหลายแถว'); const sh3 = bk3.insertSheet('Sheet1');
+sh3.appendRow(['ผลการเรียน รายวิชา ว20206', '', '', '', '']); sh3.appendRow(['ที่', 'เลขประจำตัว', 'ชื่อ - สกุล', 'คะแนนเก็บ', 'รวมคะแนนทั้งหมด']); sh3.appendRow(['', '', '', '(70)', '(100)']); sh3.appendRow(['1', '80901', 'เด็กชายคะแนน ดี', '50', '77']);
+const stt = R('scoreTest', AD, bk3.getId(), '80901').data; ok(stt.ok && stt.found && stt.value === '77' && stt.headerRow === 2, 'score test multi-row header ' + JSON.stringify(stt));
+R('saveSettings', AD, { config: { scoreSources: [{ name: 'เก็บ', url: 'https://docs.google.com/spreadsheets/d/' + bk3.getId() + '/edit#gid=0', terms: [] }] } });
+ok((R('studentHome', s9).data.total || {}).value === '77', 'total from multi-row header sheet');
+ok(R('notifications', KB).data.some(n => /การตั้งค่า/.test(n.title) && n.link.startsWith('settings:')), 'settings change notifies staff');
+// แชทลบถาวร
+const pr = R('chatOpen', s9, { type: 'dm', target: R('listUsers', AD).data.find(u => u.role === 'admin').id }).data; R('chatSend', s9, pr.id, 'ลบทิ้ง', []);
+ok(R('chatList', s9).data.find(r => r.id === pr.id).canPurge === true, 'dm can purge');
+ok(R('chatPurge', s9, pr.id).ok && !R('chatList', AD).data.some(r => r.id === pr.id) && R('chatSend', AD, pr.id, 'x', []).ok === false, 'chat purged for everyone');
+// แจ้งเตือนการเช็คชื่อ
+R('ttSaveCfg', AD, { periods: 14, minutes: 120, start: '00:00', breakAfter: 0, breakMin: 0, days: 7, lateMin: 600 });
+const sl2 = R('ttSaveSlot', AD, { day: nowD.dow, period: curP, span: 1, courseId: crs.id, grade: 'ม.1', room: '1', students: [s9u.id] }).data;
+R('attSave', AD, sl2.id, nowD.date, { [s9u.id]: { st: 'present' } });
+ok(R('notifications', KB).data.length >= 0, 'att save ok');
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

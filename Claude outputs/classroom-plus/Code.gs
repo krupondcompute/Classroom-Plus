@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '5.4.0';
+const APP_VERSION = '5.5.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -51,7 +51,7 @@ const SCHEMA = {
   LiveAnswers: ['id','sessionId','pid','name','userId','answers','score','correct','timeMs','finishedAt','createdAt','updatedAt'],
   // ---------- v5.4: ตารางสอน + เช็คชื่อ (แยกตามภาคเรียน) ----------
   Timetables: ['id','ownerId','cfg','updatedAt'],
-  TtSlots: ['id','ownerId','day','period','span','courseId','grade','room','students','note','createdAt','updatedAt'],
+  TtSlots: ['id','ownerId','day','period','span','courseId','grade','room','students','note','createdAt','updatedAt','extras'],
   Attendance: ['id','slotId','date','ownerId','courseId','records','checkedBy','checkedAt','createdAt','updatedAt']
 };
 // ตารางที่ Admin แก้ไขผ่าน save()/remove() ได้ และฟิลด์ที่อนุญาต
@@ -129,7 +129,7 @@ const ROUTES = {
   listUsers: ['staff', listUsers_], saveUser: ['staff', saveUser_], importStudents: ['staff', importStudents_],
   listTeachers: ['staff', listTeachers_], saveStudentMenus: ['staff', saveStudentMenus_], uploadFinish: ['user', uploadFinish_],
   chatContacts: ['user', chatContacts_], chatList: ['user', chatList_], chatOpen: ['user', chatOpen_], chatMessages: ['user', chatMessages_],
-  chatSend: ['user', chatSend_], chatEdit: ['user', chatEdit_], chatDelete: ['user', chatDelete_], chatHide: ['user', chatHide_], chatRename: ['user', chatRename_], chatTeamMembers: ['user', chatTeamMembers_], chatCreateTeam: ['user', chatCreateTeam_], chatUnread: ['user', chatUnread_],
+  chatSend: ['user', chatSend_], chatEdit: ['user', chatEdit_], chatDelete: ['user', chatDelete_], chatHide: ['user', chatHide_], chatRename: ['user', chatRename_], chatTeamMembers: ['user', chatTeamMembers_], chatPurge: ['user', chatPurge_], chatCreateTeam: ['user', chatCreateTeam_], chatUnread: ['user', chatUnread_],
   // admin (ผู้ดูแลระบบคนเดียว)
   deleteUser: ['admin', deleteUser_], deleteUsers: ['admin', deleteUsers_], setCoAdmin: ['admin', setCoAdmin_],
   setRole: ['admin', setRole_], getSettings: ['admin', getSettings_], saveSettings: ['admin', saveSettings_],
@@ -137,6 +137,7 @@ const ROUTES = {
   listBackups: ['admin', listBackups_], liveList: ['staff', liveList_], liveGet: ['staff', liveGet_], liveSave: ['staff', liveSave_], liveRemove: ['staff', liveRemove_],
   liveControl: ['staff', liveControl_], liveStatus: ['staff', liveStatus_], liveInfo: ['public', liveInfo_], liveJoin: ['public', liveJoin_], liveSubmit: ['public', liveSubmit_], termSources: ['staff', termSources_], peekTerm: ['staff', peekTerm_], importTerm: ['staff', importTerm_], saveTermDb: ['admin', saveTermDb_], createTermDb: ['admin', createTermDb_], removeTermDb: ['admin', removeTermDb_],
   fileData: ['user', fileData_],
+  scoreTest: ['staff', scoreTest_],
   ttGet: ['staff', ttGet_], ttSaveCfg: ['staff', ttSaveCfg_], ttSaveSlot: ['staff', ttSaveSlot_], ttDeleteSlot: ['staff', ttDeleteSlot_],
   attOpen: ['staff', attOpen_], attSave: ['staff', attSave_], attHistory: ['staff', attHistory_], attSummary: ['staff', attSummary_], attDecode: ['staff', attDecode_],
   myAttend: ['user', myAttend_], attCheckIn: ['user', attCheckIn_],
@@ -784,6 +785,35 @@ function totalScore_(u) {
   try { cache_().put(ck, JSON.stringify(out), out ? 600 : 180); } catch (e) {}
   return out;
 }
+/** หาคอลัมน์ "รวมคะแนนทั้งหมด" (หัวตารางกี่แถวก็ได้ / เซลล์รวม) แล้วหาแถวของนักเรียนจากรหัสนักเรียน (เซลล์ใดก็ได้ในแถว) หรือชื่อ-สกุล */
+function scanTotal_(tables, codeIn, nameIn) {
+  const norm = v => String(v || '').replace(/\s+/g, '').toLowerCase(), code = norm(codeIn), nm = norm(nameKey_(nameIn || '')).replace(/^(เด็กชาย|เด็กหญิง|นาย|นางสาว|นาง|ด\.ช\.|ด\.ญ\.)/, '');
+  for (const t of tables) {
+    let h = -1, tc = -1;
+    for (let i = 0; i < Math.min(15, t.length) && tc < 0; i++) { const j = t[i].findIndex(x => norm(x).indexOf('รวมคะแนนทั้งหมด') >= 0); if (j >= 0) { h = i; tc = j; } }
+    if (tc < 0) continue;
+    const rows = t.slice(h + 1), out = { header: String(t[h][tc]).trim(), headerRow: h + 1, col: tc + 1, rows: rows.length };
+    if (!code && !nm) return out;
+    const row = (code && rows.find(r => r.some(c => norm(c) === code))) || (nm && nm.length > 3 && rows.find(r => norm(nameKey_(r.join(' '))).indexOf(nm) >= 0 || norm(r.join('')).indexOf(nm) >= 0));
+    if (row) return Object.assign(out, { value: String(row[tc] === undefined ? '' : row[tc]).trim() });
+  }
+  return null;
+}
+function sheetTables_(url) {
+  const id = (String(url).match(/\/d\/([\w-]{20,})/) || String(url).match(/^([\w-]{25,})$/) || [])[1], gid = (String(url).match(/[#&?]gid=(\d+)/) || [])[1];
+  if (!id) throw err_('ลิงก์ Google Sheet ไม่ถูกต้อง');
+  try { const ss = SpreadsheetApp.openById(id); return { name: ss.getName(), tables: ss.getSheets().filter(sh => !gid || String(sh.getSheetId()) === gid).map(sh => sh.getDataRange().getDisplayValues()) }; }
+  catch (e) { const r = UrlFetchApp.fetch('https://docs.google.com/spreadsheets/d/' + id + '/gviz/tq?tqx=out:csv' + (gid ? '&gid=' + gid : ''), { muteHttpExceptions: true });
+    if (r.getResponseCode() !== 200 || /<html/i.test(r.getContentText().slice(0, 200))) throw err_('เปิด Google Sheet นี้ไม่ได้ — แชร์ไฟล์ให้บัญชีที่ Deploy เว็บแอป (' + (function () { try { return Session.getEffectiveUser().getEmail(); } catch (x) { return 'เจ้าของสคริปต์'; } })() + ') หรือตั้งค่า "ทุกคนที่มีลิงก์ดูได้"');
+    return { name: 'CSV', tables: [Utilities.parseCsv(r.getContentText())] }; }
+}
+/** ทดสอบที่มาของคะแนนเก็บ (หน้าตั้งค่า): เปิดไฟล์ได้ไหม · พบคอลัมน์ไหม · ลองค้นหานักเรียน */
+function scoreTest_(ctx, url, code) {
+  const t = sheetTables_(str_(url, 300)), c = str_(code, 10), u = c ? rows_('Users').find(x => x.role === 'student' && x.studentCode === c) : null;
+  const r = scanTotal_(t.tables, c, u ? u.fullName : '');
+  if (!r) return { ok: false, name: t.name, message: 'ไม่พบคอลัมน์ "รวมคะแนนทั้งหมด" ใน ' + t.tables.length + ' แผ่นงาน' };
+  return { ok: true, name: t.name, header: r.header, headerRow: r.headerRow, col: r.col, rows: r.rows, found: r.value !== undefined, value: r.value, student: u ? userName_(u) : '' };
+}
 /** ค้นหาแถวของนักเรียน (รหัสนักเรียน หรือชื่อ-สกุล) แล้วอ่านคอลัมน์ "รวมคะแนนทั้งหมด" */
 function sheetTotal_(url, u) {
   const id = (url.match(/\/d\/([\w-]{20,})/) || [])[1], gid = (url.match(/[#&?]gid=(\d+)/) || [])[1];
@@ -793,16 +823,8 @@ function sheetTotal_(url, u) {
   catch (e) { // ไฟล์ที่แชร์แบบลิงก์สาธารณะ → อ่านผ่าน CSV
     const r = UrlFetchApp.fetch('https://docs.google.com/spreadsheets/d/' + id + '/gviz/tq?tqx=out:csv' + (gid ? '&gid=' + gid : ''), { muteHttpExceptions: true });
     if (r.getResponseCode() !== 200) return null; tables = [Utilities.parseCsv(r.getContentText())]; }
-  const norm = v => String(v || '').replace(/\s+/g, '').toLowerCase(), code = norm(u.studentCode), nm = norm(nameKey_(u.fullName));
-  for (const t of tables) {
-    for (let h = 0; h < Math.min(12, t.length); h++) {
-      const head = t[h].map(norm), tc = head.findIndex(x => x.indexOf('รวมคะแนนทั้งหมด') >= 0); if (tc < 0) continue;
-      const cc = head.findIndex(x => /รหัส|เลขประจำตัว|studentid|id/.test(x)), nc = head.findIndex(x => /ชื่อ|name/.test(x));
-      const row = t.slice(h + 1).find(r => (cc >= 0 && norm(r[cc]) === code && code) || (nc >= 0 && nm && norm(nameKey_(r[nc])).indexOf(nm) >= 0) || (nc >= 0 && nm && norm(String(r[nc]) + String(r[nc + 1] || '')).indexOf(nm) >= 0));
-      if (row && String(row[tc]).trim() !== '') return { value: String(row[tc]).trim(), header: String(t[h][tc]) };
-    }
-  }
-  return null;
+  const r = scanTotal_(tables, u.studentCode, u.fullName);
+  return r && r.value !== undefined && r.value !== '' ? { value: r.value, header: r.header } : null;
 }
 function studentHome_(ctx, view) {
   const vf = viewFilters_(view), u = ctx.user, courses = courseCards_(u).filter(vf.c), prog = myProgress_(u.id);
@@ -1246,7 +1268,7 @@ function uploadFinish_(ctx, uploadId, fileId) {
   return fileOut_(file.getId(), s.name, file.getMimeType() || s.mime, file.getSize() || s.size, shared);
 }
 /* ---------- ลบไฟล์ใน Drive อัตโนมัติ (เฉพาะไฟล์ที่ระบบอัปโหลดเอง: description ขึ้นต้น "cp:") ---------- */
-function driveIdOf_(url) { const m = String(url || '').match(/(?:\/d\/|[?&]id=)([-\w]{20,})/); return m ? m[1] : ''; }
+function driveIdOf_(url) { const m = String(url || '').match(/(?:\/d\/|[?&]id=|^drive:)([-\w]{20,})/); return m ? m[1] : ''; }
 function fileIds_(row) {
   const ids = [];
   ['attachments', 'files'].forEach(k => { if (row[k]) json_(row[k], []).forEach(f => { const i = (f && (f.id || driveIdOf_(f.url))) || ''; if (i) ids.push(i); }); });
@@ -1792,7 +1814,7 @@ function chatList_(ctx) {
   const lastKey = {}; rows_('ChatMessages').forEach(m => { if (ids[m.roomId]) lastKey[m.roomId] = m.id; });
   rows_('ChatMessages').forEach(m => { if (ids[m.roomId] && m.senderId !== me.id && (!reads[m.roomId] || m.createdAt > reads[m.roomId])) unread[m.roomId] = (unread[m.roomId] || 0) + 1; });
   const out = rooms.filter(r => { const h = rr[r.id] && rr[r.id].hidden; return !h || h !== 'm:' + (lastKey[r.id] || ''); }) // ห้องที่ลบออกจากรายการ กลับมาเมื่อมีข้อความใหม่
-    .map(r => { const o = Object.assign({ id: r.id, type: r.type, lastText: r.lastText, lastAt: r.lastAt || r.createdAt, lastBy: r.lastBy ? userName_(users[r.lastBy]) : '', unread: unread[r.id] || 0 }, chatTitle_(me, r, users)); if (rr[r.id] && rr[r.id].alias) o.title = rr[r.id].alias; return o; });
+    .map(r => { const o = Object.assign({ id: r.id, type: r.type, canPurge: chatCanPurge_(me, r), lastText: r.lastText, lastAt: r.lastAt || r.createdAt, lastBy: r.lastBy ? userName_(users[r.lastBy]) : '', unread: unread[r.id] || 0 }, chatTitle_(me, r, users)); if (rr[r.id] && rr[r.id].alias) o.title = rr[r.id].alias; return o; });
   if (me.role === 'student' && me.grade && !out.some(r => r.type === 'class' && r.id === 'cls:' + me.grade + '|' + (me.room || '')) && (rr['cls:' + me.grade + '|' + (me.room || '')] || {}).hidden !== 'm:' + (lastKey['cls:' + me.grade + '|' + (me.room || '')] || '')) // ห้องของตัวเองแสดงเสมอ (ยกเว้นลบออกจากรายการ)
     out.push({ id: 'cls:' + me.grade + '|' + (me.room || ''), type: 'class', title: 'ห้อง ' + me.grade + (me.room ? '/' + me.room : ''), sub: 'แชทรายห้อง', lastText: '', lastAt: '', unread: 0, virtual: true });
   return out.sort((a, b) => String(b.lastAt).localeCompare(String(a.lastAt)));
@@ -1895,6 +1917,17 @@ function chatDelete_(ctx, msgId) {
     if (m.senderId !== me.id) log_(me.id, 'chat_delete_other', m.id);
     purge_(fileIds_({ files: m.files })); updateRow_('ChatMessages', m, { text: '', files: '[]', deleted: 'true', editedAt: now_() }); return true; });
 }
+/** ลบแชทถาวร (ทุกคนในห้องพิมพ์ต่อไม่ได้ ต้องเริ่มแชทใหม่): แชทรายบุคคล = คู่สนทนา · แชทกลุ่ม = ผู้สร้างกลุ่ม/ครู · ห้องเรียน = ครู/ผู้ดูแลระบบ */
+function chatCanPurge_(me, r) { if (!r || !chatCan_(me, r)) return false; if (r.type === 'dm') return true; if (r.type === 'team') return r.createdBy === me.id || staff_(me); return staff_(me); }
+function chatPurge_(ctx, roomId) {
+  const me = ctx.user;
+  return lock_(() => { delete MEM_.ChatRooms; delete MEM_.ChatMessages; const id = String(roomId);
+    const r = find_('ChatRooms', id) || (/^cls:/.test(id) ? { id: id, type: 'class', grade: id.slice(4).split('|')[0], room: id.slice(4).split('|')[1] || '' } : null);
+    if (!chatCanPurge_(me, r)) throw err_('คุณลบแชทนี้ถาวรไม่ได้ (ลบออกจากรายการของคุณได้)', 'FORBIDDEN');
+    const ms = rows_('ChatMessages').filter(m => m.roomId === id); purge_([].concat.apply([], ms.map(m => fileIds_({ files: m.files }))));
+    deleteWhere_('ChatMessages', m => m.roomId === id); deleteWhere_('ChatReads', x => x.roomId === id); deleteWhere_('ChatRooms', x => x.id === id);
+    log_(me.id, 'chat_purge', id + ' ' + ms.length); return true; });
+}
 /** ลบห้องออกจากรายการแชทของฉัน (ไม่ลบข้อความของคนอื่น — กลับมาเมื่อมีข้อความใหม่) */
 function chatHide_(ctx, roomId) { const me = ctx.user; return lock_(() => { const ms = rows_('ChatMessages').filter(m => m.roomId === String(roomId)); readRow_(me, String(roomId), { hidden: 'm:' + (ms.length ? ms[ms.length - 1].id : '') }); return true; }); }
 /** ตั้งชื่อห้อง: ทีม = เปลี่ยนชื่อให้ทุกคน · แชทรายบุคคล/ห้องเรียน = ชื่อที่เห็นเฉพาะฉัน */
@@ -1937,7 +1970,7 @@ function menus_(v) {
 function addAssignmentType_(ctx, name) {
   const v = cleanSeg_(str_(name, 40));
   if (!v || /[,/\\]/.test(v)) throw err_('ชื่อประเภทงานไม่ถูกต้อง');
-  return lock_(() => { delete MEM_.Config; const list = cfg_().assignmentTypes.split(',').filter(Boolean); if (list.indexOf(v) < 0) list.push(v); setCfg_('assignmentTypes', list.slice(0, 30).join(',')); return cfg_().assignmentTypes; });
+  return lock_(() => { delete MEM_.Config; const list = cfg_().assignmentTypes.split(',').filter(Boolean); const isNew = list.indexOf(v) < 0; if (isNew) list.push(v); setCfg_('assignmentTypes', list.slice(0, 30).join(',')); if (isNew) settingsChanged_(ctx.user, 'เพิ่มประเภทงาน "' + v + '"', 'general'); return cfg_().assignmentTypes; });
 }
 /** ครูผู้สอนจัดการเมนูนักเรียน (ลิงก์เพิ่มเติม / ลำดับ) ได้เหมือนผู้ดูแลระบบ */
 function saveStudentMenus_(ctx, v) {
@@ -1948,7 +1981,7 @@ function saveStudentMenus_(ctx, v) {
       updateRow_('Users', me, { prefs: prefs_(p), updatedAt: now_() }); log_(ctx.user.id, 'save_my_menus', ''); return out; });
   }
   lock_(() => { delete MEM_.Config; setCfg_('studentMenus', out); });
-  log_(ctx.user.id, 'save_menus', '');
+  log_(ctx.user.id, 'save_menus', ''); settingsChanged_(ctx.user, 'เมนูนักเรียน', 'menus');
   return out;
 }
 function getSettings_() {
@@ -2006,6 +2039,8 @@ function saveSettings_(ctx, d) {
     res.reloaded = true;
   }
   log_(ctx.user.id, 'save_settings', Object.keys(d.config || {}).join(','));
+  const ch = Object.keys(d.config || {}).map(k => CFG_TH[k] || k).concat(res.reloaded ? ['ฐานข้อมูล'] : []);
+  if (ch.length) settingsChanged_(ctx.user, ch.join(', '), (d.config || {}).scoreSources !== undefined ? 'scores' : res.reloaded ? 'db' : 'general');
   return res;
 }
 /* ---------- จัดการฐานข้อมูลรายภาคเรียน (แอดมิน) ---------- */
@@ -2051,7 +2086,7 @@ function saveTermDb_(ctx, d) {
     const m = dbMap_(); m[k] = { sheetId: sid, driveId: did, createdAt: (m[k] && m[k].createdAt) || now_() };
     props_().setProperty(dbKey_(), JSON.stringify(m)); setupTermSheets_(sid);
     let copied = 0; if (from && from !== k) copied = copyAllTerm_(from, k);
-    log_(ctx.user.id, 'term_db', k + ' ' + sid + (copied ? ' copied ' + copied : ''));
+    log_(ctx.user.id, 'term_db', k + ' ' + sid + (copied ? ' copied ' + copied : '')); settingsChanged_(ctx.user, 'ฐานข้อมูลภาคเรียน ' + k, 'db');
     const out = termDbList_(); out.copied = copied; return out;
   });
 }
@@ -2120,7 +2155,7 @@ function importTerm_(ctx, from, kind, ids, opts) {
 }
 function removeTermDb_(ctx, key) {
   const k = termKeyOk_(key);
-  return lock_(() => { const m = dbMap_(); delete m[k]; props_().setProperty(dbKey_(), JSON.stringify(m)); log_(ctx.user.id, 'term_db_remove', k); return termDbList_(); });
+  return lock_(() => { const m = dbMap_(); delete m[k]; props_().setProperty(dbKey_(), JSON.stringify(m)); log_(ctx.user.id, 'term_db_remove', k); settingsChanged_(ctx.user, 'ลบฐานข้อมูลภาคเรียน ' + k, 'db'); return termDbList_(); });
 }
 function backup_() {
   const name = 'Backup ' + cfg_().schoolName + ' ' + Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HHmm');
@@ -2335,6 +2370,7 @@ function dailyJob() {
 }
 
 /* ============================== v5.4 ตารางสอน + เช็คชื่อนักเรียน ============================== */
+const ATT_TH = { present: 'มาเรียน', late: 'สาย', absent: 'ขาด', sick: 'ลาป่วย', leave: 'ลากิจ', activity: 'ไปกิจกรรม', skip: 'หนีเรียน' };
 const ATT_ST = ['present', 'late', 'absent', 'sick', 'leave', 'activity', 'skip']; // มาเรียน สาย ขาด ลาป่วย ลากิจ ไปกิจกรรม หนีเรียน
 const TT_DEF = { periods: 8, minutes: 50, start: '08:30', breakAfter: 4, breakMin: 60, days: 5, lateMin: 15 };
 const hm_ = v => { const m = String(v || '').match(/^(\d{1,2}):(\d{2})$/); return m ? Number(m[1]) * 60 + Number(m[2]) : null; };
@@ -2357,7 +2393,7 @@ function ttVisible_(me) {
 function slotOut_(x, me, cs, users) {
   const c = cs[x.courseId] || {}, cfg = ttCfgOf_(x.ownerId), t = periodTime_(cfg, Number(x.period), x.span), o = users[x.ownerId];
   return { id: x.id, ownerId: x.ownerId, ownerName: o ? userName_(o) : '', mine: x.ownerId === me.id, day: Number(x.day), period: Number(x.period), span: Number(x.span) || 1,
-    courseId: x.courseId, courseName: c.name || '-', courseCode: c.code || '', grade: x.grade, room: x.room, students: json_(x.students, []), note: x.note,
+    courseId: x.courseId, courseName: c.name || '-', courseCode: c.code || '', grade: x.grade, room: x.room, students: slotStudentIds_(x), extras: json_(x.extras, []), note: x.note,
     start: fmtHm_(t.start), end: fmtHm_(t.end) };
 }
 function ttGet_(ctx) {
@@ -2391,7 +2427,8 @@ function ttSaveSlot_(ctx, d) {
     const owner = old ? old.ownerId : me.id;
     const clash = rows_('TtSlots').find(x => x.ownerId === owner && x.id !== (old && old.id) && Number(x.day) === day && Number(x.period) < period + span && Number(x.period) + (Number(x.span) || 1) > period);
     if (clash) throw err_('ช่วงเวลานี้มีคาบเรียนอื่นอยู่แล้ว (คาบ ' + clash.period + ')');
-    const patch = { day: String(day), period: String(period), span: String(span), courseId: c.id, grade: str_(d.grade, 20), room: str_(d.room, 20), students: studs, note: str_(d.note, 200), updatedAt: now_() };
+    const ex = (Array.isArray(d.extras) ? d.extras : []).map(String).filter(id => studs.indexOf(id) >= 0);
+    const patch = { day: String(day), period: String(period), span: String(span), courseId: c.id, grade: str_(d.grade, 20), room: str_(d.room, 20), students: studs, extras: ex, note: str_(d.note, 200), updatedAt: now_() };
     const row = old ? updateRow_('TtSlots', old, patch) : insert_('TtSlots', Object.assign({ id: id_(), ownerId: owner, createdAt: now_() }, patch));
     log_(me.id, old ? 'tt_edit' : 'tt_add', row.id);
     const cs = {}, users = {}; rows_('Courses').forEach(k => cs[k.id] = k); rows_('Users').forEach(u => users[u.id] = u);
@@ -2404,10 +2441,16 @@ function ttDeleteSlot_(ctx, id) {
     if (x.ownerId !== me.id && !isAdmin_(me)) throw err_('ลบได้เฉพาะคาบของคุณ', 'FORBIDDEN');
     deleteWhere_('TtSlots', r => r.id === x.id); log_(me.id, 'tt_delete', id); return true; });
 }
+/** นักเรียนในคาบ: เฉพาะชั้น/ห้องที่ตั้งไว้ + นักเรียนห้องอื่นที่ครูเพิ่มเอง (extras) */
+function slotStudentIds_(x) {
+  const ids = json_(x.students, []), ex = json_(x.extras, []); if (!x.grade) return ids;
+  const users = {}; rows_('Users').forEach(u => users[u.id] = u);
+  return ids.filter(id => { const u = users[id]; return u && (ex.indexOf(id) >= 0 || (u.grade === x.grade && (!x.room || u.room === x.room))); });
+}
 function slotCan_(me, x) { if (!x) return false; if (isAdmin_(me) || x.ownerId === me.id) return true; return teaches_(me, find_('Courses', x.courseId)); }
 function dateOk_(v) { v = str_(v, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) throw err_('วันที่ไม่ถูกต้อง'); return v; }
 function attStudents_(x) {
-  const ids = json_(x.students, []), users = {}; rows_('Users').forEach(u => users[u.id] = u);
+  const ids = slotStudentIds_(x), users = {}; rows_('Users').forEach(u => users[u.id] = u);
   return ids.map(id => users[id]).filter(Boolean).map(u => ({ id: u.id, classNo: u.classNo || '', studentCode: u.studentCode, name: userName_(u), grade: u.grade, room: u.room, avatar: u.avatar || '' }))
     .sort((a, b) => String(a.grade + '/' + a.room).localeCompare(String(b.grade + '/' + b.room)) || (Number(a.classNo) || 999) - (Number(b.classNo) || 999));
 }
@@ -2424,7 +2467,7 @@ function attSave_(ctx, slotId, date, records, opt) {
   const me = ctx.user, x = find_('TtSlots', slotId); date = dateOk_(date); opt = opt || {};
   if (!slotCan_(me, x)) throw err_('ไม่พบคาบเรียนนี้', 'FORBIDDEN');
   if (date > now_().slice(0, 10)) throw err_('เช็คชื่อล่วงหน้าไม่ได้');
-  const ids = json_(x.students, []), recs = {};
+  const ids = slotStudentIds_(x), recs = {};
   Object.keys(records || {}).forEach(k => { const v = records[k] || {}; if (ids.indexOf(k) < 0 || ATT_ST.indexOf(v.st) < 0) return; recs[k] = { st: v.st, note: str_(v.note, 200), at: str_(v.at, 19), by: v.by === 'self' ? 'self' : 'teacher' }; });
   const miss = ids.filter(k => !recs[k]); if (miss.length && !opt.partial) throw err_('ยังเช็คชื่อไม่ครบ (' + miss.length + ' คน)');
   return lock_(() => {
@@ -2435,7 +2478,10 @@ function attSave_(ctx, slotId, date, records, opt) {
     const patch = { records: recs, checkedBy: me.id, checkedAt: now_(), updatedAt: now_() };
     if (r) updateRow_('Attendance', r, patch); else insert_('Attendance', Object.assign({ id: id_(), slotId: x.id, date: date, ownerId: x.ownerId, courseId: x.courseId, createdAt: now_() }, patch));
     log_(me.id, r ? 'att_edit' : 'att_save', x.id + ' ' + date);
-    return { ok: true, counts: attCount_(recs) };
+    const c = find_('Courses', x.courseId) || {}, cnt = attCount_(recs);
+    const to = [x.ownerId, c.ownerId].concat(String(c.teachers || '').split(',')).concat(rows_('Users').filter(u => isAdmin_(u) && u.status === 'active').map(u => u.id));
+    notifyStaff_(me, (r && r.checkedBy ? 'แก้ไขการเช็คชื่อ: ' : 'เช็คชื่อเสร็จแล้ว: ') + (c.name || 'รายวิชา'), userName_(me) + ' · ' + date + ' คาบ ' + x.period + ' ' + (x.grade || '') + (x.room ? '/' + x.room : '') + ' — ' + ATT_ST.filter(k => cnt[k]).map(k => ATT_TH[k] + ' ' + cnt[k]).join(' · '), 'attendance:' + x.id + ':' + date, to);
+    return { ok: true, counts: cnt };
   });
 }
 function attCount_(recs) { const c = {}; ATT_ST.forEach(k => c[k] = 0); Object.keys(recs || {}).forEach(k => { const st = (recs[k] || {}).st; if (c[st] !== undefined) c[st]++; }); return c; }
@@ -2466,7 +2512,7 @@ function attDecode_(ctx, token) {
 function myAttend_(ctx) {
   const u = ctx.user; if (u.role !== 'student') return { slots: [], history: [], token: '', today: todayInfo_() };
   const t = todayInfo_(), cs = {}, users = {}; rows_('Courses').forEach(c => cs[c.id] = c); rows_('Users').forEach(x => users[x.id] = x);
-  const mine = rows_('TtSlots').filter(x => json_(x.students, []).indexOf(u.id) >= 0), att = rows_('Attendance').filter(a => json_(a.records, {})[u.id] !== undefined || mine.some(x => x.id === a.slotId));
+  const mine = rows_('TtSlots').filter(x => slotStudentIds_(x).indexOf(u.id) >= 0), att = rows_('Attendance').filter(a => json_(a.records, {})[u.id] !== undefined || mine.some(x => x.id === a.slotId));
   const st = (sid, date) => { const a = att.find(r => r.slotId === sid && r.date === date); return a ? (json_(a.records, {})[u.id] || null) : null; };
   const week = mine.map(x => { const o = slotOut_(x, u, cs, users), cfg = ttCfgOf_(x.ownerId), pt = periodTime_(cfg, o.period, o.span); delete o.students;
     o.today = o.day === t.dow; o.open = o.today && t.min >= pt.start - 10 && t.min <= pt.end; o.past = o.today && t.min > pt.end; o.rec = o.today ? st(x.id, t.date) : null; return o; })
@@ -2479,7 +2525,7 @@ function myAttend_(ctx) {
 function attCheckIn_(ctx, slotId) {
   const u = ctx.user; if (u.role !== 'student') throw err_('เฉพาะนักเรียน', 'FORBIDDEN');
   const x = find_('TtSlots', slotId), t = todayInfo_();
-  if (!x || json_(x.students, []).indexOf(u.id) < 0) throw err_('คุณไม่ได้อยู่ในคาบเรียนนี้', 'FORBIDDEN');
+  if (!x || slotStudentIds_(x).indexOf(u.id) < 0) throw err_('คุณไม่ได้อยู่ในคาบเรียนนี้', 'FORBIDDEN');
   const cfg = ttCfgOf_(x.ownerId), pt = periodTime_(cfg, Number(x.period), x.span);
   if (Number(x.day) !== t.dow || t.min < pt.start - 10 || t.min > pt.end) throw err_('เช็คชื่อได้เฉพาะช่วงเวลาเรียนของคาบนี้ (' + fmtHm_(pt.start) + '–' + fmtHm_(pt.end) + ' น.) — เช็คชื่อย้อนหลังไม่ได้');
   throttle_('ci_' + u.id, 10, 5)();
@@ -2506,9 +2552,19 @@ function fileData_(ctx, id) {
   if (!/^image\//.test(mime)) throw err_('ไม่ใช่ไฟล์รูปภาพ');
   let ok = false, q = [f.getParents()], depth = 0;
   while (q.length && !ok && depth < 8) { const nq = []; q.forEach(it => { while (it.hasNext()) { const p = it.next(); if (roots[p.getId()]) ok = true; else nq.push(p.getParents()); } }); q = nq; depth++; }
+  if (!ok) { try { ok = f.getOwner() && f.getOwner().getEmail() === Session.getEffectiveUser().getEmail(); } catch (e) {} } // ไฟล์ที่ระบบอัปโหลดเอง
   if (!ok) throw err_('ไม่มีสิทธิ์เข้าถึงไฟล์นี้', 'FORBIDDEN');
   if (f.getSize() > 6 * 1024 * 1024) throw err_('ไฟล์รูปใหญ่เกินไป');
   const out = 'data:' + mime + ';base64,' + Utilities.base64Encode(f.getBlob().getBytes());
   if (out.length < 95000) try { cache_().put(ck, out, 21600); } catch (e) {}
   return out;
 }
+
+/* ---------- v5.5 แจ้งเตือนครู/ผู้ดูแลระบบร่วมกัน ---------- */
+const CFG_TH = { schoolName: 'ชื่อโรงเรียน', logo: 'โลโก้', welcome: 'ข้อความต้อนรับ', allowAdminSignup: 'การสมัครบัญชีครู', requireApproval: 'การอนุมัติบัญชี', sessionHours: 'อายุเซสชัน', rememberDays: 'จดจำการเข้าสู่ระบบ',
+  emailNotify: 'อีเมลแจ้งเตือน', lineToken: 'LINE', autoBackup: 'สำรองข้อมูลอัตโนมัติ', webNotify: 'แจ้งเตือนบนเว็บ', siteUrl: 'ลิงก์หน้าเว็บ', assignmentTypes: 'ประเภทงาน', themeColor: 'สีระบบ', studentMenus: 'เมนูนักเรียน', scoreSources: 'ที่มาของคะแนนเก็บ' };
+function notifyStaff_(me, title, body, link, ids) {
+  try { const to = (ids || rows_('Users').filter(u => staff_(u) && u.status === 'active').map(u => u.id)).filter((x, i, a) => x && x !== me.id && a.indexOf(x) === i);
+    if (to.length) notifyUsers_(to, title, str_(body, 300), link || ''); } catch (e) { console.error('notifyStaff', e); }
+}
+function settingsChanged_(me, what, tab) { notifyStaff_(me, 'มีการเปลี่ยนการตั้งค่าระบบ', userName_(me) + ' แก้ไข: ' + what, 'settings:' + (tab || 'general')); }
