@@ -323,6 +323,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.evaluate(() => go('attend')); await idle(); ok(await page.isVisible('.qr-box svg'), 'student QR');
   ok(await page.isVisible('.att-now') && !(await page.$('[data-ci]')), 'student sees "กำลังเรียน" (no self check-in)');
   await page.screenshot({ path: SHOT + '/41-student-attend.png' });
+  await page.evaluate(() => go('myscores')); await idle(); ok((await page.textContent('#page')).includes('คะแนนของฉัน') && await page.isVisible('.ms-head'), 'student scores page');
   await page.evaluate(() => localLogout()); await idle();
   await page.click('[data-tab=admin]'); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle();
   await page.evaluate(() => go('attendance')); await idle(); await page.click('[data-slot]'); await page.waitForSelector('[data-bulk]');
@@ -338,9 +339,33 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.evaluate(async () => { const b = SpreadsheetApp.create('สมุดคะแนน UI'), sh = b.insertSheet('ม.1/1');
     [['เลขที่', 'คำนำหน้าชื่อ', 'ชื่อ - นามสกุล', 'ตัวชี้วัดที่ 1', 'รวมคะแนนทั้งหมด', 'เกรด'], ['', '', '', '10', '100', ''], ['1', 'เด็กชาย', 'ทดสอบ หนึ่ง', '9', '88', '4'], ['สรุป', '', '', '', '', ''], ['', '', '', 'จำนวนนักเรียนที่ได้ระดับผลการเรียน', '', ''], ['', '', '', '4', '3', 'รวม'], ['จำนวนนักเรียน', '1', '', '1', '0', '1']].forEach(r => sh.appendRow(r));
     await api('saveSettings', { config: { scoreSources: JSON.stringify([{ id: 'ui1', name: 'สมุดคะแนน UI', url: b.getId(), terms: [] }]) } }); });
-  await page.evaluate(() => go('scorebook')); await idle(); await page.waitForSelector('.sb-tbl', { timeout: 15000 });
-  ok((await page.textContent('.sb-tbl')).includes('ทดสอบ หนึ่ง') && await page.isVisible('.sb-sec'), 'score book page');
+  await page.evaluate(() => go('scorebook')); await idle(); await page.waitForSelector('.sbc [data-sum] .sbc-k', { timeout: 15000 });
+  ok(await page.isVisible('#sbAll') && (await page.textContent('.sbc')).includes('สมุดคะแนน UI'), 'score book home: all courses with summary');
+  await page.screenshot({ path: SHOT + '/43-scorebook-home.png' });
+  await page.click('[data-book=ui1]'); await page.waitForSelector('[data-room]', { timeout: 15000 }); ok(await page.isVisible('.sb-sec'), 'course → rooms');
+  await page.click('[data-room="0"]'); await page.waitForSelector('.sb-tbl', { timeout: 15000 });
+  const sbh = await page.$$eval('.sb-tbl thead th', x => x.map(t => t.textContent.trim()));
+  ok((await page.textContent('.sb-tbl tbody')).includes('ทดสอบ หนึ่ง') && sbh[0] === 'เลขที่' && sbh[1] === 'รหัสนักเรียน' && sbh.some(h => h.startsWith('เกรด')) && sbh.some(h => h.startsWith('คุณลักษณะ')), 'room score table columns ' + sbh.join('|'));
   await page.screenshot({ path: SHOT + '/43-scorebook.png' });
+  // ---------- v5.7 ----------
+  await page.evaluate(() => go('attendance', { tab: 'hist' })); await idle(); await page.click('[data-att=hist]'); await page.waitForTimeout(400);
+  ok(await page.isVisible('[data-open]'), 'attendance history saved and listed');
+  await page.click('[data-open]'); await page.waitForSelector('.att-tbl'); const ath = await page.$$eval('.att-tbl thead th', x => x.map(t => t.textContent.trim()));
+  ok(ath[0] === 'เลขที่' && ath[1] === 'รหัสนักเรียน' && /ชื่อ/.test(ath[2]), 'attendance code column second ' + ath.slice(0, 3).join('|'));
+  ok(await page.$$eval('tr[data-u] input:checked', x => x.length) > 0, 'saved records shown in edit');
+  await page.click('#modal .btn-close'); await page.waitForTimeout(500);
+  await page.click('[data-exp=print]'); await page.waitForTimeout(800); ok(await page.evaluate(() => !!document.querySelector('#cpPrintFrame') && document.querySelector('#cpPrintFrame').contentDocument.body.textContent.includes('รายงานการเช็คชื่อ')), 'print report via iframe');
+  // บัญชีทดลอง
+  await page.evaluate(() => localLogout()); await idle();
+  await page.click('[data-tab=admin]'); await page.waitForTimeout(400); ok(await page.isVisible('#demoFill') && (await page.textContent('#demoFill')).includes('test'), 'login demo box (staff)');
+  await page.click('#demoFill'); ok(await page.inputValue('#lgUser') === 'test' && await page.inputValue('#lgPass') === '12345', 'demo autofill');
+  await page.click('#loginForm button[type=submit]'); await idle(); await page.waitForSelector('#demoPill');
+  await page.screenshot({ path: SHOT + '/44-demo.png' });
+  await page.evaluate(() => go('users')); await idle(); ok(await page.isVisible('.ucard .u-tools .chip'), 'users: status chip in tool row');
+  await page.evaluate(() => api('save', 'Courses', { name: 'x' }).catch(() => {})); await page.waitForSelector('.swal2-popup'); ok((await page.textContent('.swal2-popup')).includes('ดูข้อมูลได้อย่างเดียว'), 'demo write blocked popup'); await page.click('.swal2-confirm'); await page.waitForTimeout(300);
+  await page.evaluate(() => localLogout()); await idle(); await page.waitForTimeout(400);
+  ok(await page.isVisible('#demoFill') && (await page.textContent('#demoFill')).includes('12345'), 'login demo box (student)');
+  await page.click('[data-tab=admin]'); await page.waitForTimeout(400); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle();
   // mobile
   const m = await browser.newContext({ ...require('playwright').devices['iPhone 13'], ignoreHTTPSErrors: true });
   const mp = await m.newPage(); mp.on('pageerror', e => errs.push('m: ' + e.message));
@@ -351,6 +376,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await mp.click('[data-tab=admin]'); await mp.fill('#lgUser', 'admin'); await mp.fill('#lgPass', 'admin123'); await mp.click('#loginForm button[type=submit]');
   await mp.waitForSelector('#appView:not(.hidden)'); await mp.waitForFunction(() => !document.querySelector('#loader.show')); await mp.waitForTimeout(600);
   await mp.evaluate(() => { localStorage.setItem('cp_theme', 'dark'); document.documentElement.dataset.theme = 'dark'; document.documentElement.setAttribute('data-bs-theme', 'dark'); });
+  ok(await mp.evaluate(() => { const c = document.querySelector('.hero .clock'), w = document.querySelector('.hero .who'); return c && w && c.getBoundingClientRect().top < w.getBoundingClientRect().top; }), 'mobile hero: clock above profile');
   await mp.click('.dock [data-go=users]'); await mp.waitForFunction(() => !document.querySelector('#loader.show')); await mp.waitForTimeout(400);
   await mp.screenshot({ path: SHOT + '/10-mobile-users-dark.png' });
   const ov = await mp.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1); ok(!ov, 'no horizontal overflow on mobile');

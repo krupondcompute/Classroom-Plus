@@ -439,5 +439,36 @@ R('ttSaveCfg', AD, { periods: 14, minutes: 120, start: '00:00', breakAfter: 0, b
 const sl3 = R('ttSaveSlot', AD, { day: nowD.dow, period: Math.max(1, curP - 1) === curP ? curP + 1 : curP - 1, span: 1, courseId: crs.id, grade: 'ม.1', room: '1', students: [s9u.id] });
 const cpf = R('attCopyFrom', AD, sl3.data.id, nowD.date); ok(cpf.ok && cpf.data.length >= 1 && cpf.data[0].records[s9u.id], 'copy attendance from previous period ' + (cpf.error || ''));
 const ex = R('attExport', AD, {}).data; ok(ex.rows.length >= 1 && ex.headers.length === 12, 'attendance export');
+// ---------- v5.7 ----------
+// คะแนน: ทุกแผ่นงาน (แม้ลิงก์ระบุ gid) · หัวตารางรวมเซลล์ (ชื่อ-สกุลอยู่เหนือคำนำหน้า) · คอลัมน์ตามประเภท · รหัสจาก Users
+const bk5 = ctx.SpreadsheetApp.create('ผลการเรียน ว21101');
+const mk5 = (nm, rows) => { const sh = bk5.insertSheet(nm); [['ผลการเรียน', '', '', '', '', '', '', '', '', '', '', ''], ['ที่', 'เลขประจำตัว', 'ชื่อ - สกุล', '', 'งานที่ 1', 'ตัวชี้วัดที่ 1', 'ตัวชี้วัดที่ 2', 'สอบกลางภาค', 'สอบปลายภาค', 'รวมคะแนนทั้งหมด', 'เกรด', 'คุณลักษณะอันพึงประสงค์', 'การอ่าน คิด วิเคราะห์ และเขียน'],
+  ['', '', '', '', '(5)', '(20)', '(30)', '(20)', '(30)', '(100)', '', '', '']].concat(rows).forEach(r => sh.appendRow(r)); };
+mk5('ม.1/1', [['1', '', 'เด็กชาย', 'คะแนน ดี', '5', '18', '25', '15', '25', '83', '4', '3', '3'], ['2', '', 'เด็กหญิง', 'สอง ดี', '3', '10', '15', '10', '15', '50', '1.5', '2', '2']]);
+mk5('ม.1/2', [['1', '', 'เด็กชาย', 'สาม ดี', '4', '12', '20', '12', '20', '64', '2.5', '3', '2']]);
+R('saveSettings', AD, { config: { scoreSources: [{ id: 'sb5', name: 'ว21101', url: 'https://docs.google.com/spreadsheets/d/' + bk5.getId() + '/edit#gid=12345', terms: [], courseIds: R('me', s9).data.user.courseIds.slice(0, 1) }] } });
+const bk5d = R('scoreBook', AD, 'sb5', true).data;
+ok(bk5d.sheets.length === 2 && bk5d.sheets.map(x => x.name).join() === 'ม.1/1,ม.1/2', 'score book reads every sheet (ignores gid) ' + JSON.stringify(bk5d.sheets.map(x => x.name)));
+const r51 = bk5d.sheets[0].students[0];
+ok(r51.no === '1' && r51.name === 'คะแนน ดี' && r51.prefix === 'เด็กชาย' && r51.total === '83' && r51.grade === '4' && r51.trait === '3' && r51.read === '3', 'data-driven name/no/prefix columns ' + JSON.stringify(r51));
+ok(r51.code === '80901', 'student code from Users by name');
+const kinds = bk5d.sheets[0].columns.map(c => c.kind).join();
+ok(/ind,ind/.test(kinds) && /exam,exam/.test(kinds) && kinds.indexOf('raw') >= 0, 'column kinds ' + kinds);
+const ms = R('myScores', s9).data; ok(ms.items.length === 1 && ms.items[0].value === '83' && ms.items[0].grade === '4' && ms.items[0].indicators.length === 2 && ms.items[0].exams.length === 2 && ms.items[0].room === 'ม.1/1' && ms.items[0].course, 'student my scores ' + JSON.stringify(ms.items[0]));
+ok(R('myScores', AD).ok, 'myScores safe for staff');
+// บัญชีทดลองใช้งาน
+ok(R('bootstrap', null).data.config.demoEnabled === 'true', 'demo enabled public');
+const dl = R('login', null, { mode: 'admin', username: 'test', password: '12345' }); ok(dl.ok && dl.data.user.demo === 'true', 'demo teacher login ' + (dl.error || ''));
+const DM = dl.data.token;
+ok(R('listUsers', DM).ok && R('adminDashboard', DM).ok && R('getSettings', DM).ok, 'demo can read');
+ok(/ซ่อน/.test(R('getSettings', DM).data.sheetId), 'demo settings masked');
+ok(R('save', DM, 'Courses', { name: 'x' }).code === 'DEMO' && R('saveSettings', DM, { config: { schoolName: 'x' } }).code === 'DEMO' && R('deleteUsers', DM, { ids: [] }).code === 'DEMO', 'demo cannot write');
+ok(R('batch', DM, [['listUsers', []], ['save', ['Courses', { name: 'x' }]]]).data.map(x => x.ok).join() === 'true,false', 'demo batch blocked');
+ok(R('markRead', DM, 'all').ok, 'demo soft op');
+ok(R('login', null, { mode: 'admin', username: 'test', password: '12345' }).ok && R('listUsers', AD).data.filter(u => u.username === 'test').length === 1, 'demo teacher created once');
+const dsu = ctx.ensureDemoStudent_(); const dst = ctx.createSession_(dsu, false).token;
+ok(R('me', dst).data.user.demo === 'true' && R('studentHome', dst).ok && R('submitWork', dst, {}).code === 'DEMO', 'demo student read only');
+ok(R('login', null, { mode: 'student', studentCode: '12345' }).data.user.demo === 'true' && R('listUsers', AD).data.filter(u => u.studentCode === '12345' && u.role === 'student').length === 1, 'demo student login (no duplicate)');
+R('saveSettings', AD, { config: { demoEnabled: 'false' } }); ok(R('login', null, { mode: 'admin', username: 'test', password: '12345' }).ok === false, 'demo can be disabled');
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
