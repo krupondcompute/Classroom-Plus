@@ -321,17 +321,26 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('#sfOk'); await idle(); await page.waitForTimeout(400); ok(await page.isVisible('[data-slot]'), 'slot shown in timetable');
   await page.evaluate(() => localLogout()); await idle(); await page.fill('#lgCode', '43002'); await page.click('#loginForm button[type=submit]'); await idle();
   await page.evaluate(() => go('attend')); await idle(); ok(await page.isVisible('.qr-box svg'), 'student QR');
-  await page.click('[data-ci]'); await idle(); await page.waitForTimeout(300); ok((await page.textContent('.swal2-popup')).includes('มาเรียน'), 'student self check-in'); await confirm();
+  ok(await page.isVisible('.att-now') && !(await page.$('[data-ci]')), 'student sees "กำลังเรียน" (no self check-in)');
   await page.screenshot({ path: SHOT + '/41-student-attend.png' });
   await page.evaluate(() => localLogout()); await idle();
   await page.click('[data-tab=admin]'); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle();
-  await page.evaluate(() => go('attendance')); await idle(); await page.click('[data-slot]'); await page.waitForSelector('#atAll');
-  ok((await page.textContent('#modal')).includes('เช็คชื่อเอง'), 'teacher sees self check-in');
-  await page.click('#atAll'); await page.click('#atSave'); await confirm(); await page.waitForTimeout(500);
+  await page.evaluate(() => go('attendance')); await idle(); await page.click('[data-slot]'); await page.waitForSelector('[data-bulk]');
+  ok(await page.isVisible('#mhTools #atScan') && await page.isVisible('#mhTools #atCopy') && await page.isVisible('#mhTools #atSet'), 'att modal top tools');
+  await page.click('[data-bulk=late]'); ok((await page.$$eval('tr[data-u] input[value=late]:checked', x => x.length)) === 6, 'all late');
+  await page.click('[data-bulk=late]'); ok((await page.$$eval('tr[data-u] input:checked', x => x.length)) === 0, 'toggle off all');
+  await page.click('[data-bulk=present]'); await page.click('#atSave'); await confirm(); await page.waitForTimeout(500);
   await page.click('[data-slot]'); await page.waitForSelector('.swal2-popup'); ok((await page.textContent('.swal2-popup')).includes('มีการเช็คชื่อเรียบร้อยแล้ว'), 'already checked notice'); await page.click('.swal2-confirm'); await page.waitForTimeout(300);
   await page.screenshot({ path: SHOT + '/42-attendance-check.png' });
   await page.click('#modal .btn-close'); await page.waitForTimeout(500);
   await page.evaluate(() => go('dash')); await idle(); ok(await page.isVisible('.att-dash2') && (await page.textContent('.att-dash2')).includes('%'), 'dashboard attendance card with percent');
+  // ---------- v5.6: คะแนนนักเรียน ----------
+  await page.evaluate(async () => { const b = SpreadsheetApp.create('สมุดคะแนน UI'), sh = b.insertSheet('ม.1/1');
+    [['เลขที่', 'คำนำหน้าชื่อ', 'ชื่อ - นามสกุล', 'ตัวชี้วัดที่ 1', 'รวมคะแนนทั้งหมด', 'เกรด'], ['', '', '', '10', '100', ''], ['1', 'เด็กชาย', 'ทดสอบ หนึ่ง', '9', '88', '4'], ['สรุป', '', '', '', '', ''], ['', '', '', 'จำนวนนักเรียนที่ได้ระดับผลการเรียน', '', ''], ['', '', '', '4', '3', 'รวม'], ['จำนวนนักเรียน', '1', '', '1', '0', '1']].forEach(r => sh.appendRow(r));
+    await api('saveSettings', { config: { scoreSources: JSON.stringify([{ id: 'ui1', name: 'สมุดคะแนน UI', url: b.getId(), terms: [] }]) } }); });
+  await page.evaluate(() => go('scorebook')); await idle(); await page.waitForSelector('.sb-tbl', { timeout: 15000 });
+  ok((await page.textContent('.sb-tbl')).includes('ทดสอบ หนึ่ง') && await page.isVisible('.sb-sec'), 'score book page');
+  await page.screenshot({ path: SHOT + '/43-scorebook.png' });
   // mobile
   const m = await browser.newContext({ ...require('playwright').devices['iPhone 13'], ignoreHTTPSErrors: true });
   const mp = await m.newPage(); mp.on('pageerror', e => errs.push('m: ' + e.message));

@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '5.5.0';
+const APP_VERSION = '5.6.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -137,7 +137,7 @@ const ROUTES = {
   listBackups: ['admin', listBackups_], liveList: ['staff', liveList_], liveGet: ['staff', liveGet_], liveSave: ['staff', liveSave_], liveRemove: ['staff', liveRemove_],
   liveControl: ['staff', liveControl_], liveStatus: ['staff', liveStatus_], liveInfo: ['public', liveInfo_], liveJoin: ['public', liveJoin_], liveSubmit: ['public', liveSubmit_], termSources: ['staff', termSources_], peekTerm: ['staff', peekTerm_], importTerm: ['staff', importTerm_], saveTermDb: ['admin', saveTermDb_], createTermDb: ['admin', createTermDb_], removeTermDb: ['admin', removeTermDb_],
   fileData: ['user', fileData_],
-  scoreTest: ['staff', scoreTest_],
+  scoreTest: ['staff', scoreTest_], scoreBooks: ['staff', scoreBooks_], scoreBook: ['staff', scoreBook_], attCopyFrom: ['staff', attCopyFrom_], attExport: ['staff', attExport_],
   ttGet: ['staff', ttGet_], ttSaveCfg: ['staff', ttSaveCfg_], ttSaveSlot: ['staff', ttSaveSlot_], ttDeleteSlot: ['staff', ttDeleteSlot_],
   attOpen: ['staff', attOpen_], attSave: ['staff', attSave_], attHistory: ['staff', attHistory_], attSummary: ['staff', attSummary_], attDecode: ['staff', attDecode_],
   myAttend: ['user', myAttend_], attCheckIn: ['user', attCheckIn_],
@@ -802,10 +802,49 @@ function scanTotal_(tables, codeIn, nameIn) {
 function sheetTables_(url) {
   const id = (String(url).match(/\/d\/([\w-]{20,})/) || String(url).match(/^([\w-]{25,})$/) || [])[1], gid = (String(url).match(/[#&?]gid=(\d+)/) || [])[1];
   if (!id) throw err_('ลิงก์ Google Sheet ไม่ถูกต้อง');
-  try { const ss = SpreadsheetApp.openById(id); return { name: ss.getName(), tables: ss.getSheets().filter(sh => !gid || String(sh.getSheetId()) === gid).map(sh => sh.getDataRange().getDisplayValues()) }; }
+  try { const ss = SpreadsheetApp.openById(id), shs = ss.getSheets().filter(sh => !gid || String(sh.getSheetId()) === gid); return { name: ss.getName(), names: shs.map(sh => sh.getName()), tables: shs.map(sh => sh.getDataRange().getDisplayValues()) }; }
   catch (e) { const r = UrlFetchApp.fetch('https://docs.google.com/spreadsheets/d/' + id + '/gviz/tq?tqx=out:csv' + (gid ? '&gid=' + gid : ''), { muteHttpExceptions: true });
     if (r.getResponseCode() !== 200 || /<html/i.test(r.getContentText().slice(0, 200))) throw err_('เปิด Google Sheet นี้ไม่ได้ — แชร์ไฟล์ให้บัญชีที่ Deploy เว็บแอป (' + (function () { try { return Session.getEffectiveUser().getEmail(); } catch (x) { return 'เจ้าของสคริปต์'; } })() + ') หรือตั้งค่า "ทุกคนที่มีลิงก์ดูได้"');
-    return { name: 'CSV', tables: [Utilities.parseCsv(r.getContentText())] }; }
+    return { name: 'CSV', names: ['Sheet1'], tables: [Utilities.parseCsv(r.getContentText())] }; }
+}
+const srcUrl_ = u => /^[\w-]{25,}$/.test(u) ? 'https://docs.google.com/spreadsheets/d/' + u + '/edit' : u;
+/** แยกตารางคะแนน 1 แผ่นงาน: หัวตาราง (แถวที่มี "รวมคะแนนทั้งหมด") · แถวคะแนนเต็ม · รายชื่อนักเรียน · ส่วนสรุป (ระดับผลการเรียน / คุณลักษณะ / อ่านคิดวิเคราะห์) */
+function parseBook_(t) {
+  const clean = v => String(v === undefined || v === null ? '' : v).replace(/\s+/g, ' ').trim(), norm = v => clean(v).replace(/\s/g, '').toLowerCase();
+  let h = -1, tc = -1;
+  for (let i = 0; i < Math.min(15, t.length) && tc < 0; i++) { const j = t[i].findIndex(x => norm(x).indexOf('รวมคะแนนทั้งหมด') >= 0); if (j >= 0) { h = i; tc = j; } }
+  if (tc < 0) return null;
+  const head = t[h].map(clean), hn = head.map(norm), find = re => hn.findIndex(x => re.test(x));
+  const noC = find(/^(เลขที่|ที่|no\.?)$/), preC = find(/คำนำหน้า/), codeC = find(/รหัส|เลขประจำตัว/);
+  let nameC = hn.findIndex(x => /ชื่อ/.test(x) && !/ชื่อเล่น|ชื่องาน|คำนำ/.test(x)); if (nameC < 0) nameC = find(/name/);
+  const gradeC = find(/เกรด|ผลการเรียน|ระดับผล/), idC = [noC, preC, codeC, nameC, find(/ชื่อเล่น/)];
+  let maxRow = null, start = h + 1;
+  const r1 = t[h + 1] || []; if (r1.length && !clean(r1[nameC]) && /\d/.test(clean(r1[tc]))) { maxRow = r1; start = h + 2; }
+  const cols = []; head.forEach((x, j) => { if (!x || idC.indexOf(j) >= 0 || /ชื่องาน/.test(hn[j])) return; cols.push({ j: j, label: x, max: maxRow ? clean(maxRow[j]) : '' }); });
+  const students = []; let end = t.length;
+  for (let i = start; i < t.length; i++) { const r = t[i]; if (r.slice(0, Math.max(5, nameC + 1)).some(c => /สรุป/.test(clean(c)))) { end = i; break; }
+    const nm = clean(r[nameC]); if (!nm) continue;
+    const vals = {}; cols.forEach(c => vals[c.j] = clean(r[c.j]));
+    students.push({ no: noC >= 0 ? clean(r[noC]) : '', prefix: preC >= 0 ? clean(r[preC]) : '', name: nm, code: codeC >= 0 ? clean(r[codeC]) : '', vals: vals, total: clean(r[tc]), grade: gradeC >= 0 ? clean(r[gradeC]) : '' }); }
+  const section = re => { for (let i = end; i < t.length; i++) { const j = t[i].findIndex(c => re.test(norm(c))); if (j < 0) continue;
+      const lab = t[i + 1] || [], cnt = t[i + 2] || [], pct = t[i + 3] || [], out = { labels: [], counts: [], percents: [] }; let k = j;
+      while (k < lab.length && clean(lab[k]) && !/^รวม/.test(clean(lab[k]))) { out.labels.push(clean(lab[k])); out.counts.push(clean(cnt[k])); out.percents.push(/ร้อยละ/.test(pct.slice(0, j).map(clean).join('')) ? clean(pct[k]) : ''); k++; }
+      out.total = clean(cnt[k]); return out.labels.length ? out : null; } return null; };
+  let count = ''; for (let i = end; i < t.length; i++) { const j = t[i].findIndex(c => /^จำนวนนักเรียน$/.test(norm(c))); if (j >= 0) { count = clean(t[i].slice(j + 1).find(c => clean(c)) || ''); break; } }
+  return { totalCol: tc, gradeCol: gradeC, columns: cols, students: students, count: count || String(students.length),
+    sections: { grade: section(/ได้ระดับผลการเรียน/), trait: section(/คุณลักษณะ/), read: section(/การอ่าน|อ่าน,?คิด/) } };
+}
+/** รายละเอียดคะแนนของนักเรียน 1 คนจากแหล่งคะแนน (ตัวชี้วัด / รวมคะแนน / สอบ / เกรด) */
+function studentScore_(tables, u) {
+  const norm = v => String(v || '').replace(/\s+/g, '').toLowerCase(), code = norm(u.studentCode), nm = norm(nameKey_(u.fullName || '')).replace(/^(เด็กชาย|เด็กหญิง|นาย|นางสาว|นาง|ด\.ช\.|ด\.ญ\.)/, '');
+  for (const t of tables) { const b = parseBook_(t); if (!b) continue;
+    const st = b.students.find(x => (code && (norm(x.code) === code || Object.keys(x.vals).some(k => norm(x.vals[k]) === code))) || (nm.length > 3 && (norm(x.prefix + x.name).indexOf(nm) >= 0 || norm(nameKey_(x.name)).indexOf(nm) >= 0)));
+    if (!st) continue;
+    const details = b.columns.filter(c => /ตัวชี้วัด|รวม|สอบ|คะแนน|กลางภาค|ปลายภาค/.test(c.label) && c.j !== b.totalCol).map(c => ({ label: c.label, value: st.vals[c.j], max: c.max })).filter(d => d.value !== '');
+    const tcol = b.columns.find(c => c.j === b.totalCol);
+    return { value: st.total, header: tcol ? tcol.label : 'รวมคะแนนทั้งหมด', max: tcol ? tcol.max : '', grade: st.grade, details: details };
+  }
+  return null;
 }
 /** ทดสอบที่มาของคะแนนเก็บ (หน้าตั้งค่า): เปิดไฟล์ได้ไหม · พบคอลัมน์ไหม · ลองค้นหานักเรียน */
 function scoreTest_(ctx, url, code) {
@@ -823,6 +862,7 @@ function sheetTotal_(url, u) {
   catch (e) { // ไฟล์ที่แชร์แบบลิงก์สาธารณะ → อ่านผ่าน CSV
     const r = UrlFetchApp.fetch('https://docs.google.com/spreadsheets/d/' + id + '/gviz/tq?tqx=out:csv' + (gid ? '&gid=' + gid : ''), { muteHttpExceptions: true });
     if (r.getResponseCode() !== 200) return null; tables = [Utilities.parseCsv(r.getContentText())]; }
+  const d = studentScore_(tables, u); if (d && d.value !== '') return d;
   const r = scanTotal_(tables, u.studentCode, u.fullName);
   return r && r.value !== undefined && r.value !== '' ? { value: r.value, header: r.header } : null;
 }
@@ -1855,7 +1895,7 @@ function chatCreateTeam_(ctx, name, ids) {
 }
 function chatRoomOut_(me, r) {
   const users = {}; rows_('Users').forEach(u => users[u.id] = u);
-  const o = Object.assign({ id: r.id, type: r.type }, chatTitle_(me, r, users));
+  const o = Object.assign({ id: r.id, type: r.type, canPurge: chatCanPurge_(me, r) }, chatTitle_(me, r, users));
   const al = (rows_('ChatReads').find(x => x.id === me.id + '|' + r.id) || {}).alias; if (al) o.title = al;
   if (r.type === 'team') { const ids = json_(r.members, []); o.members = ids.map(id => userName_(users[id])); o.canRename = true; o.canManage = true;
     o.memberList = ids.map(id => { const u = users[id]; return { id: id, name: userName_(u), role: u ? u.role : '', grade: u ? u.grade || '' : '', room: u ? u.room || '' : '', me: id === me.id, owner: id === r.createdBy }; }); }
@@ -2524,6 +2564,7 @@ function myAttend_(ctx) {
 }
 function attCheckIn_(ctx, slotId) {
   const u = ctx.user; if (u.role !== 'student') throw err_('เฉพาะนักเรียน', 'FORBIDDEN');
+  if (props_().getProperty('ATT_SELF') !== '1') throw err_('การเช็คชื่อทำโดยครูผู้สอนเท่านั้น (แสดง QR ประจำตัวให้ครูสแกน)', 'FORBIDDEN');
   const x = find_('TtSlots', slotId), t = todayInfo_();
   if (!x || slotStudentIds_(x).indexOf(u.id) < 0) throw err_('คุณไม่ได้อยู่ในคาบเรียนนี้', 'FORBIDDEN');
   const cfg = ttCfgOf_(x.ownerId), pt = periodTime_(cfg, Number(x.period), x.span);
@@ -2545,7 +2586,7 @@ function attCheckIn_(ctx, slotId) {
 /** รูปที่แชร์สาธารณะไม่ได้ (บัญชีโรงเรียน): ส่งข้อมูลรูปผ่านระบบ — เฉพาะไฟล์ในโฟลเดอร์ของระบบเท่านั้น */
 function fileData_(ctx, id) {
   id = str_(id, 80); if (!/^[\w-]{20,}$/.test(id)) throw err_('รหัสไฟล์ไม่ถูกต้อง');
-  const ck = 'fd_' + id, c = cache_().get(ck); if (c) return c;
+  const ck = 'fd_' + id, c = getBig_(ck); if (c) return c;
   const roots = {}; [mainDriveId_(), coreDriveId_(), driveId_()].concat(Object.keys(tenants_()).map(k => tenants_()[k].driveId)).forEach(x => { if (x) roots[x] = 1; });
   try { Object.keys(dbMap_()).forEach(k => { const d = dbMap_()[k].driveId; if (d) roots[d] = 1; }); } catch (e) {}
   const f = DriveApp.getFileById(id), mime = f.getMimeType();
@@ -2556,7 +2597,7 @@ function fileData_(ctx, id) {
   if (!ok) throw err_('ไม่มีสิทธิ์เข้าถึงไฟล์นี้', 'FORBIDDEN');
   if (f.getSize() > 6 * 1024 * 1024) throw err_('ไฟล์รูปใหญ่เกินไป');
   const out = 'data:' + mime + ';base64,' + Utilities.base64Encode(f.getBlob().getBytes());
-  if (out.length < 95000) try { cache_().put(ck, out, 21600); } catch (e) {}
+  putBig_(ck, out, 21600);
   return out;
 }
 
@@ -2568,3 +2609,47 @@ function notifyStaff_(me, title, body, link, ids) {
     if (to.length) notifyUsers_(to, title, str_(body, 300), link || ''); } catch (e) { console.error('notifyStaff', e); }
 }
 function settingsChanged_(me, what, tab) { notifyStaff_(me, 'มีการเปลี่ยนการตั้งค่าระบบ', userName_(me) + ' แก้ไข: ' + what, 'settings:' + (tab || 'general')); }
+
+/* ---------- v5.6 เมนู "คะแนนนักเรียน" (ครู/ผู้ดูแลระบบ) ---------- */
+function myScoreSources_(me) {
+  const out = json_(cfg_().scoreSources, []).map(x => Object.assign({ scope: 'system' }, x)), cs = {}; rows_('Courses').forEach(c => cs[c.id] = c);
+  rows_('Users').filter(t => staff_(t) && t.prefs && (t.id === me.id || isAdmin_(me))).forEach(t => ((json_(t.prefs, {}) || {}).scoreSources || []).forEach(x => out.push(Object.assign({ scope: t.id === me.id ? 'mine' : 'teacher', by: userName_(t) }, x))));
+  return out.filter(x => isAdmin_(me) || x.scope === 'mine' || !(x.courseIds || []).length || x.courseIds.some(c => teaches_(me, cs[c])))
+    .map(x => Object.assign({}, x, { courseNames: (x.courseIds || []).map(c => (cs[c] || {}).name).filter(Boolean) }));
+}
+function scoreBooks_(ctx) { return myScoreSources_(ctx.user).map(x => ({ id: x.id, name: x.name, terms: x.terms || [], courseNames: x.courseNames, grades: x.grades || [], rooms: x.rooms || [], scope: x.scope, by: x.by || '' })); }
+function scoreBook_(ctx, id, refresh) {
+  const x = myScoreSources_(ctx.user).find(y => y.id === String(id)); if (!x) throw err_('ไม่พบที่มาของคะแนนนี้', 'NOTFOUND');
+  const ck = 'sb_' + (props_().getProperty('SCORE_V') || '') + x.id; if (!refresh) { const c = getBig_(ck); if (c) return json_(c, null); }
+  const t = sheetTables_(srcUrl_(x.url)), sheets = [];
+  t.tables.forEach((tb, i) => { const b = parseBook_(tb); if (b && b.students.length) sheets.push(Object.assign({ name: (t.names || [])[i] || 'แผ่นงาน ' + (i + 1) }, b)); });
+  const out = { id: x.id, name: x.name, file: t.name, url: srcUrl_(x.url), sheets: sheets, at: now_() };
+  putBig_(ck, JSON.stringify(out), 900); return out;
+}
+/** แคชข้อมูลขนาดใหญ่ (แบ่งเป็นชิ้น ≤ 90KB สูงสุด ~2.7MB) */
+function putBig_(k, str, sec) { try { const n = Math.ceil(str.length / 90000); if (n > 30) return; const o = { [k + '#n']: String(n) }; for (let i = 0; i < n; i++) o[k + '#' + i] = str.slice(i * 90000, (i + 1) * 90000); cache_().putAll(o, sec || 21600); } catch (e) {} }
+function getBig_(k) { try { const c = cache_(), n = Number(c.get(k + '#n') || 0); if (!n) return null; const keys = []; for (let i = 0; i < n; i++) keys.push(k + '#' + i); const g = c.getAll(keys); if (keys.some(x => g[x] == null)) return null; return keys.map(x => g[x]).join(''); } catch (e) { return null; } }
+/* ---------- v5.6 เช็คชื่อ: คัดลอกจากคาบก่อน · ส่งออก ---------- */
+function attCopyFrom_(ctx, slotId, date) {
+  const me = ctx.user, x = find_('TtSlots', slotId); date = dateOk_(date);
+  if (!slotCan_(me, x)) throw err_('ไม่พบคาบเรียนนี้', 'FORBIDDEN');
+  const mine = slotStudentIds_(x), cs = {}; rows_('Courses').forEach(c => cs[c.id] = c);
+  const slots = {}; rows_('TtSlots').forEach(y => slots[y.id] = y);
+  return rows_('Attendance').filter(a => a.date === date && a.slotId !== x.id && slots[a.slotId]).map(a => {
+    const y = slots[a.slotId], recs = json_(a.records, {}), r = {}; mine.forEach(id => { if (recs[id]) r[id] = { st: recs[id].st, note: recs[id].note || '' }; });
+    return { slotId: y.id, period: Number(y.period), courseName: (cs[y.courseId] || {}).name || '-', grade: y.grade, room: y.room, checked: !!a.checkedBy, matched: Object.keys(r).length, records: r };
+  }).filter(o => o.matched).sort((a, b) => b.period - a.period);
+}
+function attExport_(ctx, d) {
+  d = d || {}; const me = ctx.user, vis = {}, cs = {}, users = {};
+  ttVisible_(me).forEach(x => vis[x.id] = x); rows_('Courses').forEach(c => cs[c.id] = c); rows_('Users').forEach(u => users[u.id] = u);
+  const rows = [];
+  rows_('Attendance').filter(a => vis[a.slotId] && a.checkedBy && (!d.from || a.date >= d.from) && (!d.to || a.date <= d.to) && (!d.slotId || a.slotId === d.slotId))
+    .sort((a, b) => a.date.localeCompare(b.date) || Number(vis[a.slotId].period) - Number(vis[b.slotId].period)).forEach(a => {
+      const x = vis[a.slotId], c = cs[x.courseId] || {}, recs = json_(a.records, {});
+      Object.keys(recs).forEach(id => { const u = users[id] || {}; rows.push([a.date, DAY_TH_[dowOf_(a.date)], Number(x.period), c.code || '', c.name || '', (u.grade || x.grade || '') + '/' + (u.room || x.room || ''), u.classNo || '', u.studentCode || '', userName_(u), ATT_TH[recs[id].st] || recs[id].st, recs[id].note || '', userName_(users[a.checkedBy])]); });
+    });
+  rows.sort((a, b) => a[0].localeCompare(b[0]) || a[2] - b[2] || String(a[5]).localeCompare(String(b[5])) || (Number(a[6]) || 999) - (Number(b[6]) || 999));
+  return { headers: ['วันที่', 'วัน', 'คาบ', 'รหัสวิชา', 'รายวิชา', 'ชั้น/ห้อง', 'เลขที่', 'รหัสนักเรียน', 'ชื่อ-สกุล', 'สถานะ', 'หมายเหตุ', 'ผู้เช็คชื่อ'], rows: rows };
+}
+const DAY_TH_ = ['', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];

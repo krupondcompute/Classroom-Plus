@@ -396,6 +396,7 @@ const sl = R('ttSaveSlot', AD, { day: nowD.dow, period: curP, span: 1, courseId:
 ok(R('ttSaveSlot', AD, { day: nowD.dow, period: curP, span: 1, courseId: crs.id, grade: 'ม.1', room: '1', students: [s9u.id] }).ok === false, 'slot clash');
 ok(R('ttGet', AD).data.slots.some(x => x.id === sl.data.id), 'tt list');
 const mat = R('myAttend', s9).data; ok(mat.slots.length === 1 && mat.slots[0].open && mat.token.startsWith('CPA1.'), 'student sees open slot');
+ok(R('attCheckIn', s9, sl.data.id).code === 'FORBIDDEN', 'self check-in disabled by default'); vm.runInContext("props_().setProperty('ATT_SELF','1')", ctx);
 const ci = R('attCheckIn', s9, sl.data.id); ok(ci.ok && ci.data.st === 'present', 'student self check-in ' + ci.error);
 ok(R('attCheckIn', s9, sl.data.id).ok === false, 'no double self check-in');
 const ao = R('attOpen', AD, sl.data.id, nowD.date).data; ok(ao.records[s9u.id].st === 'present' && !ao.done, 'teacher sees self check-in');
@@ -425,5 +426,18 @@ R('ttSaveCfg', AD, { periods: 14, minutes: 120, start: '00:00', breakAfter: 0, b
 const sl2 = R('ttSaveSlot', AD, { day: nowD.dow, period: curP, span: 1, courseId: crs.id, grade: 'ม.1', room: '1', students: [s9u.id] }).data;
 R('attSave', AD, sl2.id, nowD.date, { [s9u.id]: { st: 'present' } });
 ok(R('notifications', KB).data.length >= 0, 'att save ok');
+// ---------- v5.6 ----------
+const bk4 = ctx.SpreadsheetApp.create('สมุดคะแนน'); const s4 = bk4.insertSheet('ม.1/1');
+[['คะแนนการส่งงาน', '', '', '', '', '', '', ''], ['เลขที่', 'คำนำหน้าชื่อ', 'ชื่อ - นามสกุล', 'ชื่อเล่น', 'ตัวชี้วัดที่ 1', 'สอบกลางภาค', 'รวมคะแนนทั้งหมด', 'เกรดที่ได้'], ['', '', '', 'คะแนน', '10', '20', '100', ''],
+ ['1', 'เด็กชาย', 'คะแนน ดี', 'ดี', '8', '15', '84', '4'], ['2', 'เด็กหญิง', 'สอง ดี', '', '5', '10', '60', '2.5'], ['สรุปจำนวนนักเรียน', '', '', '', '', '', '', ''], ['', '', '', '', '', '', '', ''],
+ ['สรุปผลการเรียน', '', '', '', 'จำนวนนักเรียนที่ได้ระดับผลการเรียน', '', 'รวม', ''], ['', '', '', '', '4', '2.5', '', ''], ['จำนวนนักเรียน', '', '', '2', '1', '1', '2', ''], ['ร้อยละ', '', '', '', '50%', '50%', '100%', '']].forEach(r => s4.appendRow(r));
+R('saveSettings', AD, { config: { scoreSources: [{ id: 'sb1', name: 'สมุด', url: bk4.getId(), terms: [] }] } });
+const bkl = R('scoreBooks', AD).data; ok(bkl.some(x => x.id === 'sb1'), 'score books list');
+const bkd = R('scoreBook', AD, 'sb1').data; ok(bkd.sheets.length === 1 && bkd.sheets[0].students.length === 2 && bkd.sheets[0].sections.grade.labels.join() === '4,2.5' && bkd.sheets[0].sections.grade.counts.join() === '1,1', 'parse score book ' + JSON.stringify(bkd.sheets[0] && bkd.sheets[0].sections));
+const th9 = R('studentHome', s9).data.total; ok(th9.value === '84' && th9.grade === '4' && th9.details.some(d => d.label === 'ตัวชี้วัดที่ 1' && d.value === '8' && d.max === '10'), 'student score details ' + JSON.stringify(th9));
+R('ttSaveCfg', AD, { periods: 14, minutes: 120, start: '00:00', breakAfter: 0, breakMin: 0, days: 7, lateMin: 600 });
+const sl3 = R('ttSaveSlot', AD, { day: nowD.dow, period: Math.max(1, curP - 1) === curP ? curP + 1 : curP - 1, span: 1, courseId: crs.id, grade: 'ม.1', room: '1', students: [s9u.id] });
+const cpf = R('attCopyFrom', AD, sl3.data.id, nowD.date); ok(cpf.ok && cpf.data.length >= 1 && cpf.data[0].records[s9u.id], 'copy attendance from previous period ' + (cpf.error || ''));
+const ex = R('attExport', AD, {}).data; ok(ex.rows.length >= 1 && ex.headers.length === 12, 'attendance export');
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
