@@ -485,5 +485,35 @@ let qe = null; try { ctx.quiz_({ questions: [{ type: 'mc', q: 'x', points: 1, op
 const bk6 = ctx.SpreadsheetApp.create('ไม่มีอ่าน'); const s6 = bk6.insertSheet('ม.3/1');
 [['เลขที่', 'คำนำหน้าชื่อ', 'ชื่อ - นามสกุล', 'ตัวชี้วัดที่ 1', 'รวมคะแนนทั้งหมด', 'เกรด', 'คุณลักษณะอันพึงประสงค์'], ['', '', '', '10', '100', '', ''], ['1', 'เด็กชาย', 'ทด ลอง', '9', '90', '4', '3']].forEach(r => s6.appendRow(r));
 const pb6 = ctx.parseBook_(s6.getDataRange().getDisplayValues()); ok(pb6.readFromTrait && pb6.students[0].read === '3', 'read falls back to trait column');
+// ---------- v5.9 ----------
+const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+const q1 = R('qrSave', AD, { text: 'https://example.com', note: 'ทดสอบ', png: PNG, useDate: '2026-11-21', style: { dot: 'dots' } }); ok(q1.ok && q1.data.imgId && q1.data.style.dot === 'dots', 'qr save with png to drive ' + (q1.error || ''));
+const q2 = R('qrSave', AD, { id: q1.data.id, text: 'https://example.org', png: PNG }); ok(q2.ok && q2.data.imgId !== q1.data.imgId, 'qr edit replaces image');
+ok(R('qrStatus', AD, q1.data.id, 'cancel').ok && R('qrList', AD).data.cancel === 1, 'qr status + summary');
+ok(R('qrSave', KB, { id: q1.data.id, text: 'x' }).code === 'NOTFOUND', 'qr owner only');
+ok(R('qrRemove', AD, q1.data.id).ok && R('qrList', AD).data.total === 0, 'qr remove');
+ok(R('qrSave', AD, { text: '' }).ok === false, 'qr requires text');
+// กระดาษคำถาม
+const pp = R('paperSave', AD, { title: 'กลางภาค', data: { type: 'กลางภาค', parts: [{ title: 'ตอนที่ 1', questions: [{ q: '1+1', choices: ['1', '2'] }] }] } }); ok(pp.ok && R('paperList', AD).data[0].data.parts.length === 1, 'question paper save/list');
+// กระดาษคำตอบ
+const fd = R('examFolderSave', AD, { name: 'ม.1' }).data; ok(fd.id, 'exam folder');
+const ex1 = R('examSave', AD, { name: 'ข้อสอบ 1', folderId: fd.id, cfg: { digits: 5, count: 5, fmt: 'c4', sets: 2 }, classes: ['ม.1/1'], tags: ['กลางภาค'] }).data;
+ok(ex1.cfg.nopt === 4 && ex1.key.A.length === 5 && ex1.key.B.length === 5 && ex1.tags[0] === 'กลางภาค', 'exam create with default key');
+ok(R('examKey', AD, ex1.id, { A: [{ a: [0], p: 1 }, { a: [1], p: 1 }, { a: [2, 3], p: 2 }, { a: [3], p: 1 }, { a: [0], p: 1 }] }, false).ok, 'exam key save');
+const eg = R('examGet', AD, ex1.id).data; ok(eg.students.some(u => u.id === s9u.id), 'exam students from classes');
+const rs = R('examResultSave', AD, ex1.id, { studentId: s9u.id, set: 'A', answers: [[0], [2], [3], [3], []], code: '80901', img: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ' }).data;
+ok(rs.score === 4 && rs.max === 6, 'exam score with multi-correct item ' + JSON.stringify(rs));
+ok(R('examResultSave', AD, ex1.id, { studentId: s9u.id, answers: [] }).code === 'EXISTS', 'one student one sheet');
+const rs2 = R('examResultSave', AD, ex1.id, { studentId: s9u.id, answers: [[0], [1], [2], [3], [0]], overwrite: true }).data; ok(rs2.replaced && rs2.score === 6, 'overwrite keeps history');
+ok(R('examGet', AD, ex1.id).data.results[0].history.length === 1, 'result history');
+ok(R('examKey', AD, ex1.id, { A: [{ a: [1], p: 1 }, { a: [1], p: 1 }, { a: [2], p: 1 }, { a: [3], p: 1 }, { a: [0], p: 1 }] }, true).data.recalculated === 1 && R('examGet', AD, ex1.id).data.results[0].score === '4', 'recalculate after key edit');
+const rid = R('examGet', AD, ex1.id).data.results[0].id; ok(R('examResultUpdate', AD, rid, { score: 3.5 }).ok && R('examResults', AD).data[0].score === 3.5, 'manual score edit + results list');
+ok(R('examAll', AD).data.exams[0].done === 1, 'exam list counts results');
+ok(R('examFolderRemove', AD, fd.id, 'move').data.exams === 1 && R('examAll', AD).data.exams[0].folderId === '', 'remove folder moves exams out');
+ok(R('examResultRemove', AD, rid).ok && R('examRemove', AD, ex1.id).ok, 'exam result/exam remove');
+ok(R('examPrefs', AD, { pass: 60, auto: true }).data.pass === 60 && JSON.parse(ctx.allStaff_().find(u => u.username === 'admin').prefs).exam.auto === true, 'exam prefs saved per user');
+const cb = R('classBulkAdd', AD, [['ม.4', '1'], ['ม.4', '2'], ['ม.4', '1']]).data; ok(cb.added === 2 && cb.skipped === 1, 'class bulk add skips duplicates');
+ok(R('classRemove2', AD, 'ม.4', '2').ok, 'remove empty class');
+ok(R('classRemove2', AD, 'ม.1', '1').code === 'HAS_STUDENTS', 'class with students needs move/delete');
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

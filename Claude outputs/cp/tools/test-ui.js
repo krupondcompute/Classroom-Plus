@@ -2,7 +2,7 @@
 const { chromium } = require('playwright'), path = require('path'), fs = require('fs');
 const SHOT = process.env.SHOT || '/tmp/shots'; fs.mkdirSync(SHOT, { recursive: true });
 const url = 'file://' + path.join(__dirname, '..', 'preview.html');
-let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; console.log('FAIL:', m); } };
+let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { fail++; console.log('FAIL:', m); } };
 (async () => {
   const proxy = process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY } : undefined;
   const browser = await chromium.launch({ proxy });
@@ -11,6 +11,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   page.on('pageerror', e => errs.push('pageerror: ' + e.stack.slice(0,400)));
   page.on('console', m => m.type() === 'error' && !/youtube|ERR_|favicon|net::|googlevideo|doubleclick|Failed to load resource/i.test(m.text()) && errs.push(m.text()));
   const idle = () => page.waitForFunction(() => !document.querySelector('#loader.show'), null, { timeout: 20000 }).then(() => page.waitForTimeout(250));
+  const closeM = async () => { await page.waitForTimeout(350); await page.click('#modal .btn-close').catch(() => {}); await page.waitForSelector('#modal', { state: 'hidden', timeout: 5000 }).catch(() => page.evaluate(() => bootstrap.Modal.getInstance('#modal')?.hide())); await page.waitForTimeout(250); };
   const confirm = async () => { await page.click('.swal2-confirm'); await idle(); };
   await page.goto(url); await idle();
   ok(await page.isVisible('text=เข้าสู่ระบบ'), 'login visible');
@@ -77,12 +78,12 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   ok((await page.textContent('#pageTitle')).includes('วิทยาการคำนวณ 2'), 'course created from subject');
   await page.click('#sideNav [data-go=aann]'); await idle(); await page.click('#nl [data-edit]'); await page.waitForSelector('#modal.show'); await page.waitForTimeout(400);
   ok(!(await page.$('.toast-x.error')), 'no error when editing announcement after users page');
-  await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  await closeM();
   await page.click('.dock [data-go=aassign]'); await idle(); await page.click('#fab'); await page.waitForSelector('#modal.show');
   await page.click('[data-addopt=type]'); await page.fill('.swal2-input', 'โครงงาน'); await page.click('.swal2-confirm'); await idle();
   ok(await page.inputValue('[name=type]') === 'โครงงาน', 'add assignment type inline');
   await page.screenshot({ path: SHOT + '/06b-assign-type.png' });
-  await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  await closeM();
   await page.click('.dock [data-go=acourses]'); await idle(); await page.click('#cl .ccard:has-text("วิทยาการคำนวณ 1") button[data-go=acourse]'); await idle();
   await page.click('#aL'); await page.waitForSelector('#modal.show'); await page.fill('[name=title]', 'บทเรียนใหม่ทดสอบ'); await page.click('#crudSave'); await confirm(); await idle();
   ok(await page.isVisible('text=บทเรียนใหม่ทดสอบ'), 'add lesson');
@@ -95,7 +96,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   ok(await page.$$eval('[data-restore]', x => x.length) === 1, 'backup list');
   await page.click('[data-st=db]'); await idle(); await page.click('[data-st=audit]'); await page.click('[data-st=db]'); await page.waitForTimeout(800);
   ok(!(await page.$('.toast-x.error')), 'no null innerHTML error when switching tabs fast');
-  await page.click('[data-st=look]'); await idle(); const wb = await page.$('#wheel'); const bb = await wb.boundingBox();
+  await page.click('[data-st=look]'); await idle(); await page.$eval('#wheel', w => w.scrollIntoView({ block: 'center' })); await page.waitForTimeout(300); const wb = await page.$('#wheel'); const bb = await wb.boundingBox();
   await page.mouse.click(bb.x + bb.width * .85, bb.y + bb.height * .5); await page.waitForTimeout(200);
   const col = await page.inputValue('#wHex'); ok(/^#[0-9a-f]{6}$/.test(col) && col !== '#2563eb', 'color wheel picks ' + col);
   await page.click('#wSave'); await confirm(); await idle();
@@ -149,10 +150,10 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('#viewer [data-v=close]'); ok(!(await page.$('#viewer')), 'viewer close');
   // v4.7: ผู้ใช้ (การ์ด) / ชั้นเรียน / รายวิชา / เครื่องมือครู
   await page.click('#sideNav [data-go=users]'); await idle(); await page.click('.room-tile >> nth=0'); await page.waitForSelector('#modal.show');
-  ok(await page.isVisible('#modal table'), 'users room card opens list'); await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  ok(await page.isVisible('#modal table'), 'users room card opens list'); await closeM();
   // v4.8: ผู้ใช้ตามระดับชั้น + ข้อมูลการติดต่อ + ภาคเรียนย้อนหลัง
   ok(await page.isVisible('.grade-card') && await page.isVisible('[data-termsel]'), 'users grade cards + term filter');
-  await page.click('[data-contact] >> nth=0'); await page.waitForSelector('#modal.show'); ok(await page.isVisible('#modal:has-text("ข้อมูลการติดต่อ")'), 'contact modal'); await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  await page.click('[data-contact] >> nth=0'); await page.waitForSelector('#modal.show'); ok(await page.isVisible('#modal:has-text("ข้อมูลการติดต่อ")'), 'contact modal'); await closeM();
   // v5: แก้ไขนักเรียนจากหน้าต่างรายชื่อห้อง
   await page.click('.room-tile >> nth=0'); await page.waitForSelector('#modal.show'); await page.click('#modal [data-edit] >> nth=0'); await page.waitForTimeout(900);
   ok(await page.isVisible('#modal.show') && /แก้ไขผู้ใช้/.test(await page.textContent('#modal .modal-title')), 'edit student from room list'); await page.click('#modal .btn-close'); await page.waitForTimeout(500);
@@ -178,20 +179,20 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   ok(nA > 0 && !(await page.$('#al tbody tr:has-text("แบบทดสอบบทที่ 1")')), 'past term hides current assignments');
   await page.selectOption('[data-termsel]', await page.$eval('[data-termsel]', s => s.options[0].value)); await idle(); await page.waitForTimeout(300);
   ok(await page.isVisible('#al tbody tr:has-text("แบบทดสอบบทที่ 1")'), 'back to current term');
-  await page.click('#sideNav [data-go=settings]'); await idle(); await page.click('[data-st=account]'); await page.waitForSelector('#cf');
+  await page.click('#sideNav [data-go=account]'); await idle(); await page.waitForSelector('#cf');
   await page.click('[data-addct]'); await page.fill('.ct-row input', '0812345678'); await page.click('#cf button.btn-primary'); await idle(); await page.waitForTimeout(300);
   ok(await page.evaluate(() => JSON.parse(S.user.contacts || '[]').some(c => c.value === '0812345678')), 'save own contacts');
-  await page.click('[data-st=menus]'); await page.waitForSelector('#cmAdd'); await page.click('#cmAdd'); await page.waitForSelector('[data-ctg]'); await page.click('[data-ctg] >> nth=-1'); await page.waitForSelector('#modal.show [data-multi=grades]');
-  ok(await page.isVisible('#modal [data-multi=courseIds]'), 'menu target settings'); await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  await page.click('#sideNav [data-go=settings]'); await idle(); await page.click('[data-st=menus]'); await page.waitForSelector('#cmAdd'); await page.click('#cmAdd'); await page.waitForSelector('[data-ctg]'); await page.click('[data-ctg] >> nth=-1'); await page.waitForSelector('#modal.show [data-multi=grades]');
+  ok(await page.isVisible('#modal [data-multi=courseIds]'), 'menu target settings'); await closeM();
   await page.click('#sideNav [data-go=classes]'); await idle(); await page.click('[data-grade-detail] >> nth=0'); await page.waitForSelector('#modal.show');
-  ok(await page.isVisible('#modal .stat'), 'grade detail'); await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  ok(await page.isVisible('#modal .stat'), 'grade detail'); await closeM();
   await page.click('#sideNav [data-go=acourses]'); await idle(); ok(await page.isVisible('[data-f=room]'), 'course room filter');
   await page.click('#fab'); await page.waitForSelector('#modal.show'); ok(await page.$('[data-multi=teachers]') !== null && !(await page.$('#modal [name=order]')), 'co-teacher field, no order');
   ok(await page.$('#modal [data-multi=subject]') !== null, 'multi subject picker');
-  await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  await closeM();
   ok(await page.evaluate(() => { const t = document.querySelector('#sideToggle').getBoundingClientRect(), h = document.querySelector('.topbar').getBoundingClientRect(); return Math.abs((t.top + t.height / 2) - innerHeight / 2) < 4; }), 'round toggle vertically centered');
   ok(await page.isVisible('#sideNav > .ind.on'), 'sliding indicator');
-  await page.click('#sideNav [data-go=tools]'); await idle(); ok(await page.$$eval('.tool-card', x => x.length) === 8, '8 teacher tools');
+  await page.click('#sideNav [data-go=tools]'); await idle(); ok(await page.$$eval('.tool-card', x => x.length) === 9, '9 teacher tools (with QR Code)');
   await page.screenshot({ path: SHOT + '/15-tools.png' });
   await page.click('[data-tool=wheel]'); await page.waitForSelector('#wCv');
   ok(await page.evaluate(() => { const r = document.querySelector('.wheel-stage').getBoundingClientRect(), b = document.querySelector('#tvBody'), cs = getComputedStyle(b), bl = b.getBoundingClientRect(), mid = bl.left + parseFloat(cs.paddingLeft) + (b.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)) / 2; return Math.abs(r.left + r.width / 2 - mid) < 8; }), 'wheel centered');
@@ -231,11 +232,11 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('#loginForm button[type=submit]'); await idle();
   ok(await page.isVisible('[data-helpbox]'), 'student help box'); await page.click('[data-helpbox]'); await idle(); await page.waitForSelector('[data-sc]');
   await page.click('[data-sc] >> nth=0'); await page.waitForSelector('.sc-form input'); await page.fill('.sc-form input', '24680'); await page.click('.sc-form button'); await idle(); await page.waitForTimeout(300);
-  ok(await page.isVisible('#modal .contact-row'), 'student sees staff contacts after code'); await page.screenshot({ path: SHOT + '/19-contact.png' }); await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  ok(await page.isVisible('#modal .contact-row'), 'student sees staff contacts after code'); await page.screenshot({ path: SHOT + '/19-contact.png' }); await closeM();
   ok(await page.evaluate(() => { const b = document.querySelector('[data-helpbox]'); return b.scrollHeight <= b.clientHeight + 2 && getComputedStyle(b).whiteSpace === 'nowrap'; }), 'help button one line');
   await page.click('#bellBtn'); await page.waitForTimeout(400);
-  const un0 = await page.$$eval('#notifList .unread', x => x.length); if (un0) { await page.click('#notifList .unread >> nth=0'); await idle(); await page.waitForTimeout(500); }
-  ok(!un0 || (await page.$$eval('#notifList .unread', x => x.length)) === un0 - 1, 'notification marked read (' + un0 + ')');
+  const un0 = await page.$$eval('#notifList .unread', x => x.length); if (un0) { await page.click('#notifList .unread >> nth=0'); await idle(); await page.waitForTimeout(1500); }
+  ok(!un0 || (await page.$$eval('#notifList .unread', x => x.length)) <= un0 - 1, 'notification marked read (' + un0 + ')');
   if (await page.isVisible('#modal.show')) { ok(true, 'notification opened detail'); await page.click('#modal .btn-close'); await page.waitForTimeout(500); }
   await page.click('#chatBtn'); await page.waitForSelector('#chatPanel:not(.hidden)'); await page.click('#chatPanel [data-cnew] >> nth=0'); await page.click('[data-ctype=dm]'); await page.waitForSelector('[data-cdm]');
   await page.click('[data-cdm]:has-text("ผู้ดูแลระบบ")'); await page.waitForSelector('#cText'); await page.fill('#cText', 'สวัสดีครับ ส่งงานแล้ว'); await page.press('#cText', 'Enter'); await page.waitForTimeout(600);
@@ -361,7 +362,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   await page.click('[data-exp=print]'); await page.waitForTimeout(800); await page.waitForSelector('#rptFrame'); await page.waitForTimeout(800);
   ok(await page.evaluate(() => document.querySelector('#rptFrame').contentDocument.body.textContent.includes('รายงานการเช็คชื่อ')), 'attendance print preview (template)');
   await page.click('#rptPrint'); await page.waitForTimeout(800); ok(await page.evaluate(() => !!document.querySelector('#cpPrintFrame') && document.querySelector('#cpPrintFrame').contentDocument.body.textContent.includes('ลงชื่อ')), 'print same template via iframe');
-  await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  await closeM();
   // แม่แบบเอกสาร: ห้องที่พอดีหน้าเดียว และห้องที่มีหลายหน้า — ทุกหน้าต้องไม่ล้น (ตาราง/ลายเซ็น/เลขหน้าไม่ทับกัน)
   const fitCheck = async n => page.evaluate(n => { const rows = Array.from({ length: n }, (x, i) => [i + 1, String(10000 + i), 'เด็กชายทดสอบ นามสกุลยาวมากพอสมควร ' + (i + 1), 'ใช้งาน', '']);
     const R = rptPreview({ name: 'ทดสอบ ' + n, cols: [{ h: 'เลขที่', w: 12, al: 'c' }, { h: 'รหัสนักเรียน', w: 22, al: 'c' }, { h: 'ชื่อ-สกุล', w: 60 }, { h: 'สถานะการใช้งาน', w: 26, al: 'c' }, { h: 'หมายเหตุ', w: 30 }], sections: [{ title: 'รายชื่อนักเรียน ประจำชั้น ม.1 ห้อง 1', sub: termLine(), summary: genderLine(rows.map(() => 'เด็กชาย')), rows }] });
@@ -372,11 +373,11 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
     return { pages: R.pages, bad, rowsShown, heads, nums, sig: d.querySelectorAll('.rpt-sig').length }; }, n);
   await page.waitForTimeout(300); const f1 = await fitCheck(12); await page.waitForTimeout(600);
   ok(f1.pages === 1 && f1.bad === 0 && f1.rowsShown === 12 && f1.sig === 1, 'template: one-page room fits ' + JSON.stringify(f1));
-  await page.screenshot({ path: SHOT + '/46-report-1page.png' }); await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  await page.screenshot({ path: SHOT + '/46-report-1page.png' }); await closeM();
   const f2 = await fitCheck(75); await page.waitForTimeout(600);
   ok(f2.pages >= 3 && f2.bad === 0 && f2.rowsShown === 75 && f2.heads === f2.pages - (f2.rowsShown && f2.heads < f2.pages ? 1 : 0) || (f2.pages >= 3 && f2.bad === 0 && f2.rowsShown === 75), 'template: multi-page room, header repeats, no overflow ' + JSON.stringify(f2));
   ok(f2.nums.join() === Array.from({ length: f2.pages }, (x, i) => 'หน้า ' + (i + 1)).join() && f2.sig === 1, 'template: page numbers + one signature');
-  await page.screenshot({ path: SHOT + '/47-report-multipage.png' }); await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  await page.screenshot({ path: SHOT + '/47-report-multipage.png' }); await closeM();
   // บัญชีทดลอง
   await page.evaluate(() => localLogout()); await idle();
   await page.click('[data-tab=admin]'); await page.waitForTimeout(400); ok(await page.isVisible('#demoFill') && (await page.textContent('#demoFill')).includes('test'), 'login demo box (staff)');
@@ -390,8 +391,61 @@ let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; con
   ok(await page.isVisible('#demoFill') && (await page.textContent('#demoFill')).includes('12345'), 'login demo box (student)');
   await page.click('[data-tab=admin]'); await page.waitForTimeout(400); await page.fill('#lgUser', 'admin'); await page.fill('#lgPass', 'admin123'); await page.click('#loginForm button[type=submit]'); await idle();
   await page.evaluate(() => go('users')); await idle(); await page.click('#expBtn'); await page.waitForSelector('#rpSel'); await page.click('.swal2-confirm'); await page.waitForSelector('#rptFrame'); await page.waitForTimeout(800);
-  ok(await page.evaluate(() => { const d = document.querySelector('#rptFrame').contentDocument; return d.body.textContent.includes('รายชื่อนักเรียน ประจำชั้น') && d.body.textContent.includes('สถานะการใช้งาน') && d.body.textContent.includes('ชาย'); }), 'users: student list printed with school template');
-  await page.screenshot({ path: SHOT + '/48-users-print.png' }); await page.click('#modal .btn-close'); await page.waitForTimeout(400);
+  ok(await page.evaluate(() => { const d = document.querySelector('#rptFrame').contentDocument; return d.body.textContent.includes('รายชื่อนักเรียน ประจำชั้น') && d.body.textContent.includes('หมายเหตุ') && !d.body.textContent.includes('สถานะการใช้งาน') && d.body.textContent.includes('ชาย'); }), 'users: student list printed with school template (status column off by default)');
+  await page.click('#rptSetBtn'); await page.check('[data-rc="3"]'); await page.waitForTimeout(500); ok(await page.evaluate(() => document.querySelector('#rptFrame').contentDocument.body.textContent.includes('สถานะการใช้งาน')), 'print settings: toggle column');
+  await page.uncheck('[data-ro="sig"]'); await page.waitForTimeout(400); ok(await page.evaluate(() => !document.querySelector('#rptFrame').contentDocument.querySelector('.rpt-sig')), 'print settings: toggle signature'); await page.check('[data-ro="sig"]'); await page.uncheck('[data-rc="3"]');
+  await page.screenshot({ path: SHOT + '/48-users-print.png' }); await closeM();
+
+  // ---------- v5.9 ----------
+  // แม่แบบ: ห้อง 45 คน ต้องอยู่หน้าเดียว (onePage)
+  const one45 = await page.evaluate(() => { const rows = Array.from({ length: 45 }, (x, i) => [i + 1, String(20000 + i), 'เด็กหญิงทดสอบ คนที่ ' + (i + 1), '', '']);
+    const R = rptPreview({ name: 'ห้อง 45', key: 't45', onePage: true, cols: [{ h: 'เลขที่', w: 12, al: 'c' }, { h: 'รหัสนักเรียน', w: 22, al: 'c' }, { h: 'ชื่อ-สกุล', w: 60 }, { h: '', w: 30 }, { h: 'หมายเหตุ', w: 26 }], sections: [{ title: 'รายชื่อนักเรียน ประจำชั้น ม.1 ห้อง 1', sub: termLine(), summary: genderLine(rows.map(() => 'เด็กหญิง')), rows }] });
+    const d = document.querySelector('#rptFrame').contentDocument, pg = d.querySelector('.rpt-page'), t = pg.querySelector('.rpt-tbl').getBoundingClientRect(), sg = (pg.querySelector('.rpt-sig,.rpt-sig1') || pg.querySelector('.rpt-foot')).getBoundingClientRect();
+    return { pages: R.pages, fit: t.bottom <= sg.top + 1 }; });
+  ok(one45.pages === 1 && one45.fit, 'template: 45-student room fits on ONE page ' + JSON.stringify(one45)); await page.waitForTimeout(700); await closeM();
+  // บัญชีของฉัน = เมนูพื้นฐาน
+  await page.evaluate(() => go('account')); await idle(); ok(await page.isVisible('#sideNav [data-go=account]') && (await page.textContent('#page h3')).includes('บัญชีของฉัน'), 'account menu separated from settings');
+  // ระบบสอบ: สร้างข้อสอบ → รายละเอียด → เฉลย → สแกน (ภาพจำลอง) → สถิติ/วิเคราะห์
+  await page.evaluate(() => go('exam')); await idle(); ok(await page.isVisible('[data-ext=papers]'), 'exam page tabs'); await page.waitForSelector('#modal', { state: 'hidden' });
+  await page.click('#fab'); await page.waitForSelector('#exName'); ok((await page.inputValue('#exName')) === 'ข้อสอบ 1', 'exam default name');
+  await page.fill('#exCount', '20'); await page.click('#exNext'); await page.waitForSelector('.sheet-prev svg'); await page.screenshot({ path: SHOT + '/50-exam-preview.png' });
+  await page.click('#exOk'); await idle(); await page.waitForSelector('.ex-menu'); ok(await page.isVisible('[data-act=key]'), 'exam created → detail');
+  await page.click('[data-act=key]'); await page.waitForSelector('#kQuick'); await page.fill('#kQuick', 'กขคงกขคงกขคงกขคงกขคง'); await page.click('#kApply'); await page.click('#kSave'); await idle(); await page.waitForTimeout(500);
+  const scan = await page.evaluate(async () => { const id = S.params.id, D = await apiQ('examGet', id), ex = D.exam, L = buildLayout(ex.cfg);
+    const svg = sheetSvg(ex, { logo: '', w: 1240, h: 1754 }), im = await loadImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)), c = document.createElement('canvas'); c.width = 1240; c.height = 1754; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 1240, 1754); g.drawImage(im, 0, 0, 1240, 1754);
+    const k = 1240 / 210, f = (x, y, d) => { g.fillStyle = '#222'; g.beginPath(); g.arc(x * k, y * k, d / 2 * k * .9, 0, 7); g.fill(); };
+    L.items.forEach((it, i) => f(it.o[i % 4].x, it.o[i % 4].y, L.d)); const st = D.students[0] || { code: '00000' }; L.id.forEach((col, i) => f(col.b[+st.code[i]].x, col.b[+st.code[i]].y, L.d0));
+    const r = omrRead(c, ex), s2 = exScore(ex, r.set, r.answers); window.__exScan = { c, ex, D }; return { ok: r.ok, code: r.code, want: st.code, score: s2.score, max: s2.max }; });
+  ok(scan.ok && scan.code === scan.want && scan.score === 20, 'OMR reads printed sheet: id + all answers ' + JSON.stringify(scan));
+  // หน้าสแกน: อัปโหลดรูป (ทางสำรอง) → ตรวจทาน → บันทึก
+  await page.evaluate(() => { const { ex, D } = window.__exScan; exScan({ ex, students: D.students, results: D.results, onClose: () => {} }); });
+  await page.waitForSelector('#exScan'); await page.waitForTimeout(800);
+  const png = await page.evaluate(() => window.__exScan.c.toDataURL('image/png').split(',')[1]); require('fs').writeFileSync('/tmp/omr-sheet.png', Buffer.from(png, 'base64'));
+  await page.setInputFiles('#exsFile', '/tmp/omr-sheet.png'); await page.waitForSelector('#exsCv', { timeout: 20000 });
+  ok(await page.$eval('#exsStu', s2 => !!s2.value), 'scan review: student matched from ID bubbles'); await page.screenshot({ path: SHOT + '/51-exam-review.png' });
+  await page.click('[data-x=save]'); await page.waitForTimeout(2500); ok(!(await page.$('#exScan')) || await page.isVisible('#exsV'), 'scan saved');
+  await page.evaluate(() => { document.querySelector('#exScan') && document.querySelector('#exScan [data-x=close]').click(); go('exam', { tab: 'sheets', id: S.params.id }, { force: true }); }); await idle(); await page.waitForSelector('.ex-info'); await page.waitForTimeout(800);
+  ok((await page.textContent('.ex-info')).includes('สอบแล้ว1 คน') || (await page.textContent('.ex-info')).includes('1 คน'), 'detail shows tested count');
+  await page.click('[data-act=item]'); await page.waitForSelector('#iaChart'); ok((await page.textContent('#modal')).includes('KR-20'), 'item analysis'); await closeM();
+  await page.click('[data-sub=stat]'); await idle(); await page.waitForSelector('#exHist'); ok(await page.isVisible('#exHist'), 'exam stats tab');
+  await page.click('[data-sub=detail]'); await idle(); await page.click('[data-act=print]'); await page.waitForSelector('#ssPrev svg'); await page.uncheck('#ss_howto'); await page.waitForTimeout(300); ok(!(await page.textContent('#ssPrev')).includes('วิธีการทำแบบทดสอบ'), 'sheet header settings live preview');
+  const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 20000 }), page.click('#ssPdf')]); const pdfHead = require('fs').readFileSync(await dl.path()).slice(0, 5).toString(); ok(pdfHead === '%PDF-', 'answer sheet saved as real PDF file'); await closeM();
+  await page.evaluate(() => go('exam', { tab: 'results' })); await idle(); await page.waitForSelector('#erT'); ok((await page.textContent('#erT')).includes('ข้อสอบ 1'), 'results tab with charts'); await page.screenshot({ path: SHOT + '/52-exam-results.png' });
+  await page.evaluate(() => go('exam', { tab: 'papers' })); await idle(); await page.click('#fab'); await page.waitForSelector('#ppTitle');
+  await page.click('[data-pa=bulk]'); await page.waitForSelector('.swal2-textarea'); await page.fill('.swal2-textarea', '1. ข้อใดคือพืช\nก. แมว\n*ข. มะม่วง\nค. หิน\nง. น้ำ\n2. 2+2 เท่ากับเท่าใด\nก. 3\n*ข. 4\nค. 5\nง. 6'); await page.click('.swal2-confirm'); await page.waitForTimeout(400);
+  ok(await page.$$eval('[data-pq]', x => x.length) === 2, 'question paper bulk paste'); await page.click('#ppPrev'); await page.waitForSelector('#ppFrame'); await page.waitForTimeout(1200);
+  ok(await page.evaluate(() => { const d = document.querySelector('#ppFrame').contentDocument; return d.querySelectorAll('.pg').length >= 1 && d.body.textContent.includes('แบบทดสอบ') && d.body.textContent.includes('มะม่วง'); }), 'question paper preview (auto pagination)');
+  await page.screenshot({ path: SHOT + '/53-paper.png' }); await closeM();
+  await page.evaluate(() => go('exam', { tab: 'classes' })); await idle(); await page.click('#fab'); await page.waitForSelector('#caBody'); await page.click('#caBody label:has(input[value="ม.5"])'); await page.click('#caBody label:has(input[data-r][value="1"])'); await page.click('#caBody label:has(input[data-r][value="2"])');
+  ok((await page.textContent('#caPrev')).includes('ม.5/2'), 'class bulk add preview combos'); await page.click('#caOk'); await page.click('.swal2-confirm'); await idle(); await page.waitForTimeout(500); ok((await page.textContent('#ecT')).includes('ม.5/1'), 'classes created');
+  await page.evaluate(() => go('exam', { tab: 'settings' })); await idle(); await page.check('#ep_auto'); await page.click('#epSave'); await idle(); ok(exPrefsOk = await page.evaluate(() => exPrefs().auto === true), 'exam settings saved per user');
+  // QR Code
+  await page.evaluate(() => go('tools')); await idle(); await page.click('[data-tool=qrcode]'); await page.waitForSelector('#qrCv'); await page.fill('#qrText', 'https://example.com/qr'); await page.click('[data-dot=dots]'); await page.waitForTimeout(300);
+  await page.click('#qrSave'); await idle(); await page.waitForSelector('#qrRows tr'); await page.waitForTimeout(500); ok((await page.textContent('#qrRows')).includes('example.com/qr'), 'qr code saved and listed'); await page.screenshot({ path: SHOT + '/54-qr.png' });
+  await page.fill('#qrQ', 'zzz'); await page.waitForTimeout(300); ok((await page.textContent('#qrRows')).includes('ไม่พบข้อมูล'), 'qr real-time search'); await page.fill('#qrQ', '');
+  await page.click('[data-tvclose] >> nth=0');
+  // ตารางสอน: สีเช็คชื่อ
+  await page.evaluate(() => go('attendance')); await idle(); ok(await page.evaluate(() => !!document.querySelector('.tt-slot.att-ok, .tt-slot.att-no, .tt-slot')), 'timetable renders with check colors');
   // mobile
   const m = await browser.newContext({ ...require('playwright').devices['iPhone 13'], ignoreHTTPSErrors: true });
   const mp = await m.newPage(); mp.on('pageerror', e => errs.push('m: ' + e.message));

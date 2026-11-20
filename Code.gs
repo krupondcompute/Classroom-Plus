@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '5.8.0';
+const APP_VERSION = '5.9.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -49,6 +49,11 @@ const SCHEMA = {
   TermConfig: ['key','value','updatedAt'],
   LiveSessions: ['id','kind','title','pin','ownerId','data','settings','status','startedAt','endsAt','createdAt','updatedAt'],
   ToolLogs: ['id','ownerId','tool','term','data','createdAt'],
+  QrCodes: ['id','ownerId','text','note','status','useDate','style','imgId','fileJson','createdAt','updatedAt'],
+  ExamPapers: ['id','ownerId','title','data','createdAt','updatedAt'],
+  ExamFolders: ['id','ownerId','name','createdAt'],
+  Exams: ['id','ownerId','name','folderId','cfg','key','classes','tags','createdAt','updatedAt'],
+  ExamResults: ['id','examId','ownerId','studentId','code','set','answers','score','max','img','meta','history','createdAt','updatedAt'],
   LiveAnswers: ['id','sessionId','pid','name','userId','answers','score','correct','timeMs','finishedAt','createdAt','updatedAt'],
   // ---------- v5.4: ตารางสอน + เช็คชื่อ (แยกตามภาคเรียน) ----------
   Timetables: ['id','ownerId','cfg','updatedAt'],
@@ -118,7 +123,7 @@ function markDemo_(u) { const l = demoIds_().concat([u.id]).slice(-50); props_()
 function rawUser_(pred) { try { return prows_('Users', 'g').find(pred) || (tenant_().unset ? null : prows_('Users', split_() ? 't' : 'c').find(pred)) || null; } catch (e) { return null; } }
 const DEMO_OK = {}; ('me logout studentHome listCourses getCourse getLesson listAssignments listAnnouncements search notifications groupCandidates batch myTeachers staffContact '
   + 'adminDashboard list listSubmissions report classSummary listUsers listTeachers chatContacts chatList chatMessages chatUnread chatTeamMembers getSettings auditLog listBackups '
-  + 'liveList liveGet liveStatus termSources peekTerm fileData scoreTest scoreBooks scoreBook attExport ttGet attOpen attHistory attSummary attDecode myAttend myScores toolLogList').split(' ').forEach(k => DEMO_OK[k] = 1);
+  + 'liveList liveGet liveStatus termSources peekTerm fileData scoreTest scoreBooks scoreBook attExport ttGet attOpen attHistory attSummary attDecode myAttend myScores toolLogList qrList paperList examAll examGet examResults').split(' ').forEach(k => DEMO_OK[k] = 1);
 const DEMO_SOFT = { markRead: 1, saveProgress: 1, discardUploads: 1, toolLogAdd: 1 }; // คำสั่งเบื้องหลังที่หน้าเว็บเรียกอัตโนมัติ → ข้ามเงียบ ๆ
 function demoMask_(fn, data) {
   if (!data) return data;
@@ -179,6 +184,11 @@ const ROUTES = {
   scoreTest: ['staff', scoreTest_], scoreBooks: ['staff', scoreBooks_], scoreBook: ['staff', scoreBook_], attCopyFrom: ['staff', attCopyFrom_], attExport: ['staff', attExport_],
   ttGet: ['staff', ttGet_], ttSaveCfg: ['staff', ttSaveCfg_], ttSaveSlot: ['staff', ttSaveSlot_], ttDeleteSlot: ['staff', ttDeleteSlot_],
   attOpen: ['staff', attOpen_], attSave: ['staff', attSave_], attHistory: ['staff', attHistory_], attSummary: ['staff', attSummary_], attDecode: ['staff', attDecode_],
+  qrList: ['staff', qrList_], qrSave: ['staff', qrSave_], qrStatus: ['staff', qrStatus_], qrRemove: ['staff', qrRemove_],
+  paperList: ['staff', paperList_], paperSave: ['staff', paperSave_], paperRemove: ['staff', paperRemove_],
+  examAll: ['staff', examAll_], examFolderSave: ['staff', examFolderSave_], examFolderRemove: ['staff', examFolderRemove_], examSave: ['staff', examSave_], examRemove: ['staff', examRemove_], examGet: ['staff', examGet_],
+  examKey: ['staff', examKey_], examResultSave: ['staff', examResultSave_], examResultUpdate: ['staff', examResultUpdate_], examResultRemove: ['staff', examResultRemove_], examResults: ['staff', examResults_], examPrefs: ['staff', examPrefs_],
+  classBulkAdd: ['staff', classBulkAdd_], classRemove2: ['admin', classRemove2_],
   toolLogAdd: ['staff', toolLogAdd_], toolLogList: ['staff', toolLogList_], toolLogClear: ['staff', toolLogClear_],
   myAttend: ['user', myAttend_], myScores: ['user', myScores_], attCheckIn: ['user', attCheckIn_],
   editSubmission: ['staff', editSubmission_], removeSubmission: ['staff', removeSubmission_], renameClass: ['admin', renameClass_], restoreBackup: ['admin', restoreBackup_], installTriggers: ['admin', installTriggers_]
@@ -717,6 +727,7 @@ function prefs_(v) {
   if (o.logo) { const l = str_(o.logo, 48000); if (!(imgOk_(l) || /^data:image\/svg\+xml;base64,/.test(l))) throw err_('โลโก้ไม่ถูกต้อง'); out.logo = l; }
   if (o.menus) out.menus = json_(menus_(Array.isArray(o.menus) ? { custom: o.menus } : o.menus), {}).custom || [];
   if (o.scoreSources) out.scoreSources = json_(scoreSources_(o.scoreSources), []);
+  if (o.exam && typeof o.exam === 'object') out.exam = o.exam; // ค่าตั้งระบบสอบ (ตรวจค่าแล้วใน examPrefs_)
   return JSON.stringify(out);
 }
 /** ที่มาของคะแนนเก็บ (Google Sheet ที่มีคอลัมน์ "รวมคะแนนทั้งหมด") + ขอบเขต ภาคเรียน/รายวิชา/ชั้น/ห้อง */
@@ -941,8 +952,185 @@ function sheetTotal_(url, u) {
   const r = scanTotal_(tables, u.studentCode, u.fullName);
   return r && r.value !== undefined && r.value !== '' ? { value: r.value, header: r.header } : null;
 }
+/* ============================== v5.9 เครื่องมือ QR Code ============================== */
+/** บันทึกรูป base64 (data URL) ลง Google Drive ของภาคเรียน */
+function saveDataUrl_(ctx, dataUrl, name, path) {
+  const m = String(dataUrl || '').match(/^data:(image\/(png|jpeg|webp));base64,(.+)$/); if (!m) return null;
+  if (m[3].length > 9e6) throw err_('รูปใหญ่เกินไป');
+  const file = folderFor_(ctx.user, path).createFile(Utilities.newBlob(Utilities.base64Decode(m[3]), m[1], name));
+  file.setDescription('cp:' + ctx.user.id); const shared = share_(file);
+  return fileOut_(file.getId(), name, m[1], file.getSize(), shared);
+}
+/** ย้ายไฟล์เก่าใน Drive ลงถังขยะ (ไม่ให้ล้มถ้าไม่มีสิทธิ์/ไม่พบ) */
+function trash_(id) { if (!id) return; try { DriveApp.getFileById(String(id)).setTrashed(true); } catch (e) {} }
+const qrOwn_ = (u, r) => r && (r.ownerId === u.id || isAdmin_(u));
+function qrOut_(r) { const o = pub_(r); o.style = json_(r.style, {}); o.file = json_(r.fileJson, null); delete o.fileJson; return o; }
+function qrList_(ctx) {
+  const me = ctx.user, list = rows_('QrCodes').filter(r => r.ownerId === me.id || isAdmin_(me)).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).map(qrOut_);
+  return { items: list, total: list.length, active: list.filter(x => x.status !== 'cancel').length, cancel: list.filter(x => x.status === 'cancel').length, term: tkey_() };
+}
+function qrSave_(ctx, d) {
+  d = d || {}; const me = ctx.user, text = str_(d.text, 2000);
+  if (!text) throw err_('กรุณากรอกข้อความหรือ URL');
+  const useDate = str_(d.useDate, 10); if (useDate && !/^\d{4}-\d{2}-\d{2}$/.test(useDate)) throw err_('วันที่ไม่ถูกต้อง');
+  const style = JSON.stringify(json_(JSON.stringify(d.style || {}), {})).slice(0, 4000);
+  const file = d.file && d.file.id ? cleanFiles_([d.file])[0] || null : null;
+  return lock_(() => {
+    const r = d.id ? find_('QrCodes', d.id) : null; if (d.id && !qrOwn_(me, r)) throw err_('ไม่พบ QR Code นี้', 'NOTFOUND');
+    const patch = { text: text, note: str_(d.note, 500), status: d.status === 'cancel' ? 'cancel' : 'active', useDate: useDate, style: style, fileJson: file ? JSON.stringify(file) : '', updatedAt: now_() };
+    let img = null; if (d.png) img = saveDataUrl_(ctx, d.png, 'QR_' + Utilities.formatDate(new Date(), TZ, 'yyyyMMdd_HHmmss') + '.png', 'QR Code');
+    if (img) patch.imgId = img.id;
+    if (r) { const oldF = json_(r.fileJson, null); if (oldF && oldF.id && (!file || file.id !== oldF.id)) trash_(oldF.id); if (img && r.imgId) trash_(r.imgId); updateRow_('QrCodes', r, patch); log_(me.id, 'qr_edit', r.id); return qrOut_(Object.assign({}, r, patch)); }
+    const row = insert_('QrCodes', Object.assign({ id: id_(), ownerId: me.id, createdAt: now_() }, patch)); log_(me.id, 'qr_add', row.id); return qrOut_(row);
+  });
+}
+function qrStatus_(ctx, id, status) { const r = find_('QrCodes', id); if (!qrOwn_(ctx.user, r)) throw err_('ไม่พบ QR Code นี้', 'NOTFOUND'); return lock_(() => { updateRow_('QrCodes', r, { status: status === 'cancel' ? 'cancel' : 'active', updatedAt: now_() }); return true; }); }
+function qrRemove_(ctx, id) {
+  const r = find_('QrCodes', id); if (!qrOwn_(ctx.user, r)) throw err_('ไม่พบ QR Code นี้', 'NOTFOUND');
+  return lock_(() => { trash_(r.imgId); const f = json_(r.fileJson, null); if (f && f.id) trash_(f.id); deleteWhere_('QrCodes', x => x.id === r.id); log_(ctx.user.id, 'qr_del', r.id); return true; });
+}
+/* ============================== v5.9 สอบเก็บคะแนน: กระดาษคำถาม · กระดาษคำตอบ (OMR) ============================== */
+const exOwn_ = (u, r) => r && (r.ownerId === u.id || isAdmin_(u));
+function paperList_(ctx) { return rows_('ExamPapers').filter(r => exOwn_(ctx.user, r)).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).map(r => Object.assign(pub_(r), { data: json_(r.data, {}) })); }
+function paperSave_(ctx, d) {
+  d = d || {}; const title = str_(d.title, 200) || 'แบบทดสอบ', js = JSON.stringify(d.data || {}); if (js.length > 45000) throw err_('ข้อสอบยาวเกินไป (แบ่งเป็นหลายชุด)');
+  return lock_(() => { const r = d.id ? find_('ExamPapers', d.id) : null; if (d.id && !exOwn_(ctx.user, r)) throw err_('ไม่พบข้อสอบนี้', 'NOTFOUND');
+    if (r) { updateRow_('ExamPapers', r, { title: title, data: js, updatedAt: now_() }); return { id: r.id }; }
+    return { id: insert_('ExamPapers', { id: id_(), ownerId: ctx.user.id, title: title, data: js, createdAt: now_(), updatedAt: now_() }).id }; });
+}
+function paperRemove_(ctx, id) { const r = find_('ExamPapers', id); if (!exOwn_(ctx.user, r)) throw err_('ไม่พบข้อสอบนี้', 'NOTFOUND'); return lock_(() => { deleteWhere_('ExamPapers', x => x.id === r.id); return true; }); }
+/** ค่าตั้งของกระดาษคำตอบ */
+function examCfg_(c) {
+  c = c || {}; const n = x => Math.round(Number(x) || 0);
+  const out = { digits: Math.min(5, Math.max(2, n(c.digits) || 5)), count: Math.min(200, Math.max(1, n(c.count) || 10)),
+    fmt: ['tf', 'c2', 'c3', 'c4', 'c5', 'custom'].indexOf(c.fmt) >= 0 ? c.fmt : 'c4', nopt: Math.min(10, Math.max(2, n(c.nopt) || 4)), labels: ['th', 'en', 'num'].indexOf(c.labels) >= 0 ? c.labels : 'th',
+    sets: Math.min(6, Math.max(1, n(c.sets) || 1)), cols: Math.min(5, Math.max(0, n(c.cols))), layout: c.layout === 'side' ? 'side' : 'inline', sheet: {} };
+  if (out.fmt === 'tf') out.nopt = 2; else if (out.fmt !== 'custom') out.nopt = Number(out.fmt.slice(1));
+  const s = c.sheet || {}; ['info', 'howto', 'idbox', 'logo', 'qr', 'setbox'].forEach(k => out.sheet[k] = s[k] !== false);
+  out.sheet.howtoText = str_(s.howtoText, 600); out.sheet.school = str_(s.school, 120); out.sheet.subtitle = str_(s.subtitle, 200); out.sheet.courseCode = str_(s.courseCode, 30); out.sheet.courseName = str_(s.courseName, 120);
+  return out;
+}
+/** เฉลย: { A: [{ a: [ตัวเลือกที่ถูก...], p: คะแนน }] } */
+function examKeyClean_(k, cfg) {
+  const out = {}, sets = 'ABCDEF'.slice(0, cfg.sets).split('');
+  sets.forEach(s => { const arr = (k && Array.isArray(k[s]) ? k[s] : []); out[s] = Array.from({ length: cfg.count }, (x, i) => { const it = arr[i] || {};
+    return { a: (Array.isArray(it.a) ? it.a : []).map(Number).filter((v, j, l) => v >= 0 && v < cfg.nopt && l.indexOf(v) === j).sort(), p: Math.max(0, Math.min(100, Number(it.p) || 1)) }; }); });
+  return out;
+}
+/** ให้คะแนน: ข้อที่มีคำตอบถูกหลายตัว → ตอบตัวใดตัวหนึ่งที่ถูก (และไม่ฝนตัวผิด) ได้คะแนนเต็ม */
+function examScore_(key, set, answers) {
+  const k = key[set] || key.A || [], ans = Array.isArray(answers) ? answers : [];
+  let score = 0, max = 0, right = 0;
+  k.forEach((it, i) => { max += it.p; const a = (Array.isArray(ans[i]) ? ans[i] : ans[i] === null || ans[i] === undefined || ans[i] === '' ? [] : [ans[i]]).map(Number);
+    if (it.a.length && a.length && a.every(v => it.a.indexOf(v) >= 0)) { score += it.p; right++; } });
+  return { score: r2_(score), max: r2_(max), right: right };
+}
+function examOut_(r) { const o = pub_(r); o.cfg = examCfg_(json_(r.cfg, {})); o.key = json_(r.key, {}); o.classes = String(r.classes || '').split(',').filter(Boolean); o.tags = String(r.tags || '').split(',').filter(Boolean); return o; }
+function examAll_(ctx) {
+  const me = ctx.user, res = {}; rows_('ExamResults').forEach(x => res[x.examId] = (res[x.examId] || 0) + 1);
+  return { term: tkey_(), folders: rows_('ExamFolders').filter(r => exOwn_(me, r)).map(pub_).sort((a, b) => natural_(a.name, b.name)),
+    exams: rows_('Exams').filter(r => exOwn_(me, r)).map(r => Object.assign(examOut_(r), { done: res[r.id] || 0 })).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))) };
+}
+const natural_ = (a, b) => String(a).localeCompare(String(b), 'th', { numeric: true });
+function examFolderSave_(ctx, d) { d = d || {}; const name = str_(d.name, 80); if (!name) throw err_('กรุณาตั้งชื่อโฟลเดอร์');
+  return lock_(() => { const r = d.id ? find_('ExamFolders', d.id) : null; if (d.id && !exOwn_(ctx.user, r)) throw err_('ไม่พบโฟลเดอร์', 'NOTFOUND');
+    if (r) { updateRow_('ExamFolders', r, { name: name }); return { id: r.id, name: name }; } return { id: insert_('ExamFolders', { id: id_(), ownerId: ctx.user.id, name: name, createdAt: now_() }).id, name: name }; }); }
+function examFolderRemove_(ctx, id, mode) {
+  const r = find_('ExamFolders', id); if (!exOwn_(ctx.user, r)) throw err_('ไม่พบโฟลเดอร์', 'NOTFOUND');
+  return lock_(() => { const ex = rows_('Exams').filter(e => e.folderId === r.id);
+    if (mode === 'all') { const ids = {}; ex.forEach(e => ids[e.id] = 1); rows_('ExamResults').filter(x => ids[x.examId]).forEach(x => trash_(json_(x.img, {}).id)); deleteWhere_('ExamResults', x => ids[x.examId]); deleteWhere_('Exams', e => ids[e.id]); }
+    else ex.forEach(e => updateRow_('Exams', e, { folderId: '', updatedAt: now_() }));
+    deleteWhere_('ExamFolders', x => x.id === r.id); return { exams: ex.length }; }); }
+function examSave_(ctx, d) {
+  d = d || {}; const name = str_(d.name, 150); if (!name) throw err_('กรุณาตั้งชื่อข้อสอบ');
+  const cfg = examCfg_(d.cfg), classes = (Array.isArray(d.classes) ? d.classes : []).map(x => str_(x, 30)).filter(Boolean).slice(0, 60).join(','), tags = (Array.isArray(d.tags) ? d.tags : []).map(x => str_(x, 30)).filter(Boolean).slice(0, 20).join(',');
+  return lock_(() => { const r = d.id ? find_('Exams', d.id) : null; if (d.id && !exOwn_(ctx.user, r)) throw err_('ไม่พบข้อสอบ', 'NOTFOUND');
+    const key = examKeyClean_(d.key !== undefined ? d.key : (r ? json_(r.key, {}) : {}), cfg);
+    const patch = { name: name, folderId: str_(d.folderId, 20), cfg: JSON.stringify(cfg), key: JSON.stringify(key), classes: classes, tags: tags, updatedAt: now_() };
+    if (r) { updateRow_('Exams', r, patch); return examOut_(Object.assign({}, r, patch)); }
+    return examOut_(insert_('Exams', Object.assign({ id: id_(), ownerId: ctx.user.id, createdAt: now_() }, patch))); });
+}
+function examRemove_(ctx, id) { const r = find_('Exams', id); if (!exOwn_(ctx.user, r)) throw err_('ไม่พบข้อสอบ', 'NOTFOUND');
+  return lock_(() => { rows_('ExamResults').filter(x => x.examId === r.id).forEach(x => trash_(json_(x.img, {}).id)); deleteWhere_('ExamResults', x => x.examId === r.id); deleteWhere_('Exams', x => x.id === r.id); return true; }); }
+function examGet_(ctx, id) {
+  const r = find_('Exams', id); if (!exOwn_(ctx.user, r)) throw err_('ไม่พบข้อสอบ', 'NOTFOUND');
+  const ex = examOut_(r), cl = ex.classes, inCl = u => !cl.length || cl.indexOf(u.grade + '/' + u.room) >= 0 || cl.indexOf(u.grade) >= 0;
+  const students = rows_('Users').filter(u => u.role === 'student' && u.status !== 'disabled' && inCl(u)).map(u => ({ id: u.id, code: u.studentCode, no: u.classNo, name: (u.prefix || '') + u.fullName, grade: u.grade, room: u.room }))
+    .sort((a, b) => natural_(a.grade + '/' + a.room, b.grade + '/' + b.room) || (Number(a.no) || 999) - (Number(b.no) || 999));
+  const results = rows_('ExamResults').filter(x => x.examId === r.id).map(x => Object.assign(pub_(x), { answers: json_(x.answers, []), img: json_(x.img, null), meta: json_(x.meta, {}), history: json_(x.history, []) }));
+  return { exam: ex, students: students, results: results };
+}
+/** บันทึกเฉลย (+ คำนวณคะแนนที่สแกนแล้วใหม่ถ้าเลือก) */
+function examKey_(ctx, id, key, recalc) {
+  const r = find_('Exams', id); if (!exOwn_(ctx.user, r)) throw err_('ไม่พบข้อสอบ', 'NOTFOUND');
+  return lock_(() => { const cfg = examCfg_(json_(r.cfg, {})), k = examKeyClean_(key, cfg); updateRow_('Exams', r, { key: JSON.stringify(k), updatedAt: now_() }); let n = 0;
+    if (recalc) rows_('ExamResults').filter(x => x.examId === r.id).forEach(x => { const s = examScore_(k, x.set || 'A', json_(x.answers, [])); updateRow_('ExamResults', x, { score: String(s.score), max: String(s.max), updatedAt: now_() }); n++; });
+    return { recalculated: n }; });
+}
+/** บันทึกผลสแกน: คะแนนลงชีตก่อนเสมอ แล้วจึงอัปโหลดรูป (รูปล้มเหลว คะแนนยังอยู่) */
+function examResultSave_(ctx, examId, d) {
+  d = d || {}; const r = find_('Exams', examId); if (!exOwn_(ctx.user, r)) throw err_('ไม่พบข้อสอบ', 'NOTFOUND');
+  const cfg = examCfg_(json_(r.cfg, {})), key = examKeyClean_(json_(r.key, {}), cfg), set = 'ABCDEF'.slice(0, cfg.sets).indexOf(String(d.set || 'A')) >= 0 ? String(d.set || 'A') : 'A';
+  const answers = Array.from({ length: cfg.count }, (x, i) => (Array.isArray(d.answers) && Array.isArray(d.answers[i]) ? d.answers[i] : []).map(Number).filter(v => v >= 0 && v < cfg.nopt).slice(0, cfg.nopt));
+  const stu = d.studentId ? find_('Users', d.studentId) : null; if (d.studentId && (!stu || stu.role !== 'student')) throw err_('ไม่พบนักเรียน');
+  const s = examScore_(key, set, answers), meta = JSON.stringify({ code: str_(d.code, 10), flags: (Array.isArray(d.flags) ? d.flags : []).slice(0, 200), by: ctx.user.id, manual: !!d.manual });
+  const row = lock_(() => {
+    const old = stu && d.single !== false ? rows_('ExamResults').find(x => x.examId === r.id && x.studentId === stu.id) : null; // ปิด "1 คนต่อ 1 ฉบับ" → เก็บได้หลายผล
+    if (old && d.single !== false && !d.overwrite) throw err_('นักเรียนคนนี้มีผลสอบข้อสอบนี้แล้ว', 'EXISTS');
+    if (old) { const hist = json_(old.history, []); hist.unshift({ at: old.updatedAt, score: old.score, answers: json_(old.answers, []), set: old.set, img: json_(old.img, null) }); 
+      updateRow_('ExamResults', old, { set: set, answers: JSON.stringify(answers), score: String(s.score), max: String(s.max), meta: meta, history: JSON.stringify(hist.slice(0, 5)), updatedAt: now_() }); return Object.assign(old, { replaced: true }); }
+    return insert_('ExamResults', { id: id_(), examId: r.id, ownerId: ctx.user.id, studentId: stu ? stu.id : '', code: str_(d.code, 10), set: set, answers: JSON.stringify(answers), score: String(s.score), max: String(s.max), img: '', meta: meta, history: '[]', createdAt: now_(), updatedAt: now_() });
+  });
+  let img = null, imgErr = '';
+  if (d.img) { try { img = saveDataUrl_(ctx, d.img, (stu ? stu.studentCode + '_' : '') + 'scan_' + Utilities.formatDate(new Date(), TZ, 'yyyyMMdd_HHmmss') + '.jpg', 'กระดาษคำตอบ/' + cleanSeg_(r.name));
+    if (img) lock_(() => { const x = find_('ExamResults', row.id); if (x) updateRow_('ExamResults', x, { img: JSON.stringify(img) }); }); } catch (e) { imgErr = e.message || String(e); } }
+  return { id: row.id, score: s.score, max: s.max, right: s.right, replaced: !!row.replaced, img: img, imgError: imgErr };
+}
+function examResultUpdate_(ctx, id, d) {
+  d = d || {}; const x = find_('ExamResults', id), r = x && find_('Exams', x.examId); if (!x || !exOwn_(ctx.user, r)) throw err_('ไม่พบผลสอบ', 'NOTFOUND');
+  const cfg = examCfg_(json_(r.cfg, {})), key = examKeyClean_(json_(r.key, {}), cfg);
+  return lock_(() => { const patch = { updatedAt: now_() };
+    if (d.studentId !== undefined) { const st = d.studentId ? find_('Users', d.studentId) : null; if (d.studentId && (!st || st.role !== 'student')) throw err_('ไม่พบนักเรียน'); patch.studentId = st ? st.id : ''; }
+    if (Array.isArray(d.answers)) { patch.answers = JSON.stringify(d.answers.slice(0, cfg.count).map(a => (Array.isArray(a) ? a : []).map(Number).filter(v => v >= 0 && v < cfg.nopt))); const s = examScore_(key, x.set || 'A', json_(patch.answers, [])); patch.score = String(s.score); patch.max = String(s.max); }
+    if (d.score !== undefined && d.score !== '') { const sc = Number(d.score); if (!(sc >= 0)) throw err_('คะแนนไม่ถูกต้อง'); patch.score = String(r2_(sc)); }
+    updateRow_('ExamResults', x, patch); return true; });
+}
+function examResultRemove_(ctx, id) { const x = find_('ExamResults', id), r = x && find_('Exams', x.examId); if (!x || !exOwn_(ctx.user, r)) throw err_('ไม่พบผลสอบ', 'NOTFOUND');
+  return lock_(() => { trash_(json_(x.img, {}).id); deleteWhere_('ExamResults', y => y.id === x.id); return true; }); }
+/** ผลสอบทุกข้อสอบ (หน้า Result) */
+function examResults_(ctx) {
+  const me = ctx.user, ex = {}; rows_('Exams').filter(r => exOwn_(me, r)).forEach(r => ex[r.id] = r);
+  const us = {}; rows_('Users').forEach(u => us[u.id] = u);
+  return rows_('ExamResults').filter(x => ex[x.examId]).map(x => { const u = us[x.studentId] || {}; return { id: x.id, examId: x.examId, exam: ex[x.examId].name, studentId: x.studentId, name: u.fullName ? (u.prefix || '') + u.fullName : '(ไม่ระบุ)', code: u.studentCode || x.code, no: u.classNo || '', grade: u.grade || '', room: u.room || '', score: Number(x.score) || 0, max: Number(x.max) || 0, at: x.updatedAt || x.createdAt, img: json_(x.img, null) }; });
+}
+/** เพิ่มชั้นเรียนครบทุกคู่ผสม ชั้น × ห้อง (ข้ามรายการซ้ำ) */
+function classBulkAdd_(ctx, pairs) {
+  const list = (Array.isArray(pairs) ? pairs : []).slice(0, 200).map(p => [str_(p && p[0], 20), str_(p && p[1], 20)]).filter(p => p[0]);
+  return lock_(() => { const have = {}; rows_('Classes').forEach(c => have[c.grade + '|' + (c.room || '')] = 1); let n = 0, order = rows_('Classes').length;
+    list.forEach(p => { const k = p[0] + '|' + p[1]; if (have[k]) return; have[k] = 1; insert_('Classes', { id: id_(), grade: p[0], room: p[1], order: String(++order), createdAt: now_() }); n++; });
+    return { added: n, skipped: list.length - n }; });
+}
+/** ลบชั้นเรียน: ถ้ามีนักเรียน → ย้ายไปชั้น/ห้องอื่น หรือ ลบนักเรียนด้วย */
+function classRemove2_(ctx, grade, room, mode, to) {
+  grade = str_(grade, 20); room = str_(room, 20); const studs = rows_('Users').filter(u => u.role === 'student' && u.grade === grade && (u.room || '') === room);
+  return lock_(() => {
+    if (studs.length && mode === 'move') { const tg = str_(to && to[0], 20), tr = str_(to && to[1], 20); if (!tg) throw err_('กรุณาเลือกชั้น/ห้องปลายทาง'); studs.forEach(u => updateRow_('Users', u, { grade: tg, room: tr, updatedAt: now_() })); }
+    else if (studs.length && mode === 'delete') { const ids = {}; studs.forEach(u => ids[u.id] = 1); deleteWhere_('Users', u => ids[u.id]); }
+    else if (studs.length) throw err_('ชั้นเรียนนี้มีนักเรียน ' + studs.length + ' คน — เลือกย้ายหรือลบนักเรียนก่อน', 'HAS_STUDENTS');
+    deleteWhere_('Classes', c => c.grade === grade && (c.room || '') === room); log_(ctx.user.id, 'class_del', grade + '/' + room + ' ' + (mode || '')); return { students: studs.length };
+  });
+}
+/** ค่าตั้งของระบบสอบ (ต่อผู้ใช้) */
+function examPrefs_(ctx, o) {
+  o = o || {}; const b = (k, d) => o[k] === undefined ? d : !!o[k];
+  const ex = { showExam: b('showExam', true), single: b('single', true), warnOver: b('warnOver', true), hideScore: b('hideScore', false), showKey: b('showKey', true), shutter: b('shutter', true), vibrate: b('vibrate', true), light: b('light', true),
+    auto: b('auto', false), cont: b('cont', false), pass: Math.min(100, Math.max(0, Number(o.pass) || 50)), sd: o.sd === 'pop' ? 'pop' : 'sample', year: o.year === 'ad' ? 'ad' : 'be' };
+  return lock_(() => { const u = staff_(ctx.user) ? allStaff_().find(x => x.id === ctx.user.id) : null; if (!u) throw err_('ไม่พบผู้ใช้');
+    const p = json_(u.prefs, {}); p.exam = ex; updateRow_('Users', u, { prefs: JSON.stringify(p), updatedAt: now_() }); return ex; });
+}
+
 /* ---------- v5.8 ประวัติเครื่องมือครู (แยกภาคเรียน/ปีการศึกษา) ---------- */
-const TOOL_IDS = ['wheel', 'topic', 'color', 'noise', 'letter', 'bomb', 'quizlive', 'survey'];
+const TOOL_IDS = ['qrcode', 'exam', 'wheel', 'topic', 'color', 'noise', 'letter', 'bomb', 'quizlive', 'survey'];
 const tkey_ = () => { let k = ''; try { k = termDb_().key; } catch (e) {} return /^25\d\d\/[12]$/.test(k || '') ? k : curTermKey_(); };
 function toolLogAdd_(ctx, tool, data) {
   tool = String(tool || ''); if (TOOL_IDS.indexOf(tool) < 0) throw err_('ไม่รู้จักเครื่องมือนี้');
