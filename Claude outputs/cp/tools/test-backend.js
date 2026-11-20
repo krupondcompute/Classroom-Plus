@@ -465,10 +465,25 @@ ok(/ซ่อน/.test(R('getSettings', DM).data.sheetId), 'demo settings masked
 ok(R('save', DM, 'Courses', { name: 'x' }).code === 'DEMO' && R('saveSettings', DM, { config: { schoolName: 'x' } }).code === 'DEMO' && R('deleteUsers', DM, { ids: [] }).code === 'DEMO', 'demo cannot write');
 ok(R('batch', DM, [['listUsers', []], ['save', ['Courses', { name: 'x' }]]]).data.map(x => x.ok).join() === 'true,false', 'demo batch blocked');
 ok(R('markRead', DM, 'all').ok, 'demo soft op');
-ok(R('login', null, { mode: 'admin', username: 'test', password: '12345' }).ok && R('listUsers', AD).data.filter(u => u.username === 'test').length === 1, 'demo teacher created once');
+ok(R('login', null, { mode: 'admin', username: 'test', password: '12345' }).ok && R('listUsers', AD).data.filter(u => u.username === 'test').length === 0 && ctx.allStaff_().filter(u => u.username === 'test').length === 1, 'demo teacher created once and hidden from users list');
+ok(!R('adminDashboard', AD).data.recentUsers || !JSON.stringify(R('adminDashboard', AD).data).includes('ทดลอง ใช้งาน'), 'demo not in dashboard');
 const dsu = ctx.ensureDemoStudent_(); const dst = ctx.createSession_(dsu, false).token;
 ok(R('me', dst).data.user.demo === 'true' && R('studentHome', dst).ok && R('submitWork', dst, {}).code === 'DEMO', 'demo student read only');
-ok(R('login', null, { mode: 'student', studentCode: '12345' }).data.user.demo === 'true' && R('listUsers', AD).data.filter(u => u.studentCode === '12345' && u.role === 'student').length === 1, 'demo student login (no duplicate)');
+ok(R('login', null, { mode: 'student', studentCode: '12345' }).data.user.demo === 'true' && R('listUsers', AD).data.filter(u => u.studentCode === '12345' && u.role === 'student').length === 0 && R('login', null, { mode: 'student', studentCode: '12345' }).data.user.id === dsu.id, 'demo student login (hidden, no duplicate)');
 R('saveSettings', AD, { config: { demoEnabled: 'false' } }); ok(R('login', null, { mode: 'admin', username: 'test', password: '12345' }).ok === false, 'demo can be disabled');
+// ---------- v5.8 ----------
+ok(R('toolLogAdd', AD, 'wheel', { result: 'แดง', n: 6 }).ok && R('toolLogAdd', AD, 'wheel', { result: 'ฟ้า', n: 6 }).ok, 'tool log add');
+const tl = R('toolLogList', AD, 'wheel').data; ok(tl.items.length === 2 && tl.items[0].data.result && /^25\d\d\/[12]$/.test(tl.term), 'tool log list by term');
+ok(R('toolLogList', KB, 'wheel').data.items.length === 0, 'tool log per owner');
+ok(R('toolLogAdd', AD, 'hack', {}).ok === false, 'tool log rejects unknown tool');
+ok(R('toolLogClear', AD, 'wheel').data.removed === 2 && R('toolLogList', AD, 'wheel').data.items.length === 0, 'tool log clear');
+ok(R('toolLogAdd', DM, 'wheel', { result: 'x' }).ok && R('toolLogClear', DM, 'wheel').code === 'DEMO', 'demo tool log soft / clear blocked');
+const qom = ctx.quiz_({ questions: [{ id: 'a1', type: 'mc', q: 'ภาพใด', points: 1, options: ['', 'แมว'], om: [{ img: 'https://drive.google.com/thumbnail?id=abc', link: 'javascript:alert(1)' }, { file: { id: 'f', name: 'a.pdf', url: 'https://drive.google.com/file/d/f/view', mime: 'application/pdf' } }], answer: 0 }] });
+ok(qom.questions[0].om[0].img && !qom.questions[0].om[0].link && qom.questions[0].om[1].file.name === 'a.pdf', 'quiz option media sanitized');
+ok(JSON.parse(ctx.quizPub_(JSON.stringify(qom))).questions[0].om.length === 2, 'quiz option media sent to students');
+let qe = null; try { ctx.quiz_({ questions: [{ type: 'mc', q: 'x', points: 1, options: ['', 'b'], answer: 0 }] }); } catch (e) { qe = e; } ok(qe, 'empty option without media rejected');
+const bk6 = ctx.SpreadsheetApp.create('ไม่มีอ่าน'); const s6 = bk6.insertSheet('ม.3/1');
+[['เลขที่', 'คำนำหน้าชื่อ', 'ชื่อ - นามสกุล', 'ตัวชี้วัดที่ 1', 'รวมคะแนนทั้งหมด', 'เกรด', 'คุณลักษณะอันพึงประสงค์'], ['', '', '', '10', '100', '', ''], ['1', 'เด็กชาย', 'ทด ลอง', '9', '90', '4', '3']].forEach(r => s6.appendRow(r));
+const pb6 = ctx.parseBook_(s6.getDataRange().getDisplayValues()); ok(pb6.readFromTrait && pb6.students[0].read === '3', 'read falls back to trait column');
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

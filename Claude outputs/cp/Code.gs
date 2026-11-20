@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '5.7.0';
+const APP_VERSION = '5.8.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -48,6 +48,7 @@ const SCHEMA = {
   // ---------- v5: ค่าตั้งค่าระดับภาคเรียน + กิจกรรมตอบปัญหา/แบบสอบถาม ----------
   TermConfig: ['key','value','updatedAt'],
   LiveSessions: ['id','kind','title','pin','ownerId','data','settings','status','startedAt','endsAt','createdAt','updatedAt'],
+  ToolLogs: ['id','ownerId','tool','term','data','createdAt'],
   LiveAnswers: ['id','sessionId','pid','name','userId','answers','score','correct','timeMs','finishedAt','createdAt','updatedAt'],
   // ---------- v5.4: ตารางสอน + เช็คชื่อ (แยกตามภาคเรียน) ----------
   Timetables: ['id','ownerId','cfg','updatedAt'],
@@ -112,11 +113,13 @@ function rpc(fn, token, args, vt) {
 const DEMO_USER = 'test', DEMO_PASS = '12345', DEMO_CODE = '12345', DEMO_MSG = 'บัญชีทดลองใช้งาน ดูข้อมูลได้อย่างเดียว — ไม่สามารถเพิ่ม/แก้ไข/ลบ หรือตั้งค่าได้';
 const demoIds_ = () => MEM_._demo || (MEM_._demo = String(props_().getProperty('DEMO_IDS') || '').split(',').filter(String));
 const isDemo_ = u => !!u && (u.demo === 'true' || demoIds_().indexOf(u.id) >= 0);
-function markDemo_(u) { const l = demoIds_().concat([u.id]).slice(-50); props_().setProperty('DEMO_IDS', l.join(',')); MEM_._demo = l; return u; }
+function markDemo_(u) { const l = demoIds_().concat([u.id]).slice(-50); props_().setProperty('DEMO_IDS', l.join(',')); MEM_._demo = l; if (MEM_.Users) MEM_.Users = MEM_.Users.filter(x => x.id !== u.id); return u; }
+/** อ่านผู้ใช้จากไฟล์จริงโดยไม่กรองบัญชีทดลอง (ใช้ยืนยันตัวตนบัญชีทดลองเท่านั้น) */
+function rawUser_(pred) { try { return prows_('Users', 'g').find(pred) || (tenant_().unset ? null : prows_('Users', split_() ? 't' : 'c').find(pred)) || null; } catch (e) { return null; } }
 const DEMO_OK = {}; ('me logout studentHome listCourses getCourse getLesson listAssignments listAnnouncements search notifications groupCandidates batch myTeachers staffContact '
   + 'adminDashboard list listSubmissions report classSummary listUsers listTeachers chatContacts chatList chatMessages chatUnread chatTeamMembers getSettings auditLog listBackups '
-  + 'liveList liveGet liveStatus termSources peekTerm fileData scoreTest scoreBooks scoreBook attExport ttGet attOpen attHistory attSummary attDecode myAttend myScores').split(' ').forEach(k => DEMO_OK[k] = 1);
-const DEMO_SOFT = { markRead: 1, saveProgress: 1, discardUploads: 1 }; // คำสั่งเบื้องหลังที่หน้าเว็บเรียกอัตโนมัติ → ข้ามเงียบ ๆ
+  + 'liveList liveGet liveStatus termSources peekTerm fileData scoreTest scoreBooks scoreBook attExport ttGet attOpen attHistory attSummary attDecode myAttend myScores toolLogList').split(' ').forEach(k => DEMO_OK[k] = 1);
+const DEMO_SOFT = { markRead: 1, saveProgress: 1, discardUploads: 1, toolLogAdd: 1 }; // คำสั่งเบื้องหลังที่หน้าเว็บเรียกอัตโนมัติ → ข้ามเงียบ ๆ
 function demoMask_(fn, data) {
   if (!data) return data;
   const hide = '•••• (ซ่อนในบัญชีทดลอง)';
@@ -137,6 +140,7 @@ function ensureDemoStaff_() {
 function ensureDemoStudent_() {
   if (!demoOn_()) return null;
   useTenant_(''); useTerm_('');
+  const ex = rawUser_(x => x.role === 'student' && x.studentCode === DEMO_CODE && isDemo_(x)); if (ex) return ex;
   const cl = rows_('Classes').slice().sort((a, b) => a.order - b.order)[0] || { grade: 'ม.1', room: '1' };
   return markDemo_(insert_('Users', { id: id_(), role: 'student', studentCode: DEMO_CODE, prefix: 'เด็กชาย', fullName: 'นักเรียน ทดลองใช้งาน', grade: cl.grade, room: cl.room, classNo: '99',
     status: 'active', mustChangePassword: 'false', demo: 'true', createdAt: now_(), updatedAt: now_() }));
@@ -175,6 +179,7 @@ const ROUTES = {
   scoreTest: ['staff', scoreTest_], scoreBooks: ['staff', scoreBooks_], scoreBook: ['staff', scoreBook_], attCopyFrom: ['staff', attCopyFrom_], attExport: ['staff', attExport_],
   ttGet: ['staff', ttGet_], ttSaveCfg: ['staff', ttSaveCfg_], ttSaveSlot: ['staff', ttSaveSlot_], ttDeleteSlot: ['staff', ttDeleteSlot_],
   attOpen: ['staff', attOpen_], attSave: ['staff', attSave_], attHistory: ['staff', attHistory_], attSummary: ['staff', attSummary_], attDecode: ['staff', attDecode_],
+  toolLogAdd: ['staff', toolLogAdd_], toolLogList: ['staff', toolLogList_], toolLogClear: ['staff', toolLogClear_],
   myAttend: ['user', myAttend_], myScores: ['user', myScores_], attCheckIn: ['user', attCheckIn_],
   editSubmission: ['staff', editSubmission_], removeSubmission: ['staff', removeSubmission_], renameClass: ['admin', renameClass_], restoreBackup: ['admin', restoreBackup_], installTriggers: ['admin', installTriggers_]
 };
@@ -346,10 +351,11 @@ function prows_(name, part) {
 function rows_(name) {
   if (MEM_[name]) return MEM_[name];
   if (name === 'Users') { // ครู/ผู้ดูแลระบบของฐานข้อมูลนี้ (จากไฟล์หลัก) + นักเรียนของภาคเรียนนี้
-    if (tenant_().unset) return MEM_.Users = prows_('Users', 'g').filter(u => u.role !== 'student' && tenantOf_(u) === tenant_().id);
+    // บัญชีทดลองใช้งานเป็น "บัญชีแขวนลอย": ไม่อยู่ในรายชื่อ/สถิติใด ๆ (ยืนยันตัวตนผ่าน rawUser_ แทน)
+    if (tenant_().unset) return MEM_.Users = prows_('Users', 'g').filter(u => u.role !== 'student' && tenantOf_(u) === tenant_().id && !isDemo_(u));
     const tid = tenant_().id, sp = split_() ? 't' : 'c', g = prows_('Users', 'g'), mine = u => tenantOf_(u) === tid || (!tid && u.tenant && u.tenant === u.id); // ผู้ดูแลระบบหลักเห็นผู้ดูแลระบบที่แยกฐานข้อมูลด้วย (จัดการสิทธิ์ได้)
-    if (!tid && sp === 'c') return MEM_.Users = g.filter(u => u.role === 'student' || mine(u));
-    return MEM_.Users = g.filter(u => u.role !== 'student' && mine(u)).concat(prows_('Users', sp).filter(u => u.role === 'student'));
+    if (!tid && sp === 'c') return MEM_.Users = g.filter(u => (u.role === 'student' || mine(u)) && !isDemo_(u));
+    return MEM_.Users = g.filter(u => u.role !== 'student' && mine(u) && !isDemo_(u)).concat(prows_('Users', sp).filter(u => u.role === 'student' && !isDemo_(u)));
   }
   return MEM_[name] = prows_(name, partOf_(name));
 }
@@ -521,7 +527,7 @@ function auth_(token) {
   const st = allStaff_().find(x => x.id === s.u);
   if (st) { useTenant_(tenantOf_(st)); return st.status === 'active' ? st : null; }
   useTenant_(s.tn || ''); if (s.tm) useTerm_(s.tm); // นักเรียน: ใช้ฐานข้อมูล/ภาคเรียนที่เข้าสู่ระบบ
-  const u = find_('Users', s.u);
+  const u = find_('Users', s.u) || (demoIds_().indexOf(s.u) >= 0 ? rawUser_(x => x.id === s.u) : null);
   return u && u.status === 'active' ? u : null;
 }
 /** ข้อมูลผู้ใช้ที่ส่งให้หน้าเว็บ */
@@ -859,7 +865,7 @@ function colKind_(label) {
   if (/รวมคะแนนทั้งหมด/.test(n)) return 'total';
   if (/เกรด|ผลการเรียน|ระดับผลการเรียน/.test(n)) return 'grade';
   if (/คุณลักษณะ/.test(n)) return 'trait';
-  if (/อ่าน/.test(n) && /คิด|เขียน|วิเคราะห์/.test(n)) return 'read';
+  if (/อ่าน|คิดวิเคราะห์|วิเคราะห์/.test(n)) return 'read';
   if (/^สอบ|คะแนนสอบ/.test(n)) return 'exam';
   if (/ตัวชี้วัด|บทเรียน|หน่วยการเรียน/.test(n)) return 'ind';
   if (/รวม|ระหว่างภาค|กลางภาค|ปลายภาค/.test(n)) return 'sub';
@@ -888,17 +894,17 @@ function parseBook_(t) {
   const idC = [noC, preC, codeC, nameC], cols = [];
   for (let j = 0; j < Math.max.apply(null, t.slice(h, h + 2).map(r => r.length)); j++) { const x = lab(j); if (!x || idC.indexOf(j) >= 0 || j < nameC) continue; const n = norm(x); if (/ชื่อเล่น|ชื่องาน/.test(n)) continue;
     cols.push({ j: j, label: x, max: maxRow ? clean(maxRow[j]) : '', kind: colKind_(x) }); }
-  const students = [];
+  const students = [], hasRead = cols.some(c => c.kind === 'read'); // ไม่มีคอลัมน์อ่านคิดวิเคราะห์ → ใช้ผลประเมินคุณลักษณะฯ (ตามที่โรงเรียนกำหนดให้ตรงกัน)
   body.forEach(r => { if (!isName(r[nameC]) || isPrefix(r[nameC])) return; const vals = {}; cols.forEach(c => vals[c.j] = clean(r[c.j]));
     const pick = k => { const c = cols.find(x => x.kind === k); return c ? vals[c.j] : ''; };
-    students.push({ no: noC >= 0 ? clean(r[noC]) : '', prefix: preC >= 0 ? clean(r[preC]) : '', name: clean(r[nameC]), code: codeC >= 0 ? clean(r[codeC]) : '', vals: vals, total: clean(r[tc]), grade: pick('grade'), trait: pick('trait'), read: pick('read') }); });
+    students.push({ no: noC >= 0 ? clean(r[noC]) : '', prefix: preC >= 0 ? clean(r[preC]) : '', name: clean(r[nameC]), code: codeC >= 0 ? clean(r[codeC]) : '', vals: vals, total: clean(r[tc]), grade: pick('grade'), trait: pick('trait'), read: hasRead ? pick('read') : pick('trait') }); });
   const section = re => { for (let i = end; i < t.length; i++) { const j = t[i].findIndex(c => re.test(norm(c))); if (j < 0) continue;
       const lb = t[i + 1] || [], cnt = t[i + 2] || [], pct = t[i + 3] || [], out = { labels: [], counts: [], percents: [] }; let k = j;
       while (k < lb.length && clean(lb[k]) && !/^รวม/.test(clean(lb[k]))) { out.labels.push(clean(lb[k])); out.counts.push(clean(cnt[k])); out.percents.push(/ร้อยละ/.test(pct.slice(0, j).map(clean).join('')) ? clean(pct[k]) : ''); k++; }
       out.total = clean(cnt[k]); return out.labels.length ? out : null; } return null; };
   let count = ''; for (let i = end; i < t.length; i++) { const j = t[i].findIndex(c => /^จำนวนนักเรียน$/.test(norm(c))); if (j >= 0) { count = clean(t[i].slice(j + 1).find(c => clean(c)) || ''); break; } }
   const gc = cols.find(c => c.kind === 'grade');
-  return { totalCol: tc, gradeCol: gc ? gc.j : -1, columns: cols, students: students, count: count || String(students.length),
+  return { readFromTrait: !hasRead, totalCol: tc, gradeCol: gc ? gc.j : -1, columns: cols, students: students, count: count || String(students.length),
     sections: { grade: section(/ได้ระดับผลการเรียน/), trait: section(/คุณลักษณะ/), read: section(/การอ่าน|อ่าน,?คิด/) } };
 }
 const nmKey_ = v => String(v || '').replace(SC_PREFIX, '').replace(/\s+/g, '').toLowerCase();
@@ -934,6 +940,30 @@ function sheetTotal_(url, u) {
   const d = studentScore_(tables, u, names); if (d && d.value !== '') return d;
   const r = scanTotal_(tables, u.studentCode, u.fullName);
   return r && r.value !== undefined && r.value !== '' ? { value: r.value, header: r.header } : null;
+}
+/* ---------- v5.8 ประวัติเครื่องมือครู (แยกภาคเรียน/ปีการศึกษา) ---------- */
+const TOOL_IDS = ['wheel', 'topic', 'color', 'noise', 'letter', 'bomb', 'quizlive', 'survey'];
+const tkey_ = () => { let k = ''; try { k = termDb_().key; } catch (e) {} return /^25\d\d\/[12]$/.test(k || '') ? k : curTermKey_(); };
+function toolLogAdd_(ctx, tool, data) {
+  tool = String(tool || ''); if (TOOL_IDS.indexOf(tool) < 0) throw err_('ไม่รู้จักเครื่องมือนี้');
+  const js = JSON.stringify(data === undefined ? {} : data); if (js.length > 6000) throw err_('ข้อมูลยาวเกินไป');
+  return lock_(() => {
+    const term = tkey_(), row = insert_('ToolLogs', { id: id_(), ownerId: ctx.user.id, tool: tool, term: term, data: js, createdAt: now_() });
+    const mine = rows_('ToolLogs').filter(r => r.ownerId === ctx.user.id && r.tool === tool && r.term === term);
+    if (mine.length > 600) { const old = {}; mine.sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt))).slice(0, mine.length - 500).forEach(r => old[r.id] = 1); deleteWhere_('ToolLogs', r => old[r.id]); }
+    return { id: row.id, term: term };
+  });
+}
+function toolLogList_(ctx, tool, term) {
+  const run = () => { const k = tkey_();
+    return { term: k, items: rows_('ToolLogs').filter(r => r.ownerId === ctx.user.id && (!tool || r.tool === tool) && r.term === k)
+      .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 300).map(r => ({ id: r.id, tool: r.tool, at: r.createdAt, data: json_(r.data, {}) })) }; };
+  return term && /^25\d\d\/[12]$/.test(term) ? withTerm_(term, run) : run();
+}
+function toolLogClear_(ctx, tool, term) {
+  const run = () => { const k = tkey_(); return lock_(() => { const n = rows_('ToolLogs').filter(r => r.ownerId === ctx.user.id && r.tool === tool && r.term === k).length;
+    deleteWhere_('ToolLogs', r => r.ownerId === ctx.user.id && r.tool === tool && r.term === k); return { removed: n }; }); };
+  return term && /^25\d\d\/[12]$/.test(term) ? withTerm_(term, run) : run();
 }
 /** v5.7 นักเรียน: ผลการเรียนรายบุคคลทุกรายวิชา (จากแหล่งคะแนนที่ตั้งค่าไว้) */
 function myScores_(ctx) {
@@ -1050,7 +1080,14 @@ function quiz_(v) {
     const files = cleanFiles_(q.files || []); if (files.length) out.files = files.slice(0, 5);
     if (type === 'mc') {
       out.options = (Array.isArray(q.options) ? q.options : []).map(x => str_(x, 500)).slice(0, 10);
-      if (out.options.length < 2 || out.options.some(x => !x)) throw err_(n + 'ตัวเลือกต้องมีอย่างน้อย 2 ข้อและห้ามว่าง');
+      // สื่อประกอบตัวเลือก (รูป / ไฟล์ เช่น PDF / ลิงก์) — ตัวเลือกที่มีสื่อเว้นข้อความได้
+      const om = (Array.isArray(q.om) ? q.om : []).slice(0, out.options.length).map(m => { m = m || {}; const o2 = {};
+        const im = str_(m.img, 48000); if (im && imgOk_(im)) o2.img = im;
+        const lk = str_(m.link, 500); if (lk && /^https?:\/\//.test(lk)) o2.link = lk;
+        const fl = cleanFiles_(m.file ? [m.file] : []); if (fl.length) o2.file = fl[0];
+        return o2; });
+      if (om.some(m => Object.keys(m).length)) { while (om.length < out.options.length) om.push({}); out.om = om; }
+      if (out.options.length < 2 || out.options.some((x, j) => !x && !(om[j] && Object.keys(om[j]).length))) throw err_(n + 'ตัวเลือกต้องมีอย่างน้อย 2 ข้อและห้ามว่าง (ใส่ข้อความ หรือแนบรูป/ไฟล์/ลิงก์)');
       if (q.multi) { // ตอบได้มากกว่า 1 ข้อ
         const arr = (Array.isArray(q.answer) ? q.answer : [q.answer]).map(Number).filter((a, i, l) => a >= 0 && a < out.options.length && l.indexOf(a) === i).sort();
         if (!arr.length) throw err_(n + 'กรุณาเลือกคำตอบที่ถูกอย่างน้อย 1 ข้อ');
@@ -1079,7 +1116,7 @@ function quizPub_(json) {
     const o = { id: x.id, type: x.type, q: x.q, points: x.points };
     ['image', 'link', 'files'].forEach(k => { if (x[k]) o[k] = x[k]; });
     if (x.time) o.time = x.time;
-    if (x.type === 'mc') { o.options = x.options; if (x.multi) o.multi = true; }
+    if (x.type === 'mc') { o.options = x.options; if (x.om) o.om = x.om; if (x.multi) o.multi = true; }
     if (x.type === 'match') { o.left = x.pairs.map(p => p.l); o.right = x.pairs.map(p => p.r).slice().sort(); }
     if (x.type === 'text') o.auto = !!x.answer;
     return o;
