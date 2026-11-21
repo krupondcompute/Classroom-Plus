@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '6.2.0';
+const APP_VERSION = '6.3.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -50,6 +50,7 @@ const SCHEMA = {
   LiveSessions: ['id','kind','title','pin','ownerId','data','settings','status','startedAt','endsAt','createdAt','updatedAt'],
   ToolLogs: ['id','ownerId','tool','term','data','createdAt'],
   QrCodes: ['id','ownerId','text','note','status','useDate','style','imgId','fileJson','createdAt','updatedAt'],
+  Events: ['id','ownerId','title','detail','date','endDate','start','end','allDay','color','remind','notified','createdAt','updatedAt'],
   ExamPapers: ['id','ownerId','title','data','createdAt','updatedAt','folderId'],
   ExamFolders: ['id','ownerId','name','createdAt','kind'],
   Exams: ['id','ownerId','name','folderId','cfg','key','classes','tags','createdAt','updatedAt'],
@@ -121,7 +122,7 @@ const isDemo_ = u => !!u && (u.demo === 'true' || demoIds_().indexOf(u.id) >= 0)
 function markDemo_(u) { const l = demoIds_().concat([u.id]).slice(-50); props_().setProperty('DEMO_IDS', l.join(',')); MEM_._demo = l; if (MEM_.Users) MEM_.Users = MEM_.Users.filter(x => x.id !== u.id); return u; }
 /** อ่านผู้ใช้จากไฟล์จริงโดยไม่กรองบัญชีทดลอง (ใช้ยืนยันตัวตนบัญชีทดลองเท่านั้น) */
 function rawUser_(pred) { try { return prows_('Users', 'g').find(pred) || (tenant_().unset ? null : prows_('Users', split_() ? 't' : 'c').find(pred)) || null; } catch (e) { return null; } }
-const DEMO_OK = {}; ('me logout studentHome listCourses getCourse getLesson listAssignments listAnnouncements search notifications groupCandidates batch myTeachers staffContact '
+const DEMO_OK = {}; ('me logout evList evDue studentHome listCourses getCourse getLesson listAssignments listAnnouncements search notifications groupCandidates batch myTeachers staffContact '
   + 'adminDashboard list listSubmissions report classSummary listUsers listTeachers chatContacts chatList chatMessages chatUnread chatTeamMembers getSettings auditLog listBackups '
   + 'liveList liveGet liveStatus termSources peekTerm fileData scoreTest scoreBooks scoreBook attExport ttGet attOpen attHistory attSummary attDecode myAttend myScores toolLogList qrList paperList examAll examGet examResults').split(' ').forEach(k => DEMO_OK[k] = 1);
 const DEMO_SOFT = { markRead: 1, saveProgress: 1, discardUploads: 1, toolLogAdd: 1 }; // คำสั่งเบื้องหลังที่หน้าเว็บเรียกอัตโนมัติ → ข้ามเงียบ ๆ
@@ -186,7 +187,7 @@ const ROUTES = {
   attOpen: ['staff', attOpen_], attSave: ['staff', attSave_], attHistory: ['staff', attHistory_], attSummary: ['staff', attSummary_], attDecode: ['staff', attDecode_],
   qrList: ['staff', qrList_], qrSave: ['staff', qrSave_], qrStatus: ['staff', qrStatus_], qrRemove: ['staff', qrRemove_],
   paperList: ['staff', paperList_], paperSave: ['staff', paperSave_], paperRemove: ['staff', paperRemove_],
-  examAll: ['staff', examAll_], examFolderSave: ['staff', examFolderSave_], examFolderRemove: ['staff', examFolderRemove_], examMove: ['staff', examMove_], examSave: ['staff', examSave_], examRemove: ['staff', examRemove_], examGet: ['staff', examGet_],
+  examAll: ['staff', examAll_], examFolderSave: ['staff', examFolderSave_], examFolderRemove: ['staff', examFolderRemove_], evList: ['user', evList_], evSave: ['staff', evSave_], evMove: ['staff', evMove_], evRemove: ['staff', evRemove_], evDue: ['user', evDue_], examMove: ['staff', examMove_], examSave: ['staff', examSave_], examRemove: ['staff', examRemove_], examGet: ['staff', examGet_],
   examKey: ['staff', examKey_], examResultSave: ['staff', examResultSave_], examResultUpdate: ['staff', examResultUpdate_], examResultRemove: ['staff', examResultRemove_], examResults: ['staff', examResults_], examPrefs: ['staff', examPrefs_],
   classBulkAdd: ['staff', classBulkAdd_], classRemove2: ['admin', classRemove2_],
   toolLogAdd: ['staff', toolLogAdd_], toolLogList: ['staff', toolLogList_], toolLogClear: ['staff', toolLogClear_],
@@ -1001,6 +1002,43 @@ function paperSave_(ctx, d) {
 }
 function paperRemove_(ctx, id) { const r = find_('ExamPapers', id); if (!exOwn_(ctx.user, r)) throw err_('ไม่พบข้อสอบนี้', 'NOTFOUND'); return lock_(() => { deleteWhere_('ExamPapers', x => x.id === r.id); return true; }); }
 /** ค่าตั้งของกระดาษคำตอบ */
+/* ---------- v6.3 ปฏิทินกิจกรรม (แยกตามภาคเรียน — เก็บในฐานข้อมูลภาคเรียน) ---------- */
+const EV_REMIND_ = [-1, 0, 5, 10, 15, 30, 60, 120, 1440, 2880, 10080];
+const evOut_ = r => { const o = pub_(r); o.allDay = r.allDay === 'true'; o.remind = Number(r.remind); if (isNaN(o.remind)) o.remind = -1; return o; };
+function evList_(ctx, f) { f = f || {}; return rows_('Events').filter(r => (!f.from || String(r.endDate || r.date) >= f.from) && (!f.to || String(r.date) <= f.to)).map(evOut_).sort((a, b) => (a.date + (a.allDay ? '' : a.start)).localeCompare(b.date + (b.allDay ? '' : b.start))); }
+function evClean_(d) {
+  const okD = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')), okT = v => /^\d{2}:\d{2}$/.test(String(v || ''));
+  const title = str_(d.title, 150); if (!title) throw err_('กรุณาระบุหัวข้อกิจกรรม'); if (!okD(d.date)) throw err_('วันที่ไม่ถูกต้อง');
+  const allDay = d.allDay === true || d.allDay === 'true', endDate = okD(d.endDate) && d.endDate >= d.date ? d.endDate : d.date;
+  const start = allDay ? '' : (okT(d.start) ? d.start : '08:00'), end = allDay ? '' : (okT(d.end) ? d.end : start);
+  const remind = EV_REMIND_.indexOf(Number(d.remind)) >= 0 ? String(Number(d.remind)) : '-1';
+  return { title: title, detail: str_(d.detail, 2000), date: d.date, endDate: endDate, start: start, end: end, allDay: String(allDay), color: /^#[0-9a-fA-F]{6}$/.test(String(d.color || '')) ? d.color : '#e11d48', remind: remind };
+}
+function evSave_(ctx, d) { d = d || {}; const v = evClean_(d);
+  return lock_(() => { const r = d.id ? find_('Events', d.id) : null; if (d.id && !r) throw err_('ไม่พบกิจกรรม', 'NOTFOUND');
+    if (r && r.ownerId !== ctx.user.id && !isAdmin_(ctx.user)) throw err_('แก้ไขได้เฉพาะกิจกรรมของคุณ', 'FORBIDDEN');
+    const changed = !r || r.date !== v.date || r.start !== v.start || r.remind !== v.remind;
+    if (r) { updateRow_('Events', r, Object.assign(v, changed ? { notified: '' } : {}, { updatedAt: now_() })); return evOut_(Object.assign({}, r, v)); }
+    return evOut_(insert_('Events', Object.assign({ id: id_(), ownerId: ctx.user.id, notified: '', createdAt: now_(), updatedAt: now_() }, v))); }); }
+function evMove_(ctx, id, date) { const r = find_('Events', id); if (!r) throw err_('ไม่พบกิจกรรม', 'NOTFOUND'); if (r.ownerId !== ctx.user.id && !isAdmin_(ctx.user)) throw err_('ย้ายได้เฉพาะกิจกรรมของคุณ', 'FORBIDDEN');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ''))) throw err_('วันที่ไม่ถูกต้อง');
+  const span = Math.round((new Date(String(r.endDate || r.date) + 'T00:00:00Z') - new Date(r.date + 'T00:00:00Z')) / 864e5), e = new Date(date + 'T00:00:00Z'); e.setUTCDate(e.getUTCDate() + Math.max(0, span || 0));
+  return lock_(() => { const p = { date: date, endDate: e.toISOString().slice(0, 10), notified: '', updatedAt: now_() }; updateRow_('Events', r, p); return evOut_(Object.assign({}, r, p)); }); }
+function evRemove_(ctx, id) { const r = find_('Events', id); if (!r) throw err_('ไม่พบกิจกรรม', 'NOTFOUND'); if (r.ownerId !== ctx.user.id && !isAdmin_(ctx.user)) throw err_('ลบได้เฉพาะกิจกรรมของคุณ', 'FORBIDDEN'); return lock_(() => { deleteWhere_('Events', x => x.id === r.id); return true; }); }
+const naiveAdd_ = (s, min) => new Date(new Date(s.slice(0, 16) + ':00Z').getTime() + min * 6e4).toISOString().slice(0, 16);
+/** ถึงเวลาแจ้งเตือน → ประกาศลงระบบ (ครั้งเดียว) + ส่งรายการกิจกรรมที่ใกล้ถึง/กำลังจัดให้หน้าเว็บแสดงแจ้งเตือน */
+function evDue_(ctx) {
+  const now = now_().slice(0, 16), today = now.slice(0, 10), out = [];
+  const list = rows_('Events').filter(r => String(r.endDate || r.date) >= today);
+  list.forEach(r => { const st = r.date + 'T' + (r.allDay === 'true' ? '07:00' : (r.start || '08:00')), rm = Number(r.remind); if (isNaN(rm) || rm < 0) return;
+    const at = naiveAdd_(st, -rm), endAt = (r.endDate || r.date) + 'T' + (r.allDay === 'true' ? '23:59' : (r.end || r.start || '23:59'));
+    if (now >= at && now <= endAt) out.push(Object.assign(evOut_(r), { at: at })); });
+  const due = out.filter(x => rows_('Events').some(r => r.id === x.id && r.notified !== 'true'));
+  if (due.length && !isDemo_(ctx.user)) { try { lock_(() => { due.forEach(x => { const r = find_('Events', x.id); if (!r || r.notified === 'true') return;
+    updateRow_('Events', r, { notified: 'true' });
+    insert_('Announcements', { id: id_(), type: 'กิจกรรม', title: '📅 ' + r.title, body: (r.allDay === 'true' ? 'ทั้งวัน' : (r.start || '') + (r.end ? ' – ' + r.end : '') + ' น.') + ' · วันที่ ' + r.date + (r.endDate && r.endDate !== r.date ? ' ถึง ' + r.endDate : '') + (r.detail ? '\n' + r.detail : ''), attachments: '[]', image: '', pinned: 'true', courseId: '', grade: '', room: '', ownerId: r.ownerId, createdAt: now_(), updatedAt: now_() }); }); }); } catch (e) {} }
+  return out;
+}
 function examCfg_(c) {
   c = c || {}; const n = x => Math.round(Number(x) || 0);
   const out = { digits: Math.min(5, Math.max(2, n(c.digits) || 5)), count: Math.min(200, Math.max(1, n(c.count) || 10)),

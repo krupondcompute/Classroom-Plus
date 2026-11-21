@@ -529,5 +529,17 @@ ok(JSON.parse(R('qrList', AD).data.items.find(x => x.text === 'https://x.y') ? J
 const c61 = R('examSave', AD, { name: 'v61', cfg: { count: 10, labels: 'custom', labelsCustom: 'a,b,c,d', sheet: { font: 'Kanit', fs: 1.2, howtoImg: 'data:image/png;base64,AAAA', tipsText: 'x' } } }).data.cfg; ok(c61.labels === 'custom' && c61.labelsCustom === 'a,b,c,d' && c61.sheet.font === 'Kanit' && c61.sheet.fs === 1.2 && c61.sheet.howtoImg.startsWith('data:image/png'), 'v6.1 answer sheet: custom labels, font, example image');
 ok(R('examSave', AD, { name: 'v61b', cfg: { count: 10, sheet: { howtoImg: 'javascript:alert(1)' } } }).data.cfg.sheet.howtoImg === '', 'v6.1 example image must be a data image');
 const c62 = R('examSave', AD, { name: 'v62', cfg: { count: 10, grid: 'hv', flow: 'below', sheet: { part1Type: 'ปรนัย 10 ข้อ', lay: { line: '#123456', qrSwap: true, text: 'red' } } } }).data.cfg; ok(c62.grid === 'hv' && c62.flow === 'below' && c62.sheet.part1Type === 'ปรนัย 10 ข้อ' && c62.sheet.lay.line === '#123456' && c62.sheet.lay.qrSwap === true && c62.sheet.lay.text === '#111111', 'v6.2 answer sheet grid/flow/layout (colors validated)');
+// ---- v6.3 ปฏิทินกิจกรรม ----
+{ const td = ctx.now_().slice(0, 10), ev = R('evSave', AD, { title: 'สอบกลางภาค', date: td, allDay: true, remind: 1440, color: '#123456', detail: 'ห้อง 1' }).data;
+  ok(ev && ev.id && ev.allDay === true && ev.color === '#123456' && ev.remind === 1440, 'v6.3 event save');
+  ok(R('evSave', AD, { title: '', date: td }).ok === false && R('evSave', AD, { title: 'x', date: 'bad' }).ok === false, 'v6.3 event validation');
+  ok(R('evList', AD, { from: td, to: td }).data.some(x => x.id === ev.id), 'v6.3 event list by range');
+  const d2 = new Date(td + 'T00:00:00Z'); d2.setUTCDate(d2.getUTCDate() + 3); const t3 = d2.toISOString().slice(0, 10);
+  const mv = R('evMove', AD, ev.id, t3).data; ok(mv.date === t3 && mv.endDate === t3, 'v6.3 event drag to another day');
+  R('evMove', AD, ev.id, td); const an0 = ctx.rows_('Announcements').length, due = R('evDue', AD).data;
+  ok(due.some(x => x.id === ev.id) && ctx.rows_('Announcements').length === an0 + 1 && ctx.rows_('Announcements').some(a => a.type === 'กิจกรรม' && a.title.includes('สอบกลางภาค')), 'v6.3 due event → system announcement');
+  R('evDue', AD); ok(ctx.rows_('Announcements').length === an0 + 1, 'v6.3 announcement only once');
+  ok(R('evSave', AD, { title: 'ไม่เตือน', date: td, allDay: true, remind: -1 }).ok && !R('evDue', AD).data.some(x => x.title === 'ไม่เตือน'), 'v6.3 no-reminder event not due');
+  ok(R('evRemove', AD, ev.id).ok && !R('evList', AD, {}).data.some(x => x.id === ev.id), 'v6.3 event remove'); }
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
