@@ -1386,15 +1386,50 @@ body.auth .chat-btn,body.auth .chat-panel{display:none!important}
 /* ตารางบนมือถือ/แท็บเล็ต: ไม่จำกัดความสูง → เลื่อนต่อทั้งหน้าได้เมื่อสุดตาราง */
 @media (max-width:991.98px){.sb-tbl-wrap,.att-tbl-wrap{max-height:none!important;overflow-y:visible!important;overflow-x:auto}}
 .sb-tbl-wrap,.att-tbl-wrap,.table-responsive-md{overscroll-behavior:auto}
+/* ---------- v6.2 ---------- */
+.welcome-row{align-items:center!important;justify-content:center!important;gap:10px!important}.welcome-row .bubble{margin-bottom:0!important}
+.welcome-row .robot{width:clamp(120px,13vw,165px)!important}
+@media (max-width:767.98px){.welcome-row .robot{width:96px!important}}
+.music-btn{position:absolute;top:12px;right:12px;z-index:5;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.22);color:#fff;display:grid;place-items:center;backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(2,6,23,.3)}
+.music-btn:not(.off){animation:musicPulse 1.02s ease-in-out infinite}.music-btn.off{opacity:.75}@keyframes musicPulse{50%{transform:scale(1.1)}}
+body.app footer{align-items:center!important;text-align:center!important;justify-content:flex-start!important;padding-top:14px!important;padding-left:16px!important;padding-right:16px!important;padding-bottom:calc(var(--dock-h) + 30px + var(--sab))!important}
+/* ปุ่ม X ทุกจุด = วงกลมสีแดง ไอคอนขาว */
+.btn-close{--bs-btn-close-bg:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e")!important;background-image:var(--bs-btn-close-bg)!important;background-color:#ef4444!important;filter:none!important;opacity:1!important;box-shadow:0 3px 10px rgba(239,68,68,.35)!important}
+.btn-close:hover,.btn-close:focus{background-color:#dc2626!important}
+.swal2-close{background:#ef4444!important;color:#fff!important;box-shadow:0 3px 10px rgba(239,68,68,.35)}.swal2-close:hover{background:#dc2626!important;color:#fff!important}
+.tv-btn[data-tvclose]{background:#ef4444!important;color:#fff!important}
+.btn:has(>i.fa-xmark:only-child),#exScan [data-x=close]{border-radius:50%!important;aspect-ratio:1/1;padding:0!important;width:36px;height:36px;display:inline-grid!important;place-items:center;background:#ef4444!important;border-color:#ef4444!important;color:#fff!important}
+.btn-sm:has(>i.fa-xmark:only-child){width:30px;height:30px}
+@media (max-width:767.98px){.hero .clock{order:5!important}}
+.ph-sub{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ph-sub .chip{margin-left:auto}
+/* ปุ่มในกล่อง SweetAlert แถวเดียว (มือถือ: เหลือแต่ไอคอนเมื่อไม่พอ) */
+.swal2-actions{flex-wrap:nowrap!important;gap:8px}.swal2-actions .btn{white-space:nowrap}
+@media (max-width:575.98px){.swal2-actions .btn{padding-left:14px!important;padding-right:14px!important;min-width:52px}.swal2-actions .btn .bt{display:none}.swal2-actions .btn:not(:has(.bt)){font-size:.9rem}}
+.ph-btns{display:flex;gap:8px;align-items:center;flex-wrap:nowrap}
+@media (max-width:767.98px){.page-head>.ph-btns{flex:1 1 100%;width:100%}.ph-btns>select{flex:1;min-width:0;width:auto!important}.ph-btns .bt{display:none}.ph-btns>.btn{flex:none;width:44px;height:44px;padding:0;display:grid;place-items:center;border-radius:50%}}
+/* ตารางเช็คชื่อ / ตารางสอน: เส้นตารางสีอ่อนทั้งแนวนอน-แนวตั้ง · หัวคอลัมน์กึ่งกลาง ตัวอักษรขาว */
+.att-tbl{border-collapse:collapse}.att-tbl td,.att-tbl th{border:1px solid color-mix(in srgb,var(--border) 85%,transparent)!important}
+.att-tbl thead th,.att-tbl thead th *{text-align:center!important;color:#fff!important;vertical-align:middle}
+.tt{border-spacing:0!important;border-collapse:collapse!important}.tt td,.tt th{border:1px solid color-mix(in srgb,var(--border) 85%,transparent)!important;border-radius:0!important}.tt td{padding:4px!important}
+.tt thead th,.tt thead th *{text-align:center!important;color:#fff!important}.tt thead th.tt-day{background:var(--blue)!important}
+@media (max-width:767.98px){.att-bulk{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.att-bulk .att-bk{white-space:normal;line-height:1.2;font-size:.78rem;padding:6px 4px;min-height:40px}.att-bulk .flex-fill{display:none}.att-bulk .chip{grid-column:1/-1}}
+/* เมนูจัดวางรูปแบบหน้ากระดาษ */
+.pv-tools{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;margin-left:auto}
+.lay-set{min-width:270px;max-width:320px;max-height:62vh;overflow:auto}.lay-row{display:flex;align-items:center;gap:8px;justify-content:space-between;font-size:.84rem;margin:3px 0}.lay-row>span{min-width:0;flex:1}.lay-row input[type=number],.lay-row select{width:110px;flex:none}.lay-row input[type=color]{width:46px;height:30px;padding:2px;flex:none}
+.lay-order{display:flex;flex-direction:column;gap:3px}.lay-oi{display:flex;align-items:center;gap:4px;font-size:.84rem;padding:3px 6px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}.lay-oi .btn{width:28px;height:28px;padding:0}
+@media (max-width:575.98px){.pv-tools .bt{display:none}.pv-tools .btn{width:40px;height:40px;padding:0;display:grid;place-items:center}.pv-tools .dropdown-toggle::after{display:none}}
+.ss-menu{width:min(360px,92vw);max-height:68vh;overflow:auto}
+.mf-row{display:flex;gap:8px;flex-wrap:nowrap;justify-content:flex-end;width:100%}.mf-row .btn{white-space:nowrap}
+@media (max-width:767.98px){.mf-row .btn{flex:1 1 0;min-width:0;padding-left:8px;padding-right:8px}.mf-row .bt{display:none}}
 /* ---------- v6.1 ---------- */
 .pp-bulk{border:1.5px dashed var(--blue);border-radius:14px;padding:10px 12px;margin:0 0 12px;background:var(--surface-2)}
 .ph-pair{display:flex;gap:8px;align-items:center;flex-wrap:nowrap}.ph-pair>*{min-width:0}.ph-pair>input{width:auto}
 @media (max-width:767.98px){.page-head>.ph-pair{flex:1 1 100%;width:100%}.ph-pair>*{flex:1 1 0;width:auto!important;max-width:none!important}}
 .ms-extra>div{display:flex;flex-direction:column;justify-content:space-between;gap:4px}.ms-extra small{min-height:2.4em;line-height:1.2}
 @media (max-width:767.98px){.auth-left{padding-top:26px!important}.logo-wrap{margin-top:6px}.brand-name{margin-top:4px!important}}
-.btn-close{border-radius:50%!important;width:2.1rem;height:2.1rem;padding:0!important;background-color:var(--surface-2)!important;background-size:.75rem!important;opacity:.9;flex:none;box-shadow:none!important}.btn-close:hover{opacity:1;background-color:var(--blue-light)!important}
+.btn-close{border-radius:50%!important;width:2.1rem;height:2.1rem;padding:0!important;background-size:.7rem!important;flex:none}
 .btn-close.btn-close-sm,.chip .btn-close{width:1.3rem;height:1.3rem;background-size:.5rem!important}
-.swal2-close{border-radius:50%!important;width:2.1rem!important;height:2.1rem!important;background:var(--surface-2)!important;font-size:1.6rem!important;line-height:1!important}
+.swal2-close{border-radius:50%!important;width:2.1rem!important;height:2.1rem!important;font-size:1.6rem!important;line-height:1!important}
 @media (max-width:767.98px){.stu-row>:nth-child(5){justify-self:stretch!important}.stu-row .sub-acts{width:100%}.stu-row .sub-acts [data-grade]{flex:1 1 auto!important;width:auto!important;border-radius:999px!important;padding:0 18px!important;display:inline-flex!important;gap:6px;justify-content:center;align-items:center;font-weight:700}.stu-row .sub-acts [data-grade] .bl{display:inline!important}}
 </style>
 </head>
@@ -1417,6 +1452,7 @@ body.auth .chat-btn,body.auth .chat-panel{display:none!important}
       <div class="fx-grid" aria-hidden="true"></div>
       <div class="brand" id="brand"><div class="logo-wrap"><span class="orbit"></span><span class="orbit r2"></span><div class="logo-circle" data-logo></div></div><h1 class="brand-name" data-school>Classroom +</h1></div>
       <div class="brand-line" aria-hidden="true"></div>
+      <button type="button" class="music-btn off" id="musicBtn" aria-label="เปิด/ปิดเพลงประกอบ" title="เปิดเพลงประกอบ"><i class="fa-solid fa-volume-xmark"></i></button>
       <div class="welcome-row"><div class="bubble"><div class="welcome" id="welcomeText">ยินดีต้อนรับ สู่ห้องเรียนออนไลน์แห่งอนาคต</div></div><div class="robot" id="robot" aria-hidden="true"></div></div>
     </div>
     <div class="auth-right" id="authRight"></div>
@@ -1527,7 +1563,7 @@ const SFX = {
     try {
       const ss = window.speechSynthesis; if (!ss) { setTimeout(done, 900); return; }
       ss.cancel();
-      const u = new SpeechSynthesisUtterance('สวัสดีครับ! ยินดีต้อนรับสู่ คลาสรูมพลัส มาเรียนสนุก ไปด้วยกันนะครับ');
+      const u = new SpeechSynthesisUtterance('ยินดีต้อนรับทุกท่าน สู่ห้องเรียนออนไลน์ แห่งอนาคต');
       u.lang = 'th-TH'; u.pitch = 1.8; u.rate = 1.08; u.volume = 1;
       const vs = (ss.getVoices() || []).filter(x => /^th/i.test(x.lang)); const v = vs.find(x => /female|หญิง|Kanya|Narisa|Premwadee|Google/i.test(x.name)) || vs[0]; if (v) u.voice = v;
       u.onend = u.onerror = done; setTimeout(done, 7000);
@@ -1536,11 +1572,41 @@ const SFX = {
   },
   greet() {
     if (S.greeted || !this.on()) return;
-    const go = () => { if (S.greeted || $('#authView').classList.contains('hidden')) return; S.greeted = 1; off(); setTimeout(() => this.robot(), 150); };
+    const go = e => { if (S.greeted || $('#authView').classList.contains('hidden')) return; S.greeted = 1; off(); setTimeout(() => this.robot(), 150); if (!(e && e.target && e.target.closest && e.target.closest('#musicBtn'))) LoginMusic.start(); };
     const off = () => ['pointerdown', 'keydown'].forEach(ev => document.removeEventListener(ev, go, true));
     if (navigator.userActivation && navigator.userActivation.hasBeenActive) return go();
     ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, go, true)); // เบราว์เซอร์อนุญาตให้เล่นเสียงหลังผู้ใช้แตะหน้าจอครั้งแรก
   }
+};
+/* v6.2 เพลงประกอบหน้า Login: ซินธ์แนวเทคโนโลยี จังหวะสนุก เล่นวนซ้ำเฉพาะหน้า Login (สร้างด้วย Web Audio ไม่ต้องโหลดไฟล์) */
+const LoginMusic = {
+  t: null, step: 0, bus: null, on: false,
+  muted: () => { try { return localStorage.getItem('cp_music') === '0'; } catch (e) { return false; } },
+  note(f, t, d, type, v, dest) { const a = audio(), o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.setValueAtTime(f, t);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + .015); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g).connect(dest); o.start(t); o.stop(t + d + .05); },
+  hat(t, v, dest) { const a = audio(), n = Math.floor(a.sampleRate * .05), b = a.createBuffer(1, n, a.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(); f.type = 'highpass'; f.frequency.value = 7000; g.gain.value = v; s.buffer = b; s.connect(f).connect(g).connect(dest); s.start(t); },
+  kick(t, dest) { const a = audio(), o = a.createOscillator(), g = a.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(45, t + .18); g.gain.setValueAtTime(.5, t); g.gain.exponentialRampToValueAtTime(.0001, t + .22); o.connect(g).connect(dest); o.start(t); o.stop(t + .25); },
+  start() {
+    if (this.on || this.muted() || !SFX.on() || $('#authView').classList.contains('hidden')) return;
+    try { const a = audio(); if (a.state === 'suspended') a.resume(); this.bus = a.createGain(); this.bus.gain.value = .0001; this.bus.connect(a.destination); this.bus.gain.exponentialRampToValueAtTime(.55, a.currentTime + 2); } catch (e) { return; }
+    this.on = true; this.step = 0; let next = audio().currentTime + .1; const bpm = 118, st = 60 / bpm / 4;
+    // คอร์ด Am–F–C–G · อาร์เปจจิโอเพนทาโทนิก · เบส · กลอง
+    const prog = [[220, 261.6, 329.6], [174.6, 220, 261.6], [130.8, 196, 261.6], [196, 246.9, 293.7]], arp = [0, 1, 2, 1, 2, 3, 2, 1], lead = [659.3, 0, 587.3, 523.3, 0, 587.3, 659.3, 0, 784, 0, 659.3, 587.3, 523.3, 0, 440, 0];
+    const tick = () => { if (!this.on) return; const a = audio();
+      while (next < a.currentTime + .25) { const s = this.step, bar = Math.floor(s / 16) % 4, ch = prog[bar], i = s % 16, B = this.bus;
+        const n = ch[arp[i % 8] % 3] * (arp[i % 8] === 3 ? 2 : 2); this.note(n, next, st * .9, 'triangle', .05, B);
+        if (i % 4 === 0) { this.note(ch[0] / 2, next, st * 3.6, 'sawtooth', .035, B); this.kick(next, B); }
+        if (i % 4 === 2) this.hat(next, .05, B); if (i % 8 === 4) this.hat(next, .09, B);
+        if (Math.floor(s / 64) % 2 === 1 && lead[i]) this.note(lead[i], next, st * 1.8, 'sine', .035, B);
+        if (i === 0) ch.forEach(f => this.note(f * 2, next, st * 15, 'sine', .012, B));
+        this.step++; next += st; }
+      if ($('#authView').classList.contains('hidden')) return this.stop(); };
+    this.t = setInterval(tick, 60); tick(); this.btn();
+  },
+  stop() { if (!this.on) return; this.on = false; clearInterval(this.t); try { const a = audio(), B = this.bus; B.gain.cancelScheduledValues(a.currentTime); B.gain.setValueAtTime(B.gain.value, a.currentTime); B.gain.exponentialRampToValueAtTime(.0001, a.currentTime + .6); setTimeout(() => { try { B.disconnect(); } catch (e) {} }, 800); } catch (e) {} this.btn(); },
+  toggle() { try { localStorage.setItem('cp_music', this.on ? '0' : '1'); } catch (e) {} if (this.on) this.stop(); else { this.start(); } this.btn(); },
+  btn() { const b = $('#musicBtn'); if (b) { b.innerHTML = `<i class="fa-solid ${this.on ? 'fa-music' : 'fa-volume-xmark'}"></i>`; b.title = this.on ? 'ปิดเพลงประกอบ' : 'เปิดเพลงประกอบ'; b.classList.toggle('off', !this.on); } }
 };
 const Loader = {
   n: 0, p: 0, real: false, t: null, at: 0, hideT: null,
@@ -2246,6 +2312,7 @@ function bindPw(root) {
 }
 function renderLogin(tab = 'student') {
   setTimeout(startFx, 50); SFX.greet();
+  const mb = $('#musicBtn'); if (mb && !mb.dataset.b) { mb.dataset.b = 1; mb.onclick = e => { e.stopPropagation(); S.greeted = 1; LoginMusic.toggle(); }; }
   const rb = $('#robot'); if (rb && !rb.dataset.b) { rb.dataset.b = 1; rb.title = 'แตะเพื่อให้หุ่นยนต์ทักทาย'; rb.onclick = () => { S.greeted = 1; SFX.robot(true); }; }
   AUTH_TAB = tab;
   const c = S.config, R = $('#authRight'), stu = tab === 'student';
@@ -2444,6 +2511,7 @@ const HIDDEN_TITLES = { course: 'รายวิชา', lesson: 'บทเร�
 /** เมนูฝั่งครู: ผู้ดูแลระบบเห็นทุกเมนู · ครูผู้สอนไม่มีเมนูผู้ใช้งาน และ "ตั้งค่า" = บัญชีของฉัน */
 const staffNav = () => NAV.admin.map(n => !isAdm() && n[0] === 'settings' ? ['settings', 'ตั้งค่า', 'fa-gear', 1, 'ตั้งค่า'] : n);
 function enterApp() {
+  LoginMusic.stop();
   document.body.className = 'app' + (store.get('cp_side') === '0' ? ' collapsed' : '');
   $('#authView').classList.add('hidden'); $('#appView').classList.remove('hidden');
   const isAdmin = isStaff();
@@ -3158,7 +3226,7 @@ function bindActs(root, items, entity, warn, reload) {
 PAGES.dash = { admin: true, async render(el) {
   const draw = async (quiet) => {
     const d = await (quiet ? apiQ('adminDashboard', ...viewArg()) : apiC('adminDashboard', ...viewArg())), c = d.cards;
-    const html = heroHtml() + pastBanner() + `<div class="page-head"><h3>${isAdm() ? 'แดชบอร์ดผู้ดูแลระบบ' : 'แดชบอร์ดครูผู้สอน'}<small class="d-block fs-6 text-muted fw-semibold mt-1">${isAdm() ? 'ข้อมูลทั้งระบบ' : 'เฉพาะรายวิชาที่คุณเป็นเจ้าของ'}</small></h3><span class="chip ok"><i class="fa-solid fa-circle fa-2xs"></i> อัปเดตอัตโนมัติทุก 60 วินาที</span></div>
+    const html = heroHtml() + pastBanner() + `<div class="page-head"><h3>${isAdm() ? 'แดชบอร์ดผู้ดูแลระบบ' : 'แดชบอร์ดครูผู้สอน'}<small class="ph-sub fs-6 text-muted fw-semibold mt-1"><span>${isAdm() ? 'ข้อมูลทั้งระบบ' : 'เฉพาะรายวิชาที่คุณเป็นเจ้าของ'}</span><span class="chip ok"><i class="fa-solid fa-circle fa-2xs"></i> อัปเดตอัตโนมัติทุก 60 วินาที</span></small></h3></div>
     ${c.pendingUsers ? `<div class="banner mx-0 mb-3"><i class="fa-solid fa-user-clock"></i><div class="flex-fill">มีผู้สมัครรออนุมัติ ${c.pendingUsers} คน</div><button class="btn btn-sm btn-dark" data-go="users">ตรวจสอบ</button></div>` : ''}
     <div class="grid g6 mb-3">${statCard('fa-book', c.courses, 'รายวิชา', '', 'acourses')}${statCard('fa-book-open-reader', c.lessons, 'บทเรียน', 'background:#ede9fe;color:#7c3aed', 'acourses')}${statCard('fa-user-graduate', c.students, 'ผู้เรียน', 'background:#dcfce7;color:#15803d', isAdm() ? 'users' : 'aassign')}
       ${statCard('fa-clipboard-list', c.assignments, 'งานที่มอบหมาย', 'background:#e0f2fe;color:#0369a1', 'aassign')}${statCard('fa-clipboard-question', c.ungraded, 'งานรอตรวจ', 'background:#fee2e2;color:#b91c1c', 'aassign')}${statCard('fa-bullhorn', c.announcements ?? '-', 'ประกาศ', 'background:#fef3c7;color:#b45309', 'aann')}</div>
@@ -3187,7 +3255,7 @@ const dashTermLb = () => { if (S.viewAll) return 'ทุกภาคเรีย
 /** v6.1 Donut แบบมีมิติ: ไล่เฉดสีในแต่ละชิ้น · เงา · มุมโค้ง · เว้นช่อง · ตัวเลขรวมตรงกลาง · ตัวอักษรตามธีม */
 const shadeK = (hex, k) => { const n = parseInt(String(hex).replace('#', '').padEnd(6, '0'), 16); let r = n >> 16, g = n >> 8 & 255, b = n & 255; const f = v => Math.max(0, Math.min(255, Math.round(k > 0 ? v + (255 - v) * k : v * (1 + k)))); return `rgb(${f(r)},${f(g)},${f(b)})`; };
 const DONUT_3D = { id: 'cp3d',
-  beforeDatasetsDraw(ch) { const g = ch.ctx; g.save(); g.shadowColor = 'rgba(15,23,42,.28)'; g.shadowBlur = 14; g.shadowOffsetX = 0; g.shadowOffsetY = 7; },
+  beforeDatasetsDraw(ch) { const g = ch.ctx; g.save(); g.shadowColor = 'rgba(15,23,42,.16)'; g.shadowBlur = 8; g.shadowOffsetX = 0; g.shadowOffsetY = 3; },
   afterDatasetsDraw(ch) { ch.ctx.restore(); try { this.center(ch); } catch (e) {} },
   center(ch) { const m = ch.getDatasetMeta(0), a0 = m && m.data && m.data[0]; if (!a0) return; const ir = a0.getProps ? (a0.getProps(['innerRadius'], true).innerRadius || a0.innerRadius) : a0.innerRadius; if (!(ir > 4)) return; const a = { x: a0.x, y: a0.y, innerRadius: ir }; const g = ch.ctx, ds = ch.data.datasets[0], tot = ds.data.reduce((x, y) => x + (+y || 0), 0);
     // ไฮไลต์ขอบในให้ดูนูน
@@ -3196,11 +3264,11 @@ const DONUT_3D = { id: 'cp3d',
     g.fillStyle = cv('--text') || '#0f172a'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `800 ${Math.max(16, a.innerRadius * .42)}px Sarabun`; g.fillText(String(tot), a.x, a.y - a.innerRadius * .1);
     g.fillStyle = cv('--muted') || '#64748b'; g.font = `600 ${Math.max(10, a.innerRadius * .17)}px Sarabun`; g.fillText(ch.options.cpUnit || 'รายการ', a.x, a.y + a.innerRadius * .32); g.restore(); } };
 const donutCfg = (labels, data, colors, title, unit) => ({ type: 'doughnut', plugins: [DONUT_3D],
-  data: { labels, datasets: [{ data, borderWidth: 2, borderColor: cv('--surface') || '#fff', borderRadius: 6, spacing: 2, hoverOffset: 12, offset: 0,
+  data: { labels, datasets: [{ data, borderWidth: 3, borderColor: cv('--surface') || '#fff', borderRadius: 8, spacing: 1, hoverOffset: 10, offset: 0,
     backgroundColor: c => { const col = colors[c.dataIndex] || '#94a3b8', ar = c.chart.chartArea; if (!ar) return col; const r = Math.min(ar.right - ar.left, ar.bottom - ar.top) / 2, cx = (ar.left + ar.right) / 2, cy = (ar.top + ar.bottom) / 2; if (!(r > 4)) return col;
-      const g = c.chart.ctx.createRadialGradient(cx, cy - r * .25, r * .35, cx, cy, r); g.addColorStop(0, shadeK(col, .38)); g.addColorStop(.6, col); g.addColorStop(1, shadeK(col, -.22)); return g; },
+      const g = c.chart.ctx.createRadialGradient(cx, cy - r * .25, r * .35, cx, cy, r); g.addColorStop(0, shadeK(col, .22)); g.addColorStop(.75, col); g.addColorStop(1, shadeK(col, -.08)); return g; },
     hoverBackgroundColor: c => shadeK(colors[c.dataIndex] || '#94a3b8', .15) }] },
-  options: { maintainAspectRatio: false, cutout: '60%', cpUnit: unit || 'คน', layout: { padding: 10 }, animation: { animateRotate: true, animateScale: true, duration: 900 },
+  options: { maintainAspectRatio: false, cutout: '66%', cpUnit: unit || 'คน', layout: { padding: 10 }, animation: { animateRotate: true, animateScale: true, duration: 900 },
     plugins: { title: title ? { display: true, text: title, font: { weight: 'bold', size: 13 } } : { display: false },
     legend: { position: innerWidth < 640 ? 'bottom' : 'right', labels: { color: cv('--text'), usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 12, boxHeight: 12, padding: 9, font: { size: 12, weight: '600' }, generateLabels: ch => { const ds = ch.data.datasets[0], tot = ds.data.reduce((a, b) => a + b, 0) || 1;
       return ch.data.labels.map((l, i) => ({ text: `${l}  ${ds.data[i]} (${Math.round(ds.data[i] * 1000 / tot) / 10}%)`, fillStyle: colors[i], strokeStyle: colors[i], pointStyle: 'rectRounded', hidden: !ch.getDataVisibility(i), index: i, fontColor: cv('--text') })); } } },
@@ -3392,7 +3460,7 @@ PAGES.users = { admin: true, async render(el, p = {}) {
     if (!secs.length) return toast('ไม่มีนักเรียนให้พิมพ์', 'info');
     rptPreview({ name: secs.length === 1 ? secs[0].title : 'รายชื่อนักเรียน ' + secs.length + ' ห้อง', key: 'users-room', onePage: true, cols: RPT_STU_COLS.concat([{ h: 'สถานะการใช้งาน', w: 14, al: 'c', opt: true, on: false }, { h: '', w: 4.1, rep: 9 }, { h: 'หมายเหตุ', w: 13.5, opt: true }]), sections: secs, signer: 'ครูผู้สอน' }); };
   $('#expBtn').onclick = async () => { const ks = roomKeys(), fg = $('#uG').value, fr = $('#uR').value;
-    const r2 = await Sw.fire({ title: 'ส่งออก / พิมพ์', width: 640, customClass: Object.assign({}, SW_CLASS(false), { container: 'swal-top', popup: 'cp-swal swal-wide' }), showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-print"></i> ดูตัวอย่าง / พิมพ์', showDenyButton: adm, denyButtonText: '<i class="fa-solid fa-file-excel"></i> Excel ผู้ใช้ทั้งหมด',
+    const r2 = await Sw.fire({ title: 'ส่งออก / พิมพ์', width: 640, customClass: Object.assign({}, SW_CLASS(false), { container: 'swal-top', popup: 'cp-swal swal-wide' }), showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-print"></i><span class="bt"> ดูตัวอย่าง / พิมพ์</span>', showDenyButton: adm, denyButtonText: '<i class="fa-solid fa-file-excel"></i><span class="bt"> Excel ผู้ใช้ทั้งหมด</span>', cancelButtonText: '<i class="fa-solid fa-xmark d-sm-none"></i><span class="bt"> ยกเลิก</span>',
       html: `<div class="text-start"><label class="form-label" for="rpSel">รายชื่อนักเรียนตามแบบฟอร์มของโรงเรียน (แยกหน้าตามห้อง)</label><select class="form-select" id="rpSel"><option value="*">ทุกห้อง (${ks.length} ห้อง)</option>${ks.map(([g, r]) => `<option value="${esc(g + '|' + r)}" ${fg === g && fr === r ? 'selected' : ''}>ห้อง ${esc(g)}/${esc(r)} (${roomArr(g, r).length} คน)</option>`).join('')}</select></div>`,
       preConfirm: () => $('#rpSel').value });
     if (r2.isDenied) return exportXlsx('ผู้ใช้งาน', ['บทบาท', 'รหัสนักเรียน', 'Username', 'คำนำหน้า', 'ชื่อ-สกุล', 'ชื่อเล่น', 'วันเกิด', 'ชั้น', 'ห้อง', 'เลขที่', 'ปีการศึกษา', 'อีเมล', 'สถานะ'], users.map(u => [roleTh(u), u.studentCode, u.username, u.prefix, u.fullName, u.nickname, u.birthDate, u.grade, u.room, u.classNo, u.acadYear, u.email, u.status].map(csvSafe)));
@@ -3842,6 +3910,40 @@ function rptCols(spec, show) {
  */
 /** โหลดแบบอักษรเอกสารเข้าหน้าแอป (สำหรับตัวอย่าง SVG ในหน้า) */
 const loadDocFont = f => { f = docFontOk(f); if (f === 'Sarabun' || /^TH /.test(f) || document.querySelector(`link[data-docfont="${f}"]`)) return; const l = document.createElement('link'); l.rel = 'stylesheet'; l.dataset.docfont = f; l.href = `https://fonts.googleapis.com/css2?family=${f.replace(/ /g, '+')}:wght@400;700&display=swap`; document.head.appendChild(l); };
+/* ---- v6.2 "จัดวางรูปแบบหน้ากระดาษ": ขอบกระดาษ · ลำดับ/ย้ายส่วนหัว · จัดชิด · ขนาดโลโก้ · สีหัวคอลัมน์/เส้นตาราง/ตัวอักษร · ความสูงแถว · ความกว้างคอลัมน์ ---- */
+const RPT_LAY = { mx: 15, my: 9, align: 'center', logo: 22, head: '#4A86E8', headText: '#ffffff', line: '#000000', text: '#000000', rowH: 0, sig: 'right', one: true, order: ['logo', 'sys', 'title', 'term', 'hr', 'summary'], cw: {} };
+const LAY_NAMES = { logo: 'โลโก้', sys: 'ชื่อระบบ/โรงเรียน', title: 'ชื่อเอกสาร', term: 'ภาคเรียน/ปีการศึกษา', hr: 'เส้นคั่น', summary: 'สรุปจำนวน', school: 'ชื่อโรงเรียน', rows: 'แบบทดสอบ/รายวิชา/ชั้น', intro: 'คำชี้แจง', ind: 'ตัวชี้วัด' };
+const layOrder = (o, def) => { const a = (Array.isArray(o) ? o : []).filter(x => def.includes(x)); return a.concat(def.filter(x => !a.includes(x))); };
+/** สร้างเมนูจัดวาง: defs = [{ t: 'h'|'num'|'color'|'sel'|'chk'|'order'|'cols', k, label, min, max, step, opts }] */
+function layHtml(defs, L, ctx = {}) {
+  return `<div class="lay-set">${defs.map(d => {
+    if (d.t === 'h') return `<b class="small d-block mt-2 mb-1"><i class="fa-solid ${d.ic || 'fa-sliders'}"></i> ${d.label}</b>`;
+    if (d.t === 'color') return `<label class="lay-row"><span>${d.label}</span><input type="color" class="form-control form-control-color" data-lk="${d.k}" value="${esc(L[d.k])}"></label>`;
+    if (d.t === 'num') return `<label class="lay-row"><span>${d.label}</span><input type="number" class="form-control form-control-sm" data-lk="${d.k}" data-ln="1" min="${d.min}" max="${d.max}" step="${d.step || 1}" value="${esc(L[d.k] || '')}" placeholder="${d.ph || 'อัตโนมัติ'}"></label>`;
+    if (d.t === 'sel') return `<label class="lay-row"><span>${d.label}</span><select class="form-select form-select-sm" data-lk="${d.k}">${d.opts.map(o => `<option value="${o[0]}" ${String(L[d.k]) === String(o[0]) ? 'selected' : ''}>${o[1]}</option>`).join('')}</select></label>`;
+    if (d.t === 'chk') return `<label class="form-check m-0 small"><input class="form-check-input" type="checkbox" data-lk="${d.k}" data-lc="1" ${L[d.k] !== false ? 'checked' : ''}> ${d.label}</label>`;
+    if (d.t === 'order') { const o = layOrder(L[d.k], d.def); return `<div class="lay-order">${o.map((x, i) => `<div class="lay-oi"><span class="flex-fill">${esc(LAY_NAMES[x] || x)}</span><button type="button" class="btn btn-sm btn-soft" data-lo="${d.k}|${i}|-1" ${i ? '' : 'disabled'} aria-label="ย้ายขึ้น"><i class="fa-solid fa-arrow-up"></i></button><button type="button" class="btn btn-sm btn-soft" data-lo="${d.k}|${i}|1" ${i < o.length - 1 ? '' : 'disabled'} aria-label="ย้ายลง"><i class="fa-solid fa-arrow-down"></i></button></div>`).join('')}</div>`; }
+    if (d.t === 'cols') return (ctx.cols || []).map(c => `<label class="lay-row"><span class="text-truncate">${esc(String(c.h).replace(/<br>/g, ' ').replace(/<[^>]+>/g, '') || 'ช่องว่าง')}</span><input type="number" class="form-control form-control-sm" data-lcw="${c.i}" min="2" max="80" step=".5" value="${esc((L.cw || {})[c.i] || c.w || '')}"></label>`).join('');
+    return ''; }).join('')}<button type="button" class="btn btn-sm btn-soft w-100 mt-2" data-lreset><i class="fa-solid fa-rotate-left"></i> คืนค่าเริ่มต้น</button></div>`;
+}
+/** ผูกเหตุการณ์เมนูจัดวาง → แก้ค่า L แล้วเรียก onChange(rerenderMenu?) */
+function layBind(box, get, set, defs, def, ctx, onChange) {
+  const redraw = () => { box.innerHTML = layHtml(defs, get(), ctx()); };
+  box.addEventListener('change', e => { const t = e.target, L = Object.assign({}, get());
+    if (t.dataset.lk) L[t.dataset.lk] = t.dataset.lc ? t.checked : t.dataset.ln ? (t.value === '' ? 0 : +t.value) : t.value;
+    else if (t.dataset.lcw !== undefined) { L.cw = Object.assign({}, L.cw || {}); L.cw[t.dataset.lcw] = +t.value || 0; } else return; set(L); onChange(); });
+  box.addEventListener('input', e => { if (e.target.type === 'color') e.target.dispatchEvent(new Event('change', { bubbles: true })); });
+  box.addEventListener('click', e => { const o = e.target.closest('[data-lo]'), r = e.target.closest('[data-lreset]');
+    if (o) { const [k, i, d] = o.dataset.lo.split('|'), L = Object.assign({}, get()), dd = defs.find(x => x.k === k), a = layOrder(L[k], dd.def), j = +i + +d; [a[i], a[j]] = [a[j], a[i]]; L[k] = a; set(L); redraw(); onChange(); }
+    if (r) { set(Object.assign({}, def)); redraw(); onChange(); } });
+}
+const LAY_RPT_DEFS = [{ t: 'h', label: 'ขอบกระดาษ / ระยะ', ic: 'fa-ruler-combined' }, { t: 'num', k: 'my', label: 'ขอบบน-ล่าง (มม.)', min: 4, max: 30, step: .5 }, { t: 'num', k: 'mx', label: 'ขอบซ้าย-ขวา (มม.)', min: 5, max: 30, step: .5 },
+  { t: 'num', k: 'rowH', label: 'ความสูงแถว/ระยะบรรทัด (มม.)', min: 4, max: 14, step: .1 }, { t: 'chk', k: 'one', label: 'พยายามให้ 1 ห้องอยู่หน้าเดียว (ย่อแถวอัตโนมัติ)' },
+  { t: 'h', label: 'ส่วนหัวเอกสาร (ย้าย-สลับตำแหน่ง)', ic: 'fa-arrow-down-up-across-line' }, { t: 'order', k: 'order', def: RPT_LAY.order }, { t: 'sel', k: 'align', label: 'จัดชิด', opts: [['center', 'กึ่งกลาง'], ['left', 'ซ้าย'], ['right', 'ขวา']] }, { t: 'num', k: 'logo', label: 'ขนาดโลโก้ (มม.)', min: 8, max: 40 },
+  { t: 'h', label: 'สี', ic: 'fa-palette' }, { t: 'color', k: 'head', label: 'พื้นหัวคอลัมน์' }, { t: 'color', k: 'headText', label: 'ตัวอักษรหัวคอลัมน์' }, { t: 'color', k: 'line', label: 'เส้นตาราง' }, { t: 'color', k: 'text', label: 'ตัวอักษร' },
+  { t: 'h', label: 'ความกว้างคอลัมน์ (สัดส่วน)', ic: 'fa-table-columns' }, { t: 'cols' }, { t: 'sel', k: 'sig', label: 'ตำแหน่งลงชื่อ', opts: [['right', 'ขวา'], ['center', 'กึ่งกลาง'], ['left', 'ซ้าย']] }];
+/** ปุ่ม "จัดวางรูปแบบหน้ากระดาษ" (dropdown) */
+const layBtn = id => `<div class="dropdown"><button class="btn btn-sm btn-soft dropdown-toggle text-nowrap" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="${id}Btn" title="จัดวางรูปแบบหน้ากระดาษ" aria-label="จัดวางรูปแบบหน้ากระดาษ"><i class="fa-solid fa-ruler-combined"></i><span class="bt"> จัดวางรูปแบบหน้ากระดาษ</span></button><div class="dropdown-menu dropdown-menu-end p-3" id="${id}"></div></div>`;
 /** แบบอักษรสำหรับเอกสารพิมพ์ (Google Fonts + แบบอักษรในเครื่อง) */
 const DOC_FONTS = [['Sarabun', 'Sarabun (ค่าเริ่มต้น)'], ['TH Sarabun New', 'TH Sarabun New (ต้องติดตั้งในเครื่อง)'], ['TH SarabunPSK', 'TH SarabunPSK (ต้องติดตั้งในเครื่อง)'], ['Noto Sans Thai', 'Noto Sans Thai'], ['Kanit', 'Kanit'], ['Prompt', 'Prompt'], ['Mitr', 'Mitr'], ['Chakra Petch', 'Chakra Petch'], ['Bai Jamjuree', 'Bai Jamjuree'], ['K2D', 'K2D'], ['Niramit', 'Niramit'], ['Sriracha', 'Sriracha (ลายมือ)']];
 const docFontOk = f => DOC_FONTS.some(x => x[0] === f) ? f : 'Sarabun';
@@ -3852,43 +3954,46 @@ const docFontSel = (attr, cur) => `<select class="form-select form-select-sm" ${
 function rptBuild(spec, show) {
   show = Object.assign({ logo: true, summary: true, sig: true, date: true, page: true, running: true, cols: {}, reps: {}, font: 'Sarabun', fsz: 12 }, show || {});
   const c = effCfg(), logo = c.logo ? `<img src="${esc(safeUrl(c.logo))}" alt="">` : DOC_LOGO(), sys = c.schoolName || 'Classroom +';
-  const font = docFontOk(show.font), k = Math.max(.7, Math.min(1.5, (+show.fsz || 12) / 12)) * docFontK(font), P = v => (v * k).toFixed(2) + 'pt', rowH = +(RPT.rowH * Math.max(.85, (+show.fsz || 12) / 12)).toFixed(2);
-  const land = !!spec.land, CL = rptCols(spec, show), tw = CL.reduce((t, x) => t + (x.c.rep ? (x.c.w || 6) : (x.c.w || 20)), 0) || 1;
+  const LY = Object.assign({}, RPT_LAY, show.lay || {}), font = docFontOk(show.font), k = Math.max(.7, Math.min(1.5, (+show.fsz || 12) / 12)) * docFontK(font), P = v => (v * k).toFixed(2) + 'pt';
+  const rowH = +(LY.rowH ? Math.max(4, Math.min(14, +LY.rowH)) : RPT.rowH * Math.max(.85, (+show.fsz || 12) / 12)).toFixed(2), MY = Math.max(4, Math.min(30, +LY.my || RPT.my)), MX = Math.max(5, Math.min(30, +LY.mx || RPT.mx));
+  const land = !!spec.land, CL = rptCols(spec, show), cw = x => +((LY.cw || {})[x.i]) || (x.c.w || (x.c.rep ? 6 : 20)), tw = CL.reduce((t, x) => t + cw(x), 0) || 1;
   const secs = spec.sections && spec.sections.length ? spec.sections : [{ rows: spec.rows || [] }];
-  const thead = `<thead><tr>${CL.map(x => `<th style="width:${(x.c.w || (x.c.rep ? 6 : 20)) * 100 / tw}%">${x.c.h}</th>`).join('')}</tr></thead>`;
+  const thead = `<thead><tr>${CL.map(x => `<th style="width:${cw(x) * 100 / tw}%">${x.c.h}</th>`).join('')}</tr></thead>`;
+  const one = spec.onePage && LY.one !== false;
   const cell = v => v === undefined || v === null || v === '' ? '&nbsp;' : esc(String(v));
   const src = secs.map(sec => {
     const rows = (sec.rows || []).map(r => `<tr>${CL.map(x => `<td class="${x.c.al || ''}">${x.c.rep ? '&nbsp;' : cell(r[x.i])}</td>`).join('')}</tr>`).join('');
-    return `<div class="sec" data-one="${spec.onePage ? 1 : ''}" data-run="${esc(show.running ? (sec.running || spec.running || sec.title || spec.title || '') : '')}">
-      <div class="rpt-head">${show.logo ? `<div class="rpt-logo">${logo}</div>` : ''}<div class="rpt-sys">${esc(sys)}</div><div class="rpt-title">${esc(sec.title || spec.title || '')}</div><div class="rpt-term">${esc(sec.sub || spec.sub || '')}</div><div class="rpt-hr"></div>
-        ${show.summary && (sec.summary || spec.summary) ? `<div class="rpt-sum">${esc(sec.summary || spec.summary || '')}</div>` : ''}</div>
+    const parts = { logo: show.logo ? `<div class="rpt-logo">${logo}</div>` : '', sys: `<div class="rpt-sys">${esc(sys)}</div>`, title: `<div class="rpt-title">${esc(sec.title || spec.title || '')}</div>`, term: `<div class="rpt-term">${esc(sec.sub || spec.sub || '')}</div>`, hr: '<div class="rpt-hr"></div>',
+      summary: show.summary && (sec.summary || spec.summary) ? `<div class="rpt-sum">${esc(sec.summary || spec.summary || '')}</div>` : '' };
+    return `<div class="sec" data-one="${one ? 1 : ''}" data-run="${esc(show.running ? (sec.running || spec.running || sec.title || spec.title || '') : '')}">
+      <div class="rpt-head">${layOrder(LY.order, RPT_LAY.order).map(x => parts[x] || '').join('')}</div>
       <table class="rpt-tbl">${thead}<tbody>${rows}</tbody></table>
       ${show.sig ? `<div class="rpt-sig"><div class="l1">ลงชื่อ ……………………………………………………</div><div>(.........................................................)</div><div>${esc(spec.signer || 'ครูผู้สอน')}</div>${show.date ? '<div>วันที่ …. / …. / ….</div>' : ''}</div>` : ''}</div>`;
   }).join('');
   const W = land ? RPT.ph : RPT.pw, H = land ? RPT.pw : RPT.ph;
   const css = `@page{size:A4 ${land ? 'landscape' : 'portrait'};margin:0}
-    *{box-sizing:border-box}html,body{margin:0;padding:0;background:#e5e7eb}body{font-family:'${font}',Sarabun,'TH Sarabun New',sans-serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    *{box-sizing:border-box}html,body{margin:0;padding:0;background:#e5e7eb}body{font-family:'${font}',Sarabun,'TH Sarabun New',sans-serif;color:${LY.text};-webkit-print-color-adjust:exact;print-color-adjust:exact}
     #src{display:none}
-    .rpt-page{width:${W}mm;height:${H}mm;padding:${RPT.my}mm ${RPT.mx}mm ${RPT.my - 2}mm;margin:0 auto 8mm;background:#fff;position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(0,0,0,.15);page-break-after:always;break-after:page;--rh:${rowH}mm;--fs:${P(11.2)}}
+    .rpt-page{width:${W}mm;height:${H}mm;padding:${MY}mm ${MX}mm ${Math.max(3, MY - 2)}mm;margin:0 auto 8mm;background:#fff;position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(0,0,0,.15);page-break-after:always;break-after:page;--rh:${rowH}mm;--fs:${P(11.2)}}
     .rpt-page:last-child{page-break-after:auto;break-after:auto}
     .rpt-run{flex:none;height:7mm;font-size:${P(11)};text-align:right;line-height:7mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .rpt-body{flex:1;min-height:0;overflow:hidden}
-    .rpt-head{text-align:center;display:flex;flex-direction:column;align-items:center}
-    .rpt-logo{width:22mm;height:22mm;display:grid;place-items:center;margin-bottom:1mm}.rpt-logo img,.rpt-logo svg{max-width:100%;max-height:100%;object-fit:contain}
+    .rpt-head{text-align:${LY.align};display:flex;flex-direction:column;align-items:${LY.align === 'left' ? 'flex-start' : LY.align === 'right' ? 'flex-end' : 'center'}}
+    .rpt-logo{width:${+LY.logo || 22}mm;height:${+LY.logo || 22}mm;display:grid;place-items:center;margin-bottom:1mm}.rpt-logo img,.rpt-logo svg{max-width:100%;max-height:100%;object-fit:contain}
     .rpt-sys{font-size:${P(15)};font-weight:700;line-height:1.3}.rpt-title{font-size:${P(15)};font-weight:700;line-height:1.3}.rpt-term{font-size:${P(13)};line-height:1.35;white-space:pre-line}
     .rpt-hr{width:100%;border-top:1px dashed #000;margin:2.5mm 0 2mm}.rpt-sum{font-size:${P(12.5)};align-self:flex-start;line-height:1.4;text-align:left;margin-bottom:3mm}
     .rpt-tbl{width:100%;border-collapse:collapse;table-layout:fixed;font-size:var(--fs)}
-    .rpt-tbl th{border:1px solid #000;background:#4A86E8;color:#fff;font-weight:700;font-size:${P(10.5)};line-height:1.2;padding:1mm .8mm;text-align:center;vertical-align:middle;overflow:hidden;word-break:break-word}
-    .rpt-tbl td{border:1px solid #000;height:var(--rh);padding:0 1.4mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;line-height:1.05}
+    .rpt-tbl th{border:1px solid ${LY.line};background:${LY.head};color:${LY.headText};font-weight:700;font-size:${P(10.5)};line-height:1.2;padding:1mm .8mm;text-align:center;vertical-align:middle;overflow:hidden;word-break:break-word}
+    .rpt-tbl td{border:1px solid ${LY.line};height:var(--rh);padding:0 1.4mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;line-height:1.05}
     .rpt-tbl td.c{text-align:center}.rpt-tbl td.r{text-align:right}
-    .rpt-sig{margin:2mm 2mm 0 auto;width:80mm;text-align:center;font-size:${P(12.5)};line-height:1.55}.rpt-sig .l1{text-align:left}
+    .rpt-sig{margin:2mm ${LY.sig === 'left' ? 'auto 0 2mm' : LY.sig === 'center' ? 'auto 0 auto' : '2mm 0 auto'};width:80mm;text-align:center;font-size:${P(12.5)};line-height:1.55}.rpt-sig .l1{text-align:left}
     .rpt-foot{flex:none;border-top:1px solid #000;margin-top:1.5mm;height:8mm;text-align:right;font-size:${P(11.5)};padding-top:1.5mm}
     .cmp .rpt-logo{width:14mm;height:14mm}.cmp .rpt-sys,.cmp .rpt-title{font-size:${P(13)};line-height:1.2}.cmp .rpt-term{font-size:${P(11.5)};line-height:1.2}.cmp .rpt-sum{font-size:${P(11)};margin-bottom:1.5mm}.cmp .rpt-hr{margin:1.2mm 0}.cmp .rpt-sig{font-size:${P(11)};line-height:1.3}
     .xcmp .rpt-run{display:none}.xcmp .rpt-logo{width:11mm;height:11mm;margin:0}.xcmp .rpt-sys,.xcmp .rpt-title{font-size:${P(12)};line-height:1.15}.xcmp .rpt-term,.xcmp .rpt-sum{font-size:${P(10.5)};line-height:1.15}.xcmp .rpt-hr{margin:.8mm 0}.xcmp .rpt-tbl th{font-size:${P(9.5)};padding:.4mm}
     .xcmp .rpt-sig{display:flex;gap:4mm;width:auto;justify-content:flex-end;font-size:${P(10.5)};line-height:1.3;margin-top:.8mm}
     @media print{html,body{background:#fff}.rpt-page{margin:0;box-shadow:none}}`;
   const script = `(function(){var MM=3.7795,PG=${show.page ? 1 : 0},FMAX=${(11.2 * k).toFixed(2)},out=document.getElementById('out');
-    function fit(b){return b.scrollHeight<=b.clientHeight+1;}
+    function fit(b){if(b.scrollHeight>b.clientHeight+1)return false;var l=b.lastElementChild,br=b.getBoundingClientRect();if(!l||!br.height)return true;return l.getBoundingClientRect().bottom<=br.bottom-5;}
     function mk(run,cls){var p=document.createElement('section');p.className='rpt-page'+(cls?' '+cls:'');p.innerHTML='<div class="rpt-run"></div><div class="rpt-body"></div>'+(PG?'<div class="rpt-foot"></div>':'');p.firstChild.textContent=run;out.appendChild(p);return p;}
     function setRh(p,rh){p.style.setProperty('--rh',rh+'mm');p.style.setProperty('--fs',Math.min(FMAX,Math.max(8.2,rh*1.55*${k.toFixed(3)}))+'pt');}
     function one(sec,cls,min){var p=mk(sec.dataset.run,cls),b=p.querySelector('.rpt-body');b.innerHTML=sec.innerHTML;var n=b.querySelectorAll('tbody tr').length;if(fit(b))return true;if(!n){out.removeChild(p);return false;}
@@ -3923,20 +4028,24 @@ function rptPreview(spec) {
     <div class="small text-muted mt-1" style="max-width:240px">1 ห้องจะพยายามอยู่หน้าเดียว (ย่อแถวให้อัตโนมัติ) ถ้าข้อมูลเยอะเกินจะต่อหน้าถัดไป</div></div>`; };
   let R = rptBuild(cur(), vShow());
   const m = modal(`ดูตัวอย่างก่อนพิมพ์ — ${spec.name || spec.title || ''}`, `<div class="d-flex flex-wrap gap-2 align-items-center mb-2"><div class="rpt-info small text-muted flex-fill"><i class="fa-solid fa-circle-info"></i> กระดาษ A4 ${R.land ? 'แนวนอน' : 'แนวตั้ง'} · ทั้งหมด <b id="rptN">…</b> หน้า · พิมพ์ออกมาเหมือนตัวอย่างนี้</div>
-      <div class="dropdown"><button class="btn btn-sm btn-soft dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="rptSetBtn"><i class="fa-solid fa-sliders"></i> ตั้งค่า</button><div class="dropdown-menu dropdown-menu-end p-3" id="rptSet">${setHtml()}</div></div></div>
+      <div class="pv-tools">${layBtn('rptLay')}<div class="dropdown"><button class="btn btn-sm btn-soft dropdown-toggle text-nowrap" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="rptSetBtn" title="ตั้งค่า" aria-label="ตั้งค่า"><i class="fa-solid fa-sliders"></i><span class="bt"> ตั้งค่า</span></button><div class="dropdown-menu dropdown-menu-end p-3" id="rptSet">${setHtml()}</div></div></div></div>
     <div class="rpt-frame-wrap"><iframe id="rptFrame" title="ตัวอย่างเอกสาร"></iframe></div>`,
     `<button class="btn btn-soft" data-bs-dismiss="modal">ปิด</button><button class="btn btn-primary" id="rptPrint"><i class="fa-solid fa-print"></i> พิมพ์ / บันทึก PDF</button>`, 'modal-xl modal-wide');
   const f = $('#rptFrame');
   const fit = () => { try { const pw = (R.land ? RPT.ph : RPT.pw) * 3.7795 + 24, sc = Math.min(1, (f.parentElement.clientWidth - 4) / pw); f.contentDocument.body.style.zoom = sc; f.style.height = Math.min(innerHeight * .72, f.contentDocument.documentElement.scrollHeight + 20) + 'px'; } catch (e) {} };
   const paint = () => { const doc = f.contentDocument; doc.open(); doc.write(R.html); doc.close();
     const upd = () => { try { R.pages = +f.contentDocument.body.dataset.pages || R.pages; const n = $('#rptN'); if (n) n.textContent = R.pages; fit(); } catch (e) {} };
-    try { f.contentWindow.__onpages = upd; } catch (e) {} upd(); setTimeout(upd, 80); setTimeout(upd, 700); };
-  paint();
+    const rep = () => { try { const w = f.contentWindow; if (w.__repaginate && f.offsetHeight) w.__repaginate(); } catch (e) {} upd(); };
+    try { f.contentWindow.__onpages = upd; } catch (e) {} upd(); setTimeout(upd, 80); setTimeout(rep, 450); setTimeout(rep, 1100); };
+  { let w = 0; const start = () => { if (f.offsetHeight || w++ > 30) paint(); else setTimeout(start, 50); }; start(); } // รอให้หน้าต่างแสดงก่อน แล้วจึงจัดหน้า (วัดขนาดได้ถูกต้อง)
   $('#rptSet').addEventListener('change', e => { const t = e.target;
     if (t.dataset.rv !== undefined) { show.v = t.value; $('#rptSet').innerHTML = setHtml(); }
     const tgtC = V ? ((show.vc = show.vc || {})[show.v] = (show.vc[show.v] || {})) : show.cols, tgtR = V ? ((show.vr = show.vr || {})[show.v] = (show.vr[show.v] || {})) : show.reps;
     if (t.dataset.rc !== undefined) tgtC[t.dataset.rc] = t.checked; if (t.dataset.rn !== undefined) tgtR[t.dataset.rn] = Math.max(0, Math.min(20, +t.value || 0)); if (t.dataset.ro) show[t.dataset.ro] = t.checked; if (t.dataset.rf !== undefined) show.font = t.value; if (t.dataset.rz !== undefined) show.fsz = Math.max(9, Math.min(18, +t.value || 12));
     try { localStorage.setItem(key, JSON.stringify(show)); } catch (x) {} R = rptBuild(cur(), vShow()); paint(); });
+  const layCols = () => rptCols(cur(), vShow()).filter((x, i, a) => a.findIndex(y => y.i === x.i) === i).map(x => ({ i: x.i, h: x.c.h, w: x.c.w }));
+  $('#rptLay').innerHTML = layHtml(LAY_RPT_DEFS, Object.assign({}, RPT_LAY, show.lay || {}), { cols: layCols() });
+  layBind($('#rptLay'), () => Object.assign({}, RPT_LAY, show.lay || {}), L => { show.lay = L; }, LAY_RPT_DEFS, RPT_LAY, () => ({ cols: layCols() }), () => { try { localStorage.setItem(key, JSON.stringify(show)); } catch (x) {} R = rptBuild(cur(), vShow()); paint(); });
   $('#rptPrint').onclick = () => printHtml(cur().name || spec.name || spec.title || 'รายงาน', R.html);
   return Object.assign(R, { modal: m });
 }
@@ -5250,14 +5359,18 @@ function wrapTh(txt, per) {
 function buildLayout(cfg) {
   const n = cfg.count, no = cfg.nopt, side = cfg.layout === 'side', fs = 5.5, P = 4.4, DX = 5.4, D = 3.6, sh = cfg.sheet || {};
   const band = sh.howto !== false || sh.tips !== false ? 31 + (sh.howto !== false && sh.howtoImg ? 20 : 0) : 0;
-  const BOX = [{ m: 'T', x: 90, y: 55, w: 101, h: 116 }, { m: 'T2', x: 90, y: 55, w: 101, h: 217 }, { m: 'F', x: 12, y: 53 + band, w: 186, h: 219 - band }, { m: 'F0', x: 12, y: 53, w: 186, h: 219 }];
-  const strip = cfg.digits * DX + (cfg.sets > 1 ? DX + 1 : 0) + 1, sw = Math.max(strip, 14), resv = sh.qr !== false || sh.score !== false;
-  const fit = (bx, rhMin) => { const R = { x: bx.x + 9.5 + sw + 2.5, y: bx.y + 3, w: 0, h: bx.h - 6 }; R.w = bx.x + bx.w - 9.5 - R.x;
-    const Q = resv ? { w: 27, h: (sh.qr !== false ? 24 : 0) + (sh.score !== false ? 15 : 0) } : null; if (Q) { Q.x = R.x + R.w - Q.w; Q.y = R.y + R.h - Q.h; }
+  const BOX = [{ m: 'T', x: 90, y: 61, w: 101, h: 116 }, { m: 'T2', x: 90, y: 61, w: 101, h: 211 }, { m: 'F', x: 12, y: 58 + band, w: 186, h: 214 - band }, { m: 'F0', x: 12, y: 58, w: 186, h: 214 }];
+  const strip = cfg.digits * DX + (cfg.sets > 1 ? DX + 1 : 0) + 1, sw = Math.max(strip, 14), resv = sh.qr !== false || sh.score !== false, below = cfg.flow === 'below', idH = 16.5 + 9 * P + 4;
+  const fit = (bx, rhMin) => { const wide = bx.m[0] === 'F', R = below ? { x: bx.x + 9.5, y: bx.y + idH + 1.5, w: 0, h: bx.h - idH - 4.5 } : { x: bx.x + 9.5 + sw + 2.5, y: bx.y + 3, w: 0, h: bx.h - 6 }; R.w = bx.x + bx.w - 9.5 - R.x;
+    let Q = null; if (resv) { const qh = sh.qr !== false ? 24 : 0, sc = sh.score !== false ? 15 : 0;
+      if (below) { Q = { w: Math.min(bx.x + bx.w - 9.5 - (bx.x + 9.5 + sw + 4), 56), h: Math.max(qh, sc) }; Q.x = bx.x + bx.w - 9.5 - Q.w; Q.y = bx.y + 4; Q.top = true; Q.horiz = true; }
+      else if (wide) { Q = { w: (qh ? 21 : 0) + (sc ? 33 : 0) + (qh && sc ? 2 : 0), h: Math.max(qh, sc ? 14 : 0), horiz: true }; Q.x = R.x + R.w - Q.w; Q.y = R.y + R.h - Q.h; }
+      else { Q = { w: 27, h: qh + sc }; Q.x = R.x + R.w - Q.w; Q.y = R.y + R.h - Q.h; } }
+    const Qb = Q && !Q.top ? Q : null;
     for (let rh = 5.2; rh >= rhMin - 1e-6; rh -= .1) for (let p = 5.6; p >= 4.19; p -= .2) {
       const colW = 7 + no * p + 2, maxCols = Math.floor((R.w + 2) / colW), rows = Math.floor((R.h - (side ? rh : 0)) / rh); if (maxCols < 1) continue;
       const tryCols = c => { const gapX = c > 1 ? Math.min(10, (R.w - c * colW) / (c - 1) + 2) : 0, xs = Array.from({ length: c }, (_, i) => R.x + i * (colW + gapX - 2));
-        const lim = xs.map(x => Q && x + colW - 2 > Q.x - .5 ? Math.max(0, Math.floor((Q.y - 1.5 - R.y - (side ? rh : 0)) / rh)) : rows); return { xs, lim, cap: lim.reduce((a, b) => a + b, 0), gapX }; };
+        const lim = xs.map(x => Qb && x + colW - 2 > Qb.x - .5 ? Math.max(0, Math.floor((Qb.y - 1.5 - R.y - (side ? rh : 0)) / rh)) : rows); return { xs, lim, cap: lim.reduce((a, b) => a + b, 0), gapX }; };
       let use = null; const cmax = cfg.cols ? Math.min(cfg.cols, maxCols) : maxCols;
       for (let c = cfg.cols ? cmax : 1; c <= cmax; c++) { const t = tryCols(c); if (t.cap >= n) { use = Object.assign({ c }, t); break; } }
       if (use) return { R, Q, rh, p, colW, rows, use, cap: tryCols(maxCols).cap }; }
@@ -5279,8 +5392,12 @@ function buildLayout(cfg) {
   const stx = sx + cfg.digits * DX + 1; L.set = cfg.sets > 1 ? Array.from({ length: cfg.sets }, (_, k) => ({ x: stx + DX / 2, y: bx.y + 16.5 + k * P, l: EX_SETS[k] })) : []; L.setLabel = { x: stx, y: bx.y + 5.5 };
   L.strip = { x: sx, w: sw };
   const R = best.R, Q = best.Q;
-  L.qr = Q && sh.qr !== false ? { x: Q.x + (Q.w - 19) / 2, y: Q.y, s: 19 } : { x: R.x + R.w - 19, y: R.y + R.h - 19, s: 19, off: true };
-  L.score = Q && sh.score !== false ? { x: Q.x, y: Q.y + Q.h - 13, w: Q.w, h: 13 } : null;
+  if (Q && Q.horiz) { const hasQ = sh.qr !== false; L.qr = hasQ ? { x: Q.x, y: Q.y + (Q.top ? 0 : Q.h - 22), s: 19 } : { x: R.x + R.w - 19, y: R.y + R.h - 19, s: 19, off: true };
+    L.score = sh.score !== false ? { x: Q.x + (hasQ ? 21 : 0), y: Q.y + (Q.top ? 2 : Q.h - 14), w: Q.w - (hasQ ? 21 : 0), h: 14 } : null; }
+  else { L.qr = Q && sh.qr !== false ? { x: Q.x + (Q.w - 19) / 2, y: Q.y, s: 19 } : { x: R.x + R.w - 19, y: R.y + R.h - 19, s: 19, off: true };
+    L.score = Q && sh.score !== false ? { x: Q.x, y: Q.y + Q.h - 13, w: Q.w, h: 13 } : null; }
+  if ((sh.lay || {}).qrSwap && L.score && L.qr && !L.qr.off) { if (Q && Q.horiz) { L.score.x = Q.x; L.qr.x = Q.x + L.score.w + 2; } else { const qy = L.qr.y; L.score.y = qy; L.qr.y = qy + 15; } }
+  L.grid = cfg.grid || 'none'; L.flow = below ? 'below' : 'side';
   // คำตอบ: เติมทีละคอลัมน์ (คอลัมน์ที่ชนมุมขวาล่างรับได้น้อยกว่า)
   const U = best.use, cols = U.c, per = Math.ceil(n / cols), take = U.lim.map(l => Math.min(l, per)); let left = n - take.reduce((a, b) => a + b, 0);
   for (let c = 0; c < cols && left > 0; c++) { const add = Math.min(left, U.lim[c] - take[c]); take[c] += add; left -= add; }
@@ -5292,36 +5409,41 @@ function buildLayout(cfg) {
   L.region = R; L.optHead = side ? R.y + best.rh / 2 : 0;
   return L;
 }
+const SHEET_LAY = { logo: 23, text: '#111111', line: '#000000', lgap: 4.8, qrSwap: false };
+const LAY_SHEET_DEFS = [{ t: 'h', label: 'ขนาด / ระยะ', ic: 'fa-ruler-combined' }, { t: 'num', k: 'logo', label: 'ขนาดโลโก้ (มม.)', min: 10, max: 36 }, { t: 'num', k: 'lgap', label: 'ระยะบรรทัด วิธีทำ/ข้อเสนอแนะ (มม.)', min: 3.5, max: 8, step: .1 },
+  { t: 'h', label: 'ย้าย-สลับตำแหน่ง', ic: 'fa-arrow-down-up-across-line' }, { t: 'chk', k: 'qrSwap', label: 'สลับตำแหน่ง QR กับกล่องคะแนน' },
+  { t: 'h', label: 'สี (จุดมุมกรอบคงเป็นสีดำเพื่อให้สแกนได้)', ic: 'fa-palette' }, { t: 'color', k: 'text', label: 'ตัวอักษร' }, { t: 'color', k: 'line', label: 'เส้นกรอบ' }];
 const SHEET_HOWTO = 'ใช้ดินสอดำ 2B ระบายให้เต็มวงและทึบ\nเขียนและระบายเลขที่นักเรียนให้ถูกต้อง\nเปลี่ยนคำตอบให้ลบให้สะอาดก่อนระบายใหม่', SHEET_TIPS = 'ตรวจสอบเลขที่และชุดข้อสอบให้ถูกต้องก่อนส่ง\nห้ามพับ ขีดเขียน หรือทำให้กระดาษคำตอบเปียกน้ำ';
 /** กระดาษคำตอบเป็น SVG (หน่วย มม.) — ใช้ทั้งดูตัวอย่าง พิมพ์ สร้าง PDF และแนบท้ายกระดาษคำถาม */
 function sheetSvg(ex, o = {}) {
   const cfg = ex.cfg, L = buildLayout(cfg), B = L.box, sh = Object.assign({ info: true, howto: true, tips: true, idbox: true, logo: true, qr: true, setbox: true, score: true, part2: true, page: true, foot: true }, cfg.sheet || {}), lb = exLabels(cfg), t = [];
-  const K = Math.max(.8, Math.min(1.35, +sh.fs || 1)) * (/^TH /.test(sh.font || '') ? 1.25 : 1), font = docFontOk(sh.font);
-  const T = (x, y, s, txt, a = 'start', w = 400, f = '#111', id = '') => t.push(`<text ${id ? `id="${id}" ` : ''}x="${x}" y="${y}" font-size="${(s * K).toFixed(2)}" font-weight="${w}" text-anchor="${a}" fill="${f}">${esc(txt)}</text>`);
+  const K = Math.max(.8, Math.min(1.35, +sh.fs || 1)) * (/^TH /.test(sh.font || '') ? 1.25 : 1), font = docFontOk(sh.font), LC = Object.assign({}, SHEET_LAY, sh.lay || {}), LG = Math.max(3.5, Math.min(8, +LC.lgap || 4.8)), LW = Math.max(10, Math.min(36, +LC.logo || 23));
+  const T = (x, y, s, txt, a = 'start', w = 400, f = LC.text, id = '') => t.push(`<text ${id ? `id="${id}" ` : ''}x="${x}" y="${y}" font-size="${(s * K).toFixed(2)}" font-weight="${w}" text-anchor="${a}" fill="${f}">${esc(txt)}</text>`);
   const C = (x, y, r, txt, ts) => { t.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#555" stroke-width=".22"/>`); if (txt !== undefined) t.push(`<text x="${x}" y="${y + ts * .36}" font-size="${ts}" text-anchor="middle" fill="#bdbdbd">${esc(txt)}</text>`); };
   const wrap = (txt, per) => wrapTh(txt, Math.floor(per / K));
   const cf = effCfg(), logo = o.logo !== undefined ? o.logo : cf.logo, [yy, tt] = String(sh.term || curVt() || tk(termOf())).split('/');
   const maxS = (exKeyOf(ex, 'A').reduce((a, k) => a + (+k.p || 0), 0)) || cfg.count;
   t.push(`<rect width="210" height="297" fill="#fff"/>`);
-  if (sh.logo) { if (logo) t.push(`<image href="${esc(logo)}" x="93" y="4" width="23" height="23" preserveAspectRatio="xMidYMid meet"/>`); else t.push(DOC_LOGO().replace('<svg ', '<svg x="93" y="4" width="23" height="23" ')); }
-  if (sh.page) T(186, 16, 3.2, 'หน้า ' + (o.page || 1), 'end', 400, '#111', o.pageId || '');
+  if (sh.logo) { const lx = 104.5 - LW / 2, ly = 4 + (23 - LW) / 2; if (logo) t.push(`<image href="${esc(logo)}" x="${lx}" y="${ly}" width="${LW}" height="${LW}" preserveAspectRatio="xMidYMid meet"/>`); else t.push(DOC_LOGO().replace('<svg ', `<svg x="${lx}" y="${ly}" width="${LW}" height="${LW}" `)); }
+  if (sh.page) T(186, 16, 3.2, 'หน้า ' + (o.page || 1), 'end', 400, LC.text, o.pageId || '');
   T(105, sh.logo ? 32 : 14, 4.6, 'กระดาษคำตอบ', 'middle', 700);
   const y0 = sh.logo ? 0 : -14;
-  if (sh.info) { t.push(`<rect x="21.5" y="${35 + y0}" width="170" height="9.6" fill="none" stroke="#000" stroke-width=".7"/>`);
+  if (sh.info) { t.push(`<rect x="21.5" y="${35 + y0}" width="170" height="9.6" fill="none" stroke="${LC.line}" stroke-width=".7"/>`);
     T(26, 41.4 + y0, 3.2, 'ชื่อ – นามสกุล : ..........................................................................................  เลขที่ ...............  ชั้น ' + (String(sh.grade || '').match(/^[มปอ]/) ? sh.grade.match(/^[มปอ]/)[0] : 'ม') + '......./.......'); }
   const p1 = sh.part1 || 'ตอนที่ 1';
-  T(25.4, 49.5 + y0, 3.1, `${p1} : คำสั่ง :`, 'start', 700); T(25.4 + (p1.length + 9) * 1.55 * K, 49.5 + y0, 3.1, sh.cmd || `ให้นักเรียนระบายคำตอบที่ถูกต้องที่สุด${cfg.fmt === 'tf' ? ' (ถูก/ผิด)' : 'เพียงข้อเดียว'} จำนวน ${cfg.count} ข้อ`);
+  T(25.4, 48.6 + y0, 3.1, `${p1} : ${sh.part1Type || `ปรนัย ${cfg.count} ข้อ (${maxS} คะแนน)`}`, 'start', 700);
+  T(25.4, 54.2 + y0, 3.1, 'คำสั่ง :', 'start', 700); T(25.4 + 11.5 * K, 54.2 + y0, 3.1, sh.cmd || `ให้นักเรียนระบายคำตอบที่ถูกต้องที่สุด${cfg.fmt === 'tf' ? ' (ถูก/ผิด)' : 'เพียงข้อเดียว'} จำนวน ${cfg.count} ข้อ`);
   // วิธีการทำ + ตัวอย่าง (แก้ไขข้อความ/ใส่รูปได้) · ข้อเสนอแนะต่อท้ายทันที
   const example = (x, y) => { if (sh.howtoImg) { t.push(`<image href="${esc(sh.howtoImg)}" x="${x}" y="${y - 3}" width="58" height="24" preserveAspectRatio="xMinYMin meet"/>`); return y + 22; }
     T(x, y, 2.8, 'ถูก', 'start', 700); t.push(`<circle cx="${x + 9.6}" cy="${y - .9}" r="1.9" fill="#111"/>`);
     T(x + 15.6, y, 2.8, 'ผิด', 'start', 700); [['✓', 0], ['✗', 1], ['', 2], ['/', 3]].forEach(([mk, i]) => { const cx = x + 24.6 + i * 6.5; t.push(`<circle cx="${cx}" cy="${y - .9}" r="1.9" fill="${i === 2 ? 'url(#half)' : 'none'}" stroke="#555" stroke-width=".25"/>`); if (mk) T(cx, y, 2.6, mk, 'middle', 700); }); return y + 2; };
-  const howtoBlock = (x, y, per, maxL, inline) => { T(x, y, 3.1, 'วิธีการทำแบบทดสอบ :', 'start', 700); wrap(sh.howtoText || SHEET_HOWTO, per).slice(0, maxL).forEach((l, i) => T(x, y += 4.8, 2.9, (/^\d|^•|^-/.test(l) ? '' : (i + 1) + '. ') + l));
+  const howtoBlock = (x, y, per, maxL, inline) => { T(x, y, 3.1, 'วิธีการทำแบบทดสอบ :', 'start', 700); wrap(sh.howtoText || SHEET_HOWTO, per).slice(0, maxL).forEach((l, i) => T(x, y += LG, 2.9, (/^\d|^•|^-/.test(l) ? '' : (i + 1) + '. ') + l));
     T(x, y += 6.5, 3.1, 'ตัวอย่าง :', 'start', 700); if (inline && !sh.howtoImg) return example(x + 17 * K, y); return example(x, y + 5.5); };
-  const tipsBlock = (x, y, per, maxL) => { T(x, y, 3.1, 'ข้อเสนอแนะ :', 'start', 700); wrap(sh.tipsText || SHEET_TIPS, per).slice(0, maxL).forEach((l, i) => T(x, y += 4.8, 2.9, (/^\d|^•|^-/.test(l) ? '' : (i + 1) + '. ') + l)); return y; };
-  if (L.mode === 'T' || L.mode === 'T2') { let y = B.y + 5; if (sh.howto) y = howtoBlock(25.4, y, 33, 9) + 9; if (sh.tips) tipsBlock(25.4, y, 33, 8); }
-  else if (L.mode === 'F' && L.band) { const y = 57 + y0; let yh = y; if (sh.howto) yh = howtoBlock(25.4, y, 50, 3, true); if (sh.tips) tipsBlock(sh.howto ? 112 : 25.4, y, sh.howto ? 46 : 92, 4); }
+  const tipsBlock = (x, y, per, maxL) => { T(x, y, 3.1, 'ข้อเสนอแนะ :', 'start', 700); wrap(sh.tipsText || SHEET_TIPS, per).slice(0, maxL).forEach((l, i) => T(x, y += LG, 2.9, (/^\d|^•|^-/.test(l) ? '' : (i + 1) + '. ') + l)); return y; };
+  if (L.mode === 'T' || L.mode === 'T2') { let y = B.y + 3; if (sh.howto) y = howtoBlock(25.4, y, 33, 9) + 9; if (sh.tips) tipsBlock(25.4, y, 33, 8); }
+  else if (L.mode === 'F' && L.band) { const y = 62 + y0; let yh = y; if (sh.howto) yh = howtoBlock(25.4, y, 50, 3, true); if (sh.tips) tipsBlock(sh.howto ? 112 : 25.4, y, sh.howto ? 46 : 92, 4); }
   // กรอบ OMR + เครื่องหมาย 6 จุด + เครื่องหมายทิศทาง
-  t.push(`<rect x="${B.x}" y="${B.y}" width="${B.w}" height="${B.h}" fill="none" stroke="#000" stroke-width=".9"/>`);
+  t.push(`<rect x="${B.x}" y="${B.y}" width="${B.w}" height="${B.h}" fill="none" stroke="${LC.line}" stroke-width=".9"/>`);
   L.fid.concat(L.fidMid).forEach(([x, y]) => t.push(`<rect x="${x}" y="${y}" width="${L.fs}" height="${L.fs}" fill="#000"/>`));
   t.push(`<rect x="${L.orient.x}" y="${L.orient.y}" width="${L.orient.s}" height="${L.orient.s}" fill="#000"/>`);
   if (sh.idbox) { T(L.idLabel.x, L.idLabel.y, 2.6, 'เลขที่นักเรียน', 'start', 700);
@@ -5329,18 +5451,21 @@ function sheetSvg(ex, o = {}) {
   if (sh.setbox && L.set.length) { T(L.setLabel.x + 2.7, L.setLabel.y + (cfg.digits < 3 ? 3.5 : 0), 2.6, 'ชุด', 'middle', 700); L.set.forEach(b => C(b.x, b.y, L.d0 / 2, b.l, 2.1)); }
   if (sh.qr && ex.id && !L.qr.off) { try { const q = qrcode(0, 'M'); q.addData('CPX:' + ex.id); q.make(); const nm = q.getModuleCount(), cs = L.qr.s / nm; for (let r = 0; r < nm; r++) for (let c = 0; c < nm; c++) if (q.isDark(r, c)) t.push(`<rect x="${(L.qr.x + c * cs).toFixed(2)}" y="${(L.qr.y + r * cs).toFixed(2)}" width="${(cs + .02).toFixed(2)}" height="${(cs + .02).toFixed(2)}" fill="#000"/>`); } catch (e) {}
     T(L.qr.x + L.qr.s / 2, L.qr.y + L.qr.s + 2.8, 2.1, 'รหัสข้อสอบ ' + String(ex.id).slice(-6).toUpperCase(), 'middle', 700); }
-  if (sh.score && L.score) { const S2 = L.score; t.push(`<rect x="${S2.x}" y="${S2.y}" width="${S2.w}" height="${S2.h}" fill="none" stroke="#000" stroke-width=".35"/>`); T(S2.x + 1.5, S2.y + 3.4, 2.3, 'คะแนนที่ได้', 'start', 700, '#333'); T(S2.x + S2.w - 1.5, S2.y + S2.h - 2.6, 3, `........ / ${maxS}`, 'end', 700); }
+  if (sh.score && L.score) { const S2 = L.score; t.push(`<rect x="${S2.x}" y="${S2.y}" width="${S2.w}" height="${S2.h}" fill="none" stroke="${LC.line}" stroke-width=".35"/>`); T(S2.x + 1.5, S2.y + 3.4, 2.3, 'คะแนนที่ได้', 'start', 700, '#333'); const mw = String(maxS).length * 2.9 * K; t.push(`<text x="${S2.x + S2.w - 1.5}" y="${S2.y + S2.h - 2.3}" font-size="${(5.4 * K).toFixed(2)}" font-weight="800" text-anchor="end" fill="${LC.text}">${maxS}</text>`); T(S2.x + S2.w - 2.5 - mw, S2.y + S2.h - 2.6, 2.9, '........ /', 'end', 700); }
   if (L.side) L.cols.forEach(c => lb.forEach((l, k) => T(c.x + 7 + L.p / 2 + k * L.p, L.optHead + 1, 2.5, l, 'middle', 700, '#333')));
   L.cols.forEach((c, i) => { if (i) t.push(`<line x1="${c.x - 1.5}" y1="${L.region.y}" x2="${c.x - 1.5}" y2="${L.region.y + (c.rows + (L.side ? 1 : 0)) * L.rh}" stroke="#ddd" stroke-width=".25"/>`); });
-  L.items.forEach(it => { t.push(`<text x="${it.nx}" y="${it.y + 1}" font-size="${Math.min(2.9, L.rh * .62)}" font-weight="700" text-anchor="end" fill="#111">${it.n}</text>`); it.o.forEach((b, k) => C(b.x, b.y, L.d / 2, L.side ? undefined : lb[k], L.d * .55)); });
-  if (L.mode === 'T' && sh.part2) part2Box(t, T, wrap, sh, B.y + B.h + 6, 266);
+  if (L.grid !== 'none') { const gc = '#c9d3df'; L.cols.forEach(c => { const its = L.items.filter(it => it.nx === c.x + 6); if (!its.length) return; const y0g = its[0].y - L.rh / 2, y1g = its[its.length - 1].y + L.rh / 2, x0g = c.x + .5, x1g = c.x + 7 + L.p * cfg.nopt + .5;
+    if (/h/.test(L.grid)) for (let i = 0; i <= its.length; i++) { const yy2 = y0g + i * L.rh; t.push(`<line x1="${x0g}" y1="${yy2}" x2="${x1g}" y2="${yy2}" stroke="${gc}" stroke-width=".2"/>`); }
+    if (/v/.test(L.grid)) for (let k2 = 0; k2 <= cfg.nopt; k2++) { const xx = c.x + 7 + k2 * L.p; t.push(`<line x1="${xx}" y1="${y0g}" x2="${xx}" y2="${y1g}" stroke="${gc}" stroke-width=".2"/>`); } }); }
+  L.items.forEach(it => { t.push(`<text x="${it.nx}" y="${it.y + 1}" font-size="${Math.min(2.9, L.rh * .62)}" font-weight="700" text-anchor="end" fill="${LC.text}">${it.n}</text>`); it.o.forEach((b, k) => C(b.x, b.y, L.d / 2, L.side ? undefined : lb[k], L.d * .55)); });
+  if (L.mode === 'T' && sh.part2) part2Box(t, T, wrap, sh, B.y + B.h + 6, 266, LC.line);
   if (sh.foot) T(25.4, 279, 2.9, sheetFoot(ex, sh, yy, tt), 'start', 400, '#222');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" width="${o.w || '210mm'}" ${o.h === 'auto' ? '' : `height="${o.h || '297mm'}"`} font-family="'${font}', Sarabun, Tahoma, sans-serif"><defs><linearGradient id="half"><stop offset=".5" stop-color="#111"/><stop offset=".5" stop-color="#fff"/></linearGradient></defs>${t.join('')}</svg>`;
 }
 const sheetFoot = (ex, sh, yy, tt) => `ข้อสอบรหัสวิชา ${sh.courseCode || '-'} รายวิชา ${sh.courseName || ex.name || '-'} ชั้น${gradeWord(sh.grade) || '-'} ภาคเรียนที่ ${tt || '-'} ปีการศึกษา ${yy || '-'}`;
-function part2Box(t, T, wrap, sh, py, bottom) {
+function part2Box(t, T, wrap, sh, py, bottom, lc = '#000') {
   T(25.4, py, 3.1, sh.part2Title || 'ตอนที่ 2 : อัตนัย', 'start', 700); T(25.4, py + 5.5, 3.1, 'คำสั่ง :', 'start', 700); T(37.5, py + 5.5, 3.1, sh.part2Cmd || '.................................................................................................................................................');
-  const by = py + 8.5, bh = bottom - by; t.push(`<rect x="25.4" y="${by}" width="164.2" height="${bh}" fill="none" stroke="#000" stroke-width=".9"/>`);
+  const by = py + 8.5, bh = bottom - by; t.push(`<rect x="25.4" y="${by}" width="164.2" height="${bh}" fill="none" stroke="${lc}" stroke-width=".9"/>`);
   const tx = wrap(sh.part2Text, 92); if (tx.length) tx.slice(0, Math.floor((bh - 4) / 5)).forEach((l, i) => T(28, by + 6 + i * 5, 3, l)); else for (let y = by + 9; y < by + bh - 2; y += 8) t.push(`<line x1="29" y1="${y}" x2="186" y2="${y}" stroke="#bbb" stroke-width=".2" stroke-dasharray=".6 .8"/>`);
 }
 /** ทุกหน้าของกระดาษคำตอบ: หน้าแรก (ฝนคำตอบ) + หน้า "ตอนที่ 2" เมื่อกรอบคำตอบใหญ่จนไม่มีที่ */
@@ -5638,20 +5763,22 @@ async function exForm(ex, all, fid = '') {
   const m = modal(ex ? 'แก้ไขข้อสอบ' : 'สร้างข้อสอบใหม่', `<form id="exF" class="row g-3" novalidate>
     <div class="col-md-8"><label class="form-label" for="exName">ชื่อข้อสอบ</label><input class="form-control" id="exName" maxlength="150" value="${esc(ex ? ex.name : nextName())}"></div>
     <div class="col-md-4"><label class="form-label" for="exFolder">โฟลเดอร์</label><select class="form-select" id="exFolder"><option value="">— ไม่มี —</option>${all.folders.filter(f => f.kind !== 'paper').map(f => `<option value="${esc(f.id)}" ${f.id === (ex ? ex.folderId : fid) ? 'selected' : ''}>${esc(f.name)}</option>`).join('')}<option value="__new">+ สร้างโฟลเดอร์ใหม่...</option></select></div>
-    <div class="col-6 col-md-3"><label class="form-label" for="exDigits">จำนวนหลักเลขที่นักเรียน</label><input class="form-control" type="number" id="exDigits" min="2" max="5" value="${c.digits}"><div class="form-text">5 หลัก = รหัสนักเรียน · 2–3 หลัก = เลขที่</div></div>
+    <div class="col-6 col-md-3"><label class="form-label" for="exDigits">จำนวนหลักเลขที่นักเรียน (ช่องฝน)</label><input class="form-control" type="number" id="exDigits" min="2" max="5" value="${c.digits}"><div class="form-text">5 หลัก = รหัสนักเรียน · 2–3 หลัก = เลขที่</div></div>
     <div class="col-6 col-md-3"><label class="form-label" for="exCount">จำนวนคำตอบ (ข้อ)</label><input class="form-control" type="number" id="exCount" min="1" max="200" value="${c.count}"></div>
     <div class="col-6 col-md-3"><label class="form-label" for="exFmt">รูปแบบคำตอบ</label><select class="form-select" id="exFmt">${opt([['tf', 'ถูก-ผิด'], ['c2', '2 ตัวเลือก'], ['c3', '3 ตัวเลือก'], ['c4', '4 ตัวเลือก'], ['c5', '5 ตัวเลือก'], ['custom', 'กำหนดเอง (2-10)']], c.fmt)}</select></div>
     <div class="col-6 col-md-3"><label class="form-label" for="exNopt">จำนวนตัวเลือก</label><input class="form-control" type="number" id="exNopt" min="2" max="10" value="${c.nopt}" ${c.fmt === 'custom' ? '' : 'disabled'}></div>
     <div class="col-6 col-md-3"><label class="form-label" for="exLbl">ป้ายตัวเลือก</label><select class="form-select" id="exLbl">${opt(LABEL_OPTS, c.labels)}</select><input class="form-control form-control-sm mt-1 ${c.labels === 'custom' ? '' : 'd-none'}" id="exLblC" value="${esc(c.labelsCustom || '')}" placeholder="เช่น a, b, c, d" aria-label="ป้ายตัวเลือกกำหนดเอง"></div>
     <div class="col-6 col-md-3"><label class="form-label" for="exSets">จำนวนชุดข้อสอบ</label><select class="form-select" id="exSets">${opt([1, 2, 3, 4, 5, 6].map(n => [n, n === 1 ? '1 ชุด' : n + ' ชุด (' + EX_SETS.slice(0, n).split('').join('/') + ')']), c.sets)}</select></div>
     <div class="col-6 col-md-3"><label class="form-label" for="exLayout">การจัดวาง</label><select class="form-select" id="exLayout">${opt([['inline', 'ตัวเลือกต่อจากเลขข้อ'], ['side', 'หัวคอลัมน์ตัวเลือกแยก']], c.layout)}</select></div>
+    <div class="col-6 col-md-3"><label class="form-label" for="exGrid">เส้นตาราง</label><select class="form-select" id="exGrid">${opt([['none', 'ไม่มี'], ['h', 'แนวนอน'], ['v', 'แนวตั้ง'], ['hv', 'แนวนอน + แนวตั้ง']], c.grid || 'none')}</select></div>
+    <div class="col-6 col-md-3"><label class="form-label" for="exFlow">การจัดตำแหน่งตัวเลือก</label><select class="form-select" id="exFlow">${opt([['side', 'ต่อจากเลขที่นักเรียน'], ['below', 'เริ่มแถวใหม่ (ใต้เลขที่)']], c.flow || 'side')}</select></div>
     <div class="col-6 col-md-3"><label class="form-label" for="exCols">จำนวนคอลัมน์</label><select class="form-select" id="exCols">${opt([[0, 'อัตโนมัติ'], [1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5']], c.cols)}</select></div>
     <div class="col-12"><label class="form-label">ชั้นที่จัดสอบ <small class="text-muted">(เลือกได้หลายชั้น)</small></label><div class="multi" id="exCls">${classOpts.map(x => `<label class="mchip"><input type="checkbox" value="${esc(x)}" ${picked.has(x) ? 'checked' : ''}>${esc(x)}</label>`).join('') || '<span class="text-muted small">ยังไม่มีชั้นเรียน — เพิ่มได้ที่แท็บ "ชั้นเรียน"</span>'}</div></div>
     <div class="col-12"><label class="form-label" for="exTag">แท็ก</label><div class="d-flex flex-wrap gap-1 align-items-center" id="exTags"></div><div class="input-group mt-1" style="max-width:360px"><input class="form-control" id="exTag" maxlength="30" placeholder="เช่น กลางภาค"><button class="btn btn-soft" type="button" id="exTagAdd"><i class="fa-solid fa-plus"></i> เพิ่มแท็ก</button></div></div>
     <div class="col-12"><div class="gb-alert info m-0" id="exCap"></div></div></form>`,
     `<button class="btn btn-soft" id="exBack"><i class="fa-solid fa-arrow-left"></i> ย้อนกลับ</button><button class="btn btn-primary" id="exNext">ต่อไป <i class="fa-solid fa-arrow-right"></i></button>`, 'modal-lg');
   let dirty = false;
-  const read = () => ({ digits: +$('#exDigits').value, count: +$('#exCount').value, fmt: $('#exFmt').value, nopt: +$('#exNopt').value, labels: $('#exLbl').value, labelsCustom: $('#exLblC').value.trim(), sets: +$('#exSets').value, layout: $('#exLayout').value, cols: +$('#exCols').value, sheet: ex ? ex.cfg.sheet : {} });
+  const read = () => ({ digits: +$('#exDigits').value, count: +$('#exCount').value, fmt: $('#exFmt').value, nopt: +$('#exNopt').value, labels: $('#exLbl').value, labelsCustom: $('#exLblC').value.trim(), sets: +$('#exSets').value, layout: $('#exLayout').value, cols: +$('#exCols').value, grid: $('#exGrid').value, flow: $('#exFlow').value, sheet: ex ? ex.cfg.sheet : {} });
   const capChk = () => { const cf = read(); if (cf.fmt === 'tf') cf.nopt = 2; else if (cf.fmt !== 'custom') cf.nopt = +cf.fmt.slice(1); const L = buildLayout(cf); $('#exCap').innerHTML = L.over ? `<i class="fa-solid fa-triangle-exclamation text-danger"></i><div>กระดาษ 1 แผ่นรองรับได้สูงสุด <b>${L.cap}</b> ข้อ สำหรับ ${cf.nopt} ตัวเลือก — ลดจำนวนข้อหรือจำนวนตัวเลือก</div>` : `<i class="fa-solid fa-circle-info"></i><div>จัดวาง ${L.cols.length} คอลัมน์ · ระยะฟอง ${r2(L.p)} มม. · รองรับสูงสุด ${L.cap} ข้อ</div>`; return !L.over; };
   const tagsDraw = () => $('#exTags').innerHTML = tags.map((t, i) => `<span class="chip info">#${esc(t)} <button type="button" class="btn-close btn-close-sm" data-tdel="${i}" aria-label="ลบแท็ก ${esc(t)}"></button></span>`).join('');
   tagsDraw(); capChk();
@@ -5709,10 +5836,12 @@ async function exDetail(B, p) {
 function exPrintSheet(ex) {
   const sh = Object.assign({ info: true, howto: true, tips: true, idbox: true, logo: true, qr: true, setbox: true, score: true, part2: true, page: true, foot: true, howtoText: '', tipsText: '', part1: '', cmd: '', part2Title: '', part2Cmd: '', part2Text: '', courseCode: '', courseName: '', grade: '', term: '' }, ex.cfg.sheet || {}), cfg = Object.assign({}, ex.cfg);
   const T = [['logo', 'โลโก้'], ['page', 'เลขหน้า (มุมขวาบน)'], ['info', 'ช่องชื่อ – นามสกุล / เลขที่ / ชั้น'], ['howto', 'วิธีการทำแบบทดสอบ + ตัวอย่าง'], ['tips', 'ข้อเสนอแนะ'], ['idbox', 'ช่องฝนเลขที่นักเรียน'], ['setbox', 'ช่องชุดข้อสอบ (A/B/C)'], ['qr', 'QR Code / รหัสข้อสอบ'], ['score', 'กล่องคะแนนที่ได้'], ['part2', 'ตอนที่ 2 (กล่องเว้นว่างไว้ พิมพ์เพิ่มเติม)'], ['foot', 'ข้อความท้ายหน้า (รหัสวิชา รายวิชา ชั้น ภาคเรียน)']];
-  const m = modal('พิมพ์กระดาษคำตอบ — ' + ex.name, `<div class="row g-3"><div class="col-lg-4"><div class="sheet-set">
+  const m = modal('พิมพ์กระดาษคำตอบ — ' + ex.name, `<div class="d-flex align-items-center gap-2 mb-2"><div class="small text-muted flex-fill" id="ssMode"></div><div class="pv-tools">${layBtn('ssLayM')}<div class="dropdown"><button class="btn btn-sm btn-soft dropdown-toggle text-nowrap" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="ssSetBtn" title="ตั้งค่า" aria-label="ตั้งค่า"><i class="fa-solid fa-sliders"></i><span class="bt"> ตั้งค่า</span></button><div class="dropdown-menu dropdown-menu-end p-3 ss-menu"><div class="sheet-set">
     ${T.map(t => `<div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="ss_${t[0]}" data-sk="${t[0]}" ${sh[t[0]] ? 'checked' : ''}><label class="form-check-label" for="ss_${t[0]}">${t[1]}</label></div>`).join('')}
     <div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked disabled><label class="form-check-label">ข้อที่ (NO.) และตัวเลือกแบบฝน</label></div>
-    <div class="small text-muted mt-1" id="ssMode"></div>
+    <div class="row g-1 mt-1"><div class="col-6"><label class="form-label small mb-1" for="ssGrid">เส้นตาราง</label><select class="form-select form-select-sm" id="ssGrid">${opt([['none', 'ไม่มี'], ['h', 'แนวนอน'], ['v', 'แนวตั้ง'], ['hv', 'แนวนอน + แนวตั้ง']], cfg.grid || 'none')}</select></div>
+      <div class="col-6"><label class="form-label small mb-1" for="ssFlow">ตำแหน่งตัวเลือก</label><select class="form-select form-select-sm" id="ssFlow">${opt([['side', 'ต่อจากเลขที่นักเรียน'], ['below', 'เริ่มแถวใหม่ (ใต้เลขที่)']], cfg.flow || 'side')}</select></div></div>
+    <div class="row g-1 mt-1"><div class="col-12"><label class="form-label small mb-1" for="ssP1T">ตอนที่ 1 : ประเภทข้อสอบ / คะแนนเต็ม</label><input class="form-control form-control-sm" id="ssP1T" data-st="part1Type" value="${esc(sh.part1Type || '')}" placeholder="เช่น ปรนัย 20 ข้อ (20 คะแนน)"></div></div>
     <div class="row g-1 mt-1"><div class="col-6"><label class="form-label small mb-1" for="ssDig">เลขที่นักเรียน (จำนวนหลัก)</label><select class="form-select form-select-sm" id="ssDig">${opt([[2, '2 หลัก (01–99)'], [3, '3 หลัก'], [4, '4 หลัก'], [5, '5 หลัก (รหัสนักเรียน)']], cfg.digits)}</select></div>
       <div class="col-6"><label class="form-label small mb-1">ตัวอักษร / ขนาด</label><div class="d-flex gap-1">${docFontSel('id="ssFont" data-st="font"', sh.font || 'Sarabun')}<select class="form-select form-select-sm" id="ssFs" style="max-width:84px">${opt([[.85, '85%'], [.9, '90%'], [1, '100%'], [1.1, '110%'], [1.2, '120%'], [1.3, '130%']], +sh.fs || 1)}</select></div></div></div>
     <label class="form-label small mt-2 mb-1" for="ssLay">การจัดวาง</label><div class="d-flex gap-1"><select class="form-select form-select-sm" id="ssLay">${opt([['inline', 'ตัวเลือกต่อจากเลขข้อ'], ['side', 'หัวคอลัมน์แยก']], cfg.layout)}</select><select class="form-select form-select-sm" id="ssCols" style="max-width:110px">${opt([[0, 'อัตโนมัติ'], [1, '1 คอลัมน์'], [2, '2 คอลัมน์'], [3, '3 คอลัมน์'], [4, '4 คอลัมน์'], [5, '5 คอลัมน์']], cfg.cols)}</select></div>
@@ -5723,17 +5852,18 @@ function exPrintSheet(ex) {
     <div class="d-flex gap-1 align-items-center mt-1"><span class="small text-muted flex-fill">รูปตัวอย่าง (แทนภาพ ถูก/ผิด)</span><button type="button" class="btn btn-sm btn-soft" id="ssImg"><i class="fa-solid fa-image"></i> ${sh.howtoImg ? 'เปลี่ยนรูป' : 'เพิ่มรูป'}</button><button type="button" class="btn btn-sm btn-soft text-danger ${sh.howtoImg ? '' : 'd-none'}" id="ssImgDel" aria-label="ลบรูปตัวอย่าง"><i class="fa-solid fa-xmark"></i></button></div>
     <label class="form-label small mt-2 mb-1" for="ssTip">ข้อเสนอแนะ (บรรทัดละ 1 ข้อ)</label><textarea class="form-control form-control-sm" id="ssTip" data-st="tipsText" rows="2" placeholder="${esc(SHEET_TIPS)}">${esc(sh.tipsText)}</textarea>
     <label class="form-label small mt-2 mb-1">ตอนที่ 2 (กรอบคำตอบใหญ่ → พิมพ์ในหน้าถัดไป)</label><input class="form-control form-control-sm mb-1" data-st="part2Title" value="${esc(sh.part2Title)}" placeholder="ตอนที่ 2 : อัตนัย (10 คะแนน)" aria-label="หัวข้อตอนที่ 2"><input class="form-control form-control-sm mb-1" data-st="part2Cmd" value="${esc(sh.part2Cmd)}" placeholder="คำสั่งตอนที่ 2" aria-label="คำสั่งตอนที่ 2"><textarea class="form-control form-control-sm" data-st="part2Text" rows="2" placeholder="ข้อความในกล่อง (เว้นว่าง = เส้นบรรทัดให้เขียน)" aria-label="ข้อความในกล่องตอนที่ 2">${esc(sh.part2Text)}</textarea>
-    <label class="form-label small mt-2 mb-1" for="ssCopies">จำนวนแผ่น</label><input class="form-control form-control-sm" type="number" id="ssCopies" min="1" max="100" value="1"></div></div>
-    <div class="col-lg-8"><div class="sheet-prev" id="ssPrev"></div></div></div>`,
-    `<button class="btn btn-soft" id="ssSave"><i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่า</button><button class="btn btn-soft" id="ssPrint"><i class="fa-solid fa-print"></i> พิมพ์ผ่านเบราว์เซอร์</button><button class="btn btn-primary" id="ssPdf"><i class="fa-solid fa-file-pdf"></i> บันทึกเป็น PDF</button>`, 'modal-xl modal-wide');
+    <label class="form-label small mt-2 mb-1" for="ssCopies">จำนวนแผ่น</label><input class="form-control form-control-sm" type="number" id="ssCopies" min="1" max="100" value="1"></div></div></div></div></div><div class="sheet-prev" id="ssPrev"></div>`,
+    `<div class="mf-row"><button class="btn btn-soft" id="ssSave" title="บันทึกการตั้งค่า"><i class="fa-solid fa-floppy-disk"></i><span class="bt"> บันทึกการตั้งค่า</span></button><button class="btn btn-soft" id="ssPrint" title="พิมพ์ผ่านเบราว์เซอร์"><i class="fa-solid fa-print"></i><span class="bt"> พิมพ์ผ่านเบราว์เซอร์</span></button><button class="btn btn-primary" id="ssPdf" title="บันทึกเป็น PDF"><i class="fa-solid fa-file-pdf"></i><span class="bt"> บันทึกเป็น PDF</span></button></div>`, 'modal-xl modal-wide');
   const cur = () => Object.assign({}, ex, { cfg: Object.assign({}, cfg, { sheet: sh }) });
   const draw = debounce(() => { const pg = sheetPages(cur(), { w: '100%', h: 'auto' }); $('#ssPrev').innerHTML = pg.map((x, i) => (i ? '<div class="small text-muted my-2 text-center">— หน้าถัดไป —</div>' : '') + x).join(''); const L = buildLayout(cur().cfg);
     $('#ssMode').innerHTML = `<i class="fa-solid fa-circle-info"></i> กรอบคำตอบ: ${L.mode === 'T' ? 'ครึ่งหน้า (ตามแม่แบบ)' : L.mode === 'T2' ? 'ครึ่งหน้า ยาวถึงท้ายกระดาษ' : L.mode === 'F' ? 'เต็มความกว้าง (วิธีทำ/ข้อเสนอแนะอยู่ด้านบน)' : 'เต็มหน้า (ข้อสอบจำนวนมาก)'} · ${L.cols.length} คอลัมน์ · ${pg.length} หน้า`; }, 80); draw();
   loadDocFont(sh.font);
+  $('#ssLayM').innerHTML = layHtml(LAY_SHEET_DEFS, Object.assign({}, SHEET_LAY, sh.lay || {}));
+  layBind($('#ssLayM'), () => Object.assign({}, SHEET_LAY, sh.lay || {}), L => { sh.lay = L; }, LAY_SHEET_DEFS, SHEET_LAY, () => ({}), () => draw());
   $('#ssImg').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*'; i.onchange = async () => { if (!i.files[0]) return; try { let d = await resizeImage(i.files[0], 600, 260); if (d.length > 30000) d = await resizeImage(i.files[0], 420, 180); if (d.length > 30000) return toast('รูปใหญ่เกินไป', 'warning'); sh.howtoImg = d; $('#ssImgDel').classList.remove('d-none'); draw(); } catch (e) { toast('ใช้รูปนี้ไม่ได้', 'warning'); } }; i.click(); };
   $('#ssImgDel').onclick = () => { sh.howtoImg = ''; $('#ssImgDel').classList.add('d-none'); draw(); };
   m.body.addEventListener('input', e => { const t = e.target; if (t.dataset.sk) sh[t.dataset.sk] = t.checked; if (t.dataset.st) sh[t.dataset.st] = t.value; if (t.id === 'ssLay') cfg.layout = t.value; if (t.id === 'ssCols') cfg.cols = +t.value; draw(); });
-  m.body.addEventListener('change', e => { const t = e.target; if (t.id === 'ssLay') cfg.layout = t.value; if (t.id === 'ssCols') cfg.cols = +t.value; if (t.id === 'ssDig') cfg.digits = +t.value; if (t.id === 'ssFs') sh.fs = +t.value; if (t.id === 'ssFont') { sh.font = t.value; loadDocFont(t.value); } draw(); });
+  m.body.addEventListener('change', e => { const t = e.target; if (t.id === 'ssLay') cfg.layout = t.value; if (t.id === 'ssCols') cfg.cols = +t.value; if (t.id === 'ssDig') cfg.digits = +t.value; if (t.id === 'ssGrid') cfg.grid = t.value; if (t.id === 'ssFlow') cfg.flow = t.value; if (t.id === 'ssFs') sh.fs = +t.value; if (t.id === 'ssFont') { sh.font = t.value; loadDocFont(t.value); } draw(); });
   $('#ssSave').onclick = async () => { await apiMsg('กำลังบันทึก...', 'examSave', { id: ex.id, name: ex.name, folderId: ex.folderId, cfg: cur().cfg, classes: ex.classes, tags: ex.tags }); ex.cfg = cur().cfg; toast('บันทึกการตั้งค่าหัวกระดาษแล้ว'); };
   $('#ssPrint').onclick = () => printHtml('กระดาษคำตอบ ' + ex.name, sheetHtml(cur(), +$('#ssCopies').value || 1));
   $('#ssPdf').onclick = async () => { try { Loader.show('กำลังสร้างไฟล์ PDF...'); const b = await sheetPdf(cur(), +$('#ssCopies').value || 1); download(b, 'กระดาษคำตอบ_' + ex.name + '.pdf'); toast('บันทึกไฟล์ PDF แล้ว'); }
@@ -5821,6 +5951,11 @@ const gradePre = g => { const m = String(g || '').match(/^(ม|ป|อ)/); retur
 /** "ชั้นมัธยมศึกษาปีที่ 2/1 - 2/5" */
 const paperClassTxt = P => { const r = String(P.rooms || '').trim(); if (r && /\d\s*\/\s*\w/.test(r) && gradePre(P.grade)) return 'ชั้น' + gradePre(P.grade) + r; return 'ชั้น' + (gradeWord(P.grade) || '-') + (r ? '/' + r : ''); };
 const paperFootTxt = P => { const [yy, tt] = String(P.term || curVt() || tk(termOf())).split('/'); return `ข้อสอบรหัสวิชา ${P.code || '-'} รายวิชา ${P.course || '-'} ชั้น${gradeWord(P.grade) || '-'} ภาคเรียนที่ ${tt || '-'} ปีการศึกษา ${yy || '-'}`; };
+const PAPER_LAY = { mx: 18, my: 8, align: 'center', logo: 23, lh: 1.42, qgap: 1.6, text: '#000000', line: '#000000', order: ['logo', 'school', 'rows', 'intro', 'ind'] };
+const LAY_PAPER_DEFS = [{ t: 'h', label: 'ขอบกระดาษ / ระยะ', ic: 'fa-ruler-combined' }, { t: 'num', k: 'my', label: 'ขอบบน-ล่าง (มม.)', min: 4, max: 30, step: .5 }, { t: 'num', k: 'mx', label: 'ขอบซ้าย-ขวา (มม.)', min: 5, max: 30, step: .5 },
+  { t: 'num', k: 'lh', label: 'ระยะห่างบรรทัด (เท่า)', min: 1, max: 2.5, step: .05 }, { t: 'num', k: 'qgap', label: 'ระยะห่างระหว่างข้อ (มม.)', min: 0, max: 10, step: .2 },
+  { t: 'h', label: 'หน้ารายละเอียด (ย้าย-สลับตำแหน่ง)', ic: 'fa-arrow-down-up-across-line' }, { t: 'order', k: 'order', def: ['logo', 'school', 'rows', 'intro', 'ind'] }, { t: 'sel', k: 'align', label: 'จัดชิดโลโก้/ชื่อโรงเรียน', opts: [['center', 'กึ่งกลาง'], ['left', 'ซ้าย'], ['right', 'ขวา']] }, { t: 'num', k: 'logo', label: 'ขนาดโลโก้ (มม.)', min: 8, max: 45 },
+  { t: 'h', label: 'สี', ic: 'fa-palette' }, { t: 'color', k: 'text', label: 'ตัวอักษร' }, { t: 'color', k: 'line', label: 'เส้นกรอบ / เส้นตาราง' }];
 const PAPER_SHOW = { logo: true, head: true, intro: true, ind: true, page: true, foot: true, sheet: true, key: false, sig: false, split: true, font: 'Sarabun', fsz: 12.5 };
 /** ป้ายตัวเลือก: ก ข ค ง / A B C D / 1 2 3 4 / กำหนดเอง (คั่นด้วย , หรือเว้นวรรค) */
 const LABEL_SETS = { th: 'กขคงจฉชซฌญ'.split(''), en: 'ABCDEFGHIJ'.split(''), num: '1 2 3 4 5 6 7 8 9 10'.split(' '), low: 'abcdefghij'.split(''), rom: 'I II III IV V VI VII VIII IX X'.split(' ') };
@@ -5830,17 +5965,18 @@ const LABEL_OPTS = [['th', 'ก ข ค ง'], ['en', 'A B C D'], ['low', 'a b c
 function paperDoc(P, show, ex) {
   show = Object.assign({}, PAPER_SHOW, show || {});
   const c = effCfg(), logo = c.logo ? `<img src="${esc(safeUrl(c.logo))}" alt="">` : DOC_LOGO(), L = labelsOf(P.labels, P.labelsCustom);
-  const font = docFontOk(show.font), k = Math.max(.75, Math.min(1.45, (+show.fsz || 12.5) / 12.5)) * docFontK(font), Z = v => (v * k).toFixed(2) + 'pt';
+  const font = docFontOk(show.font), k = Math.max(.75, Math.min(1.45, (+show.fsz || 12.5) / 12.5)) * docFontK(font), Z = v => (v * k).toFixed(2) + 'pt', LY0 = Object.assign({}, PAPER_LAY, show.lay || {});
   const [yy, tt] = String(P.term || curVt() || tk(termOf())).split('/'), B = [], F = h => B.push(['f', h]), Q = h => B.push(['q', h]), hr = '<div class="hr"></div>';
-  // ส่วนที่ 1: รายละเอียดข้อสอบ (หน้าแรก)
-  if (show.head) F(`<div class="cv">${show.logo ? `<div class="lg">${logo}</div>` : ''}<div class="t1">${esc(c.schoolName || 'Classroom +')}</div></div>
-    <div class="row2"><span>แบบทดสอบ ${esc(P.type || 'กลางภาค')}</span><span>ภาคเรียนที่ ${esc(tt || '-')} ปีการศึกษา ${esc(yy || '-')}</span></div>
+  // ส่วนที่ 1: รายละเอียดข้อสอบ (หน้าแรก) — ลำดับย้ายได้ในเมนู "จัดวางรูปแบบหน้ากระดาษ" · คำชี้แจง/ตัวชี้วัดแสดงตามที่พิมพ์ (ไม่รันเลขอัตโนมัติ)
+  const LY = Object.assign({}, PAPER_LAY, show.lay || {}), raw = s => String(s || '').replace(/\s+$/, '').split('\n').filter((x, i, a) => x.trim() || (i > 0 && i < a.length - 1));
+  const inds = raw(P.inds).some(x => x.trim()) ? raw(P.inds) : [...new Set(P.parts.map(p => String(p.ind || '').trim()).filter(Boolean))], nInd = inds.filter(x => x.trim()).length;
+  const cover = { logo: show.head && show.logo ? `<div class="cv"><div class="lg">${logo}</div></div>` : '', school: show.head ? `<div class="cv"><div class="t1">${esc(c.schoolName || 'Classroom +')}</div></div>` : '',
+    rows: show.head ? `<div class="row2"><span>แบบทดสอบ ${esc(P.type || 'กลางภาค')}</span><span>ภาคเรียนที่ ${esc(tt || '-')} ปีการศึกษา ${esc(yy || '-')}</span></div>
     <div class="row2"><span>รหัสวิชา ${esc(P.code || '-')} รายวิชา ${esc(P.course || '-')}</span><span>${esc(paperClassTxt(P))}</span></div>
-    ${P.time || P.score ? `<div class="row2 sm"><span>${P.time ? 'เวลา ' + esc(P.time) + ' นาที' : ''}</span><span>${P.score ? 'คะแนนเต็ม ' + esc(P.score) + ' คะแนน' : ''}</span></div>` : ''}<div class="gap"></div>`);
-  const lines = s => String(s || '').split('\n').map(x => x.trim()).filter(Boolean);
-  if (show.intro && lines(P.intro).length) F(`<div class="sec"><b>คำชี้แจง :</b><div class="ind-l">${lines(P.intro).map((x, i) => `<div>${/^\d+[.)]/.test(x) ? esc(x) : (i + 1) + '. ' + esc(x)}</div>`).join('')}</div></div>${hr}`);
-  const inds = lines(P.inds).length ? lines(P.inds) : [...new Set(P.parts.map(p => String(p.ind || '').trim()).filter(Boolean))];
-  if (show.ind && inds.length) F(`<div class="sec"><b>ตัวชี้วัด :</b><div class="ind-l">${inds.map(x => `<div>${esc(x)}</div>`).join('')}<div><b>รวมทั้งหมด ${inds.length} ตัวชี้วัด</b></div></div></div>${hr}`);
+    ${P.time || P.score ? `<div class="row2 sm"><span>${P.time ? 'เวลา ' + esc(P.time) + ' นาที' : ''}</span><span>${P.score ? 'คะแนนเต็ม ' + esc(P.score) + ' คะแนน' : ''}</span></div>` : ''}<div class="gap"></div>` : '',
+    intro: show.intro && raw(P.intro).some(x => x.trim()) ? `<div class="sec"><b>คำชี้แจง :</b><div class="ind-l pre">${raw(P.intro).map(x => esc(x)).join('\n')}</div></div>${hr}` : '',
+    ind: show.ind && nInd ? `<div class="sec"><b>ตัวชี้วัด :</b><div class="ind-l pre">${inds.map(x => esc(x)).join('\n')}</div><div class="ind-l"><b>รวมทั้งหมด ${nInd} ตัวชี้วัด</b></div></div>${hr}` : '' };
+  layOrder(LY.order, PAPER_LAY.order).forEach(k => { if (cover[k]) F(cover[k]); });
   const partHead = (pt, pi) => { const t = String(pt.title || 'ตอนที่ ' + (pi + 1)).trim(); return `<div class="part"><b>${esc(t)}</b>${pt.points ? ` <span>(${pt.questions.length} ข้อ ${esc(pt.points)} คะแนน)</span>` : ''}</div>${pt.cmd ? `<div class="cmd"><b>คำสั่ง :</b> ${esc(pt.cmd)}</div>` : ''}${hr}`; };
   // ส่วนที่ 2: กระดาษคำถาม (เริ่มหน้าใหม่ — หัวข้อ "กระดาษคำถาม" อยู่ท้ายหน้าแรกตามแม่แบบ)
   if (show.split) { B.push(['h', `<div class="sep"></div><div class="ttl">กระดาษคำถาม</div>${P.parts[0] ? partHead(P.parts[0], 0) : ''}`]); B.push(['b', '']); }
@@ -5853,16 +5989,16 @@ function paperDoc(P, show, ex) {
   if (show.key) { let kk = 0; const rows = []; P.parts.forEach(pt => pt.questions.forEach(q => { kk++; rows.push(`<td>${kk}</td><td>${q.ans >= 0 && q.ans !== '' && q.ans !== undefined ? esc(L[q.ans] || '') : '-'}</td>`); }));
     const tr = []; for (let i = 0; i < rows.length; i += 5) tr.push('<tr>' + rows.slice(i, i + 5).join('') + '</tr>'); F(`<div class="key"><b>เฉลย</b><table><thead><tr>${'<th>ข้อ</th><th>ตอบ</th>'.repeat(5)}</tr></thead><tbody>${tr.join('')}</tbody></table></div>`); }
   const sheet = show.sheet && ex ? sheetPages(ex, { pageId: 'shPage' }).map(x => `<section class="pg sheet">${x}</section>`).join('') : '';
-  const css = `@page{size:A4 portrait;margin:0}*{box-sizing:border-box}html,body{margin:0;background:#e5e7eb}body{font-family:'${font}',Sarabun,'TH Sarabun New',sans-serif;color:#000;font-size:${Z(12.5)};line-height:1.42;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    #src{display:none}.pg{width:210mm;height:297mm;padding:8mm 18mm 8mm;margin:0 auto 8mm;background:#fff;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(0,0,0,.15);page-break-after:always;break-after:page;overflow:hidden}.pg:last-child{page-break-after:auto;break-after:auto}
+  const css = `@page{size:A4 portrait;margin:0}*{box-sizing:border-box}html,body{margin:0;background:#e5e7eb}body{font-family:'${font}',Sarabun,'TH Sarabun New',sans-serif;color:${LY0.text};font-size:${Z(12.5)};line-height:${+LY0.lh || 1.42};-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    #src{display:none}.pg{width:210mm;height:297mm;padding:${+LY0.my || 8}mm ${+LY0.mx || 18}mm ${+LY0.my || 8}mm;margin:0 auto 8mm;background:#fff;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(0,0,0,.15);page-break-after:always;break-after:page;overflow:hidden}.pg:last-child{page-break-after:auto;break-after:auto}
     .pg.sheet{padding:0}.pg.sheet svg{display:block;width:210mm;height:297mm}
-    .run{flex:none;height:7mm;font-size:${Z(11)};text-align:right}.body{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}.body>*{flex:none}.foot{flex:none;font-size:${Z(11)};padding-top:2mm;margin-top:1.5mm;border-top:1px solid #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .cv{text-align:center}.lg{width:23mm;height:23mm;margin:0 auto 1mm}.lg img,.lg svg{width:100%;height:100%;object-fit:contain}.t1{font-size:${Z(15)};font-weight:700}
-    .row2{display:flex;justify-content:space-between;gap:6mm;font-weight:700;font-size:${Z(13)}}.row2.sm{font-weight:400;font-size:${Z(12)}}.hr{border-top:1px dashed #000;margin:3mm 0}.gap{height:5mm}
+    .run{flex:none;height:7mm;font-size:${Z(11)};text-align:right}.body{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}.body>*{flex:none}.foot{flex:none;font-size:${Z(11)};padding-top:2mm;margin-top:1.5mm;border-top:1px solid ${LY0.line};white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cv{text-align:${LY0.align}}.lg{width:${+LY0.logo || 23}mm;height:${+LY0.logo || 23}mm;margin:0 ${LY0.align === 'left' ? 'auto 1mm 0' : LY0.align === 'right' ? '0 1mm auto' : 'auto 1mm'}}.pre{white-space:pre-wrap}.lg img,.lg svg{width:100%;height:100%;object-fit:contain}.t1{font-size:${Z(15)};font-weight:700}
+    .row2{display:flex;justify-content:space-between;gap:6mm;font-weight:700;font-size:${Z(13)}}.row2.sm{font-weight:400;font-size:${Z(12)}}.hr{border-top:1px dashed ${LY0.line};margin:3mm 0}.gap{height:5mm}
     .sec b{display:block}.ind-l{padding-left:12mm}.ttl{text-align:center;font-weight:700;font-size:${Z(14)};margin-top:2mm}.part{margin:1mm 0 0}.cmd{margin:0}
-    .bot{margin-top:auto!important}.sep{border-top:1px solid #000;margin:2mm 0 1mm}
-    .qbox{flex:1 1 auto!important;min-height:14mm;display:flex;border:1px solid #000}.qbox.done{flex:0 0 auto!important}.qc{flex:1;min-width:0;overflow:hidden;padding:1.5mm 3mm}.qc+.qc{border-left:1px solid #000}
-    .q{padding:.8mm 0 1.6mm}.qq{display:flex;gap:1.5mm}.qn{font-weight:700;min-width:7mm}.ch{display:grid;gap:0 4mm;padding-left:9mm}.qi{max-width:100%;max-height:45mm;margin:1mm 0 1mm 9mm;display:block}.ln{border-bottom:.6px dotted #555;height:6mm;margin-left:9mm}
+    .bot{margin-top:auto!important}.sep{border-top:1px solid ${LY0.line};margin:2mm 0 1mm}
+    .qbox{flex:1 1 auto!important;min-height:14mm;display:flex;border:1px solid ${LY0.line}}.qbox.done{flex:0 0 auto!important}.qc{flex:1;min-width:0;overflow:hidden;padding:1.5mm 3mm}.qc+.qc{border-left:1px solid ${LY0.line}}
+    .q{padding:.8mm 0 ${+LY0.qgap >= 0 ? +LY0.qgap : 1.6}mm}.qq{display:flex;gap:1.5mm}.qn{font-weight:700;min-width:7mm}.ch{display:grid;gap:0 4mm;padding-left:9mm}.qi{max-width:100%;max-height:45mm;margin:1mm 0 1mm 9mm;display:block}.ln{border-bottom:.6px dotted #555;height:6mm;margin-left:9mm}
     .sig{margin:8mm 0 0 auto;width:110mm;text-align:center;line-height:2}.key table{width:100%;border-collapse:collapse;margin-top:2mm;font-size:${Z(11.5)}}.key th,.key td{border:1px solid #000;text-align:center;padding:.5mm}.key th{background:#dbeafe}
     @media print{html,body{background:#fff}.pg{margin:0;box-shadow:none}}`;
   const script = `(function(){var out=document.getElementById('out'),src=document.getElementById('src'),PG=${show.page ? 1 : 0},FT=${JSON.stringify(show.foot ? paperFootTxt(P) : '')},SPLIT=${show.split ? 1 : 0};
@@ -5893,14 +6029,16 @@ async function paperPreview(P) {
   let ex = null; if (P.examId) { try { const all = await apiQ('examAll'); ex = all.exams.find(e => e.id === P.examId) || null; } catch (e) {} }
   const O = [['split', 'แยกหน้ารายละเอียด / หน้าคำถาม'], ['logo', 'โลโก้'], ['head', 'หัวกระดาษ (วิชา ภาคเรียน ชั้น)'], ['intro', 'คำชี้แจง'], ['ind', 'ตัวชี้วัด'], ['page', 'เลขหน้า (มุมขวาบน)'], ['foot', 'ข้อความท้ายหน้า'], ['sheet', 'แนบกระดาษคำตอบท้ายชุด' + (ex ? '' : ' (ยังไม่ได้ผูก)')], ['sig', 'ลงชื่อผู้ออกข้อสอบ'], ['key', 'หน้าเฉลย (ท้ายเอกสาร)']];
   const m = modal('ดูตัวอย่างก่อนพิมพ์ — ' + (P.title || ''), `<div class="d-flex flex-wrap gap-2 align-items-center mb-2"><div class="small text-muted flex-fill"><i class="fa-solid fa-circle-info"></i> A4 แนวตั้ง · จัดหน้าอัตโนมัติ · ทั้งหมด <b id="ppN">…</b> หน้า</div>
-    <div class="dropdown"><button class="btn btn-sm btn-soft dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside"><i class="fa-solid fa-sliders"></i> ตั้งค่า</button><div class="dropdown-menu dropdown-menu-end p-3 rpt-set" id="ppSet">${O.map(o => `<label class="form-check m-0"><input class="form-check-input" type="checkbox" data-po="${o[0]}" ${show[o[0]] ? 'checked' : ''} ${o[0] === 'sheet' && !ex ? 'disabled' : ''}> ${o[1]}</label>`).join('')}
-      <b class="small d-block mt-2 mb-1"><i class="fa-solid fa-font"></i> ตัวอักษร</b>${docFontSel('data-pf2', show.font)}<label class="d-flex align-items-center gap-2 small mt-1">ขนาด <input type="number" class="form-control form-control-sm" style="width:76px" min="9" max="18" step=".5" data-pz value="${show.fsz}"> pt</label></div></div></div>
+    <div class="pv-tools">${layBtn('ppLay')}<div class="dropdown"><button class="btn btn-sm btn-soft dropdown-toggle text-nowrap" data-bs-toggle="dropdown" data-bs-auto-close="outside" title="ตั้งค่า" aria-label="ตั้งค่า"><i class="fa-solid fa-sliders"></i><span class="bt"> ตั้งค่า</span></button><div class="dropdown-menu dropdown-menu-end p-3 rpt-set" id="ppSet">${O.map(o => `<label class="form-check m-0"><input class="form-check-input" type="checkbox" data-po="${o[0]}" ${show[o[0]] ? 'checked' : ''} ${o[0] === 'sheet' && !ex ? 'disabled' : ''}> ${o[1]}</label>`).join('')}
+      <b class="small d-block mt-2 mb-1"><i class="fa-solid fa-font"></i> ตัวอักษร</b>${docFontSel('data-pf2', show.font)}<label class="d-flex align-items-center gap-2 small mt-1">ขนาด <input type="number" class="form-control form-control-sm" style="width:76px" min="9" max="18" step=".5" data-pz value="${show.fsz}"> pt</label></div></div></div></div>
     <div class="rpt-frame-wrap"><iframe id="ppFrame" title="ตัวอย่างข้อสอบ"></iframe></div>`, `<button class="btn btn-soft" data-bs-dismiss="modal">ปิด</button><button class="btn btn-primary" id="ppPrint"><i class="fa-solid fa-print"></i> พิมพ์ / บันทึก PDF</button>`, 'modal-xl modal-wide');
   const f = $('#ppFrame'); let html = '';
   const paint = () => { html = paperDoc(P, show, ex); const d = f.contentDocument; d.open(); d.write(html); d.close();
     const fit = () => { try { const sc = Math.min(1, (f.parentElement.clientWidth - 4) / (210 * 3.7795 + 24)); f.contentDocument.body.style.zoom = sc; f.style.height = Math.min(innerHeight * .72, f.contentDocument.documentElement.scrollHeight + 20) + 'px'; $('#ppN').textContent = f.contentDocument.body.dataset.pages || '-'; } catch (e) {} };
     fit(); setTimeout(fit, 120); setTimeout(fit, 900); };
   paint(); $('#ppSet').addEventListener('change', e => { const t = e.target; if (t.dataset.po) show[t.dataset.po] = t.checked; if (t.dataset.pf2 !== undefined) show.font = t.value; if (t.dataset.pz !== undefined) show.fsz = Math.max(9, Math.min(18, +t.value || 12.5)); try { localStorage.setItem(key, JSON.stringify(show)); } catch (x) {} paint(); });
+  $('#ppLay').innerHTML = layHtml(LAY_PAPER_DEFS, Object.assign({}, PAPER_LAY, show.lay || {}));
+  layBind($('#ppLay'), () => Object.assign({}, PAPER_LAY, show.lay || {}), L => { show.lay = L; }, LAY_PAPER_DEFS, PAPER_LAY, () => ({}), () => { try { localStorage.setItem(key, JSON.stringify(show)); } catch (x) {} paint(); });
   $('#ppPrint').onclick = () => printHtml(P.title || 'แบบทดสอบ', html);
   return m;
 }
@@ -5977,9 +6115,22 @@ function parseBulkQ(text, labels) {
     if (cur && OPT.test(l)) { if (/^\s*\*/.test(l)) cur.ans = cur.choices.length; cur.choices.push(l.replace(OPT, '').trim()); return; } if (cur) { if (cur.choices.length) cur.choices[cur.choices.length - 1] += ' ' + l; else cur.q += '\n' + l; } });
   return qs;
 }
+/** v6.2 กระดาษคำถาม → กระดาษคำตอบ: สร้าง/อัปเดตอัตโนมัติ (จำนวนข้อปรนัย · จำนวนตัวเลือก · ป้าย · เฉลย · คะแนนต่อข้อ · รายวิชา/ชั้น/ภาคเรียน · ชั้นที่สอบ) */
+async function syncPaperExam(d, title, exs) {
+  const items = []; d.parts.forEach(pt => { const mcq = pt.questions.filter(q => (q.choices || []).filter(x => String(x).trim() !== '').length >= 2), per = +pt.points > 0 && mcq.length ? +pt.points / mcq.length : 1;
+    mcq.forEach(q => items.push({ q, p: Math.round(per * 100) / 100 })); });
+  if (!items.length) return null;
+  const nopt = Math.min(10, Math.max(2, ...items.map(x => (x.q.choices || []).filter(c => String(c).trim() !== '').length))), old = exs.find(e => e.id === d.examId);
+  const cfg = Object.assign({ digits: 2, sets: 1, cols: 0, layout: 'inline', grid: 'none', flow: 'side' }, old ? old.cfg : {}, { count: items.length, fmt: nopt <= 5 ? 'c' + nopt : 'custom', nopt, labels: d.labels || 'th', labelsCustom: d.labelsCustom || '' });
+  const p0 = d.parts[0] || {}, sum = items.reduce((a, x) => a + x.p, 0);
+  cfg.sheet = Object.assign({}, old ? old.cfg.sheet : {}, { courseCode: d.code || '', courseName: d.course || '', grade: d.grade || '', term: d.term || '', part1: String(p0.title || 'ตอนที่ 1').split(/\s+/).slice(0, 2).join(' '), part1Type: `ปรนัย ${items.length} ข้อ (${Math.round(sum * 100) / 100} คะแนน)`, cmd: p0.cmd || '' });
+  const key = { A: items.map(x => ({ a: x.q.ans !== '' && x.q.ans !== undefined && +x.q.ans >= 0 ? [+x.q.ans] : [], p: x.p })) };
+  const cls = (() => { const g = String(d.grade || '').trim(); if (!g) return []; const r = String(d.rooms || ''), m = r.match(/(\d+)\s*\/\s*(\d+)\s*-\s*(?:\d+\s*\/\s*)?(\d+)/); if (m) return Array.from({ length: Math.max(0, +m[3] - +m[2] + 1) }, (_, i) => g + '/' + (+m[2] + i)).slice(0, 60); const one = r.match(/\/\s*(\w+)\s*$/); return [one ? g + '/' + one[1] : g]; })();
+  return api('examSave', { id: old ? old.id : '', name: old ? old.name : title + ' (กระดาษคำตอบ)', folderId: old ? old.folderId : '', cfg, key, classes: old && old.classes.length ? old.classes : cls, tags: old ? old.tags : ['จากกระดาษคำถาม'] });
+}
 async function paperEditor(row, fid = '') {
   const cs = (S.cache && S.cache.courses) || [], tkey = curVt() || tk(termOf()), exs = ((await apiQ('examAll').catch(() => ({ exams: [] }))).exams || []);
-  const P = Object.assign({ type: 'กลางภาค', term: tkey, courseId: '', code: '', course: '', grade: '', rooms: '', time: 60, score: '', labels: 'th', inds: '', examId: '', intro: 'ข้อสอบมีทั้งหมด ... ข้อ ... หน้า\nให้นักเรียนเลือกคำตอบที่ถูกที่สุดเพียงคำตอบเดียว แล้วระบายลงในกระดาษคำตอบ\nห้ามนำเอกสารใด ๆ เข้าห้องสอบ',
+  const P = Object.assign({ type: 'กลางภาค', term: tkey, courseId: '', code: '', course: '', grade: '', rooms: '', time: 60, score: '', labels: 'th', inds: '', examId: '', intro: '1. ข้อสอบมีทั้งหมด ... ข้อ ... หน้า\n2. ให้นักเรียนเลือกคำตอบที่ถูกที่สุดเพียงคำตอบเดียว แล้วระบายลงในกระดาษคำตอบ\n3. ห้ามนำเอกสารใด ๆ เข้าห้องสอบ',
     parts: [{ title: 'ตอนที่ 1 แบบปรนัย', ind: '', cmd: 'ให้นักเรียนเลือกคำตอบที่ถูกที่สุด', points: '', questions: [{ q: '', choices: ['', '', '', ''], ans: '' }] }] }, row ? JSON.parse(JSON.stringify(row.data || {})) : {});
   let title = row ? row.title : 'แบบทดสอบ' + P.type;
   const L = () => labelsOf(P.labels, P.labelsCustom);
@@ -5997,9 +6148,10 @@ async function paperEditor(row, fid = '') {
     <div class="col-6 col-md-3"><label class="form-label small" for="ppGrade">ชั้น</label><input class="form-control" id="ppGrade" data-pm="grade" value="${esc(P.grade)}" placeholder="ม.2"></div><div class="col-6 col-md-3"><label class="form-label small" for="ppRooms">ห้อง</label><input class="form-control" id="ppRooms" data-pm="rooms" value="${esc(P.rooms)}" placeholder="2/1 - 2/5"></div>
     <div class="col-4 col-md-2"><label class="form-label small" for="ppTime">เวลา (นาที)</label><input class="form-control" type="number" id="ppTime" data-pm="time" value="${esc(P.time)}"></div><div class="col-4 col-md-2"><label class="form-label small" for="ppScore">คะแนนเต็ม</label><input class="form-control" id="ppScore" data-pm="score" value="${esc(P.score)}"></div>
     <div class="col-4 col-md-2"><label class="form-label small" for="ppLbl">ป้ายตัวเลือก</label><select class="form-select" id="ppLbl" data-pm="labels">${opt(LABEL_OPTS, P.labels)}</select>${P.labels === 'custom' ? `<input class="form-control form-control-sm mt-1" id="ppLblC" data-pm="labelsCustom" value="${esc(P.labelsCustom || '')}" placeholder="เช่น a, b, c, d หรือ ๑ ๒ ๓ ๔" aria-label="ป้ายตัวเลือกกำหนดเอง">` : ''}</div>
-    <div class="col-6 col-md-6"><label class="form-label small" for="ppEx">กระดาษคำตอบที่ใช้คู่กัน (แนบท้ายชุด)</label><select class="form-select" id="ppEx" data-pm="examId"><option value="">— ไม่แนบ —</option>${exs.map(e => `<option value="${esc(e.id)}" ${e.id === P.examId ? 'selected' : ''}>${esc(e.name)} (${e.cfg.count} ข้อ)</option>`).join('')}</select></div>
-    <div class="col-md-6"><label class="form-label small" for="ppIntro">คำชี้แจง (บรรทัดละ 1 ข้อ)</label><textarea class="form-control" id="ppIntro" data-pm="intro" rows="3">${esc(P.intro)}</textarea></div>
-    <div class="col-md-6"><label class="form-label small" for="ppInds">ตัวชี้วัด (บรรทัดละ 1 ตัวชี้วัด เช่น ว 4.2 ม.2/1 : อธิบาย...)</label><textarea class="form-control" id="ppInds" data-pm="inds" rows="3" placeholder="เว้นว่าง = ใช้ตัวชี้วัดที่กรอกในแต่ละตอน">${esc(P.inds)}</textarea></div></div>
+    <div class="col-6 col-md-6"><label class="form-label small" for="ppEx">กระดาษคำตอบที่ใช้คู่กัน (แนบท้ายชุด)</label><select class="form-select" id="ppEx" data-pm="examId"><option value="">— ไม่แนบ / สร้างใหม่อัตโนมัติ —</option>${exs.map(e => `<option value="${esc(e.id)}" ${e.id === P.examId ? 'selected' : ''}>${esc(e.name)} (${e.cfg.count} ข้อ)</option>`).join('')}</select>
+      <label class="form-check small mt-1 mb-0"><input class="form-check-input" type="checkbox" id="ppAuto" ${P.autoSheet !== false ? 'checked' : ''}> สร้าง/อัปเดตกระดาษคำตอบอัตโนมัติ (จำนวนข้อ ตัวเลือก เฉลย คะแนน รายวิชา ชั้น)</label></div>
+    <div class="col-md-6"><label class="form-label small" for="ppIntro">คำชี้แจง <small class="text-muted">(แสดงตามที่พิมพ์ ไม่รันเลขอัตโนมัติ)</small></label><textarea class="form-control" id="ppIntro" data-pm="intro" rows="3">${esc(P.intro)}</textarea></div>
+    <div class="col-md-6"><label class="form-label small" for="ppInds">ตัวชี้วัด <small class="text-muted">(แสดงตามที่พิมพ์ เช่น ว 4.2 ม.2/1 : อธิบาย...)</small></label><textarea class="form-control" id="ppInds" data-pm="inds" rows="3" placeholder="เว้นว่าง = ใช้ตัวชี้วัดที่กรอกในแต่ละตอน">${esc(P.inds)}</textarea></div></div>
     <div id="ppParts">${P.parts.map(partHtml).join('')}</div><button type="button" class="btn btn-soft" data-pa="padd"><i class="fa-solid fa-layer-group"></i> เพิ่มตอน</button>`;
   const m = modal(row ? 'แก้ไขกระดาษคำถาม' : 'สร้างกระดาษคำถาม', `<div id="ppBody">${body()}</div>`, `<button class="btn btn-soft" data-bs-dismiss="modal">ยกเลิก</button><button class="btn btn-soft" id="ppPrev"><i class="fa-solid fa-eye"></i> ดูตัวอย่าง</button><button class="btn btn-primary" id="ppSave"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>`, 'modal-xl');
   const redraw = () => { $('#ppBody').innerHTML = body(); };
@@ -6033,7 +6185,10 @@ async function paperEditor(row, fid = '') {
   const data = () => Object.assign({}, P, { type: P.type, parts: P.parts.map(pt => Object.assign({}, pt, { questions: pt.questions.filter(q => q.q.trim()) })) });
   $('#ppPrev').onclick = () => paperPreview(Object.assign({ title }, data()));
   $('#ppSave').onclick = async () => { const d = data(); if (!d.parts.some(p => p.questions.length)) return toast('กรุณาเพิ่มอย่างน้อย 1 ข้อ', 'warning');
-    await apiMsg('กำลังบันทึก...', 'paperSave', Object.assign({ id: row ? row.id : '', title: title.trim() || 'แบบทดสอบ', data: d }, row ? {} : { folderId: fid })); m.hide(); toast('บันทึกกระดาษคำถามแล้ว'); go('exam', { tab: 'papers', folder: row ? row.folderId || '' : fid }, { force: true }); };
+    d.autoSheet = $('#ppAuto').checked; const nm = title.trim() || 'แบบทดสอบ';
+    const r = await apiMsg('กำลังบันทึก...', 'paperSave', Object.assign({ id: row ? row.id : '', title: nm, data: d }, row ? {} : { folderId: fid }));
+    if (d.autoSheet) { try { const ex = await syncPaperExam(d, nm, exs); if (ex && ex.id !== d.examId) { d.examId = ex.id; await api('paperSave', { id: r.id, title: nm, data: d }); } if (ex) toast('อัปเดตกระดาษคำตอบ "' + ex.name + '" ให้อัตโนมัติแล้ว', 'info'); } catch (e) { toast('สร้างกระดาษคำตอบอัตโนมัติไม่สำเร็จ: ' + e.message, 'warning'); } }
+    m.hide(); toast('บันทึกกระดาษคำถามแล้ว'); go('exam', { tab: 'papers', folder: row ? row.folderId || '' : fid }, { force: true }); };
 }
 /* ---- v6.0 ชั้น/ห้องที่ "ใช้สอบ" (ตั้งค่าในกระดาษคำถาม + กระดาษคำตอบ) → แท็บชั้นเรียน/นักเรียน/ผลลัพธ์ แสดงเฉพาะที่สอบ ---- */
 async function exUsedClasses() {
@@ -6134,7 +6289,7 @@ async function exResults(B) {
     Object.values(S.charts || {}).forEach(ch => { try { if (['erH', 'erP', 'erB', 'erL'].includes(ch.canvas.id)) ch.destroy(); } catch (x) {} });
     const bins = Array(10).fill(0); pc.forEach(v => bins[Math.min(9, Math.floor(v / 10))]++);
     chart('erH', { type: 'bar', data: { labels: bins.map((x, i) => `${i * 10}-${i * 10 + 10}`), datasets: [{ data: bins, backgroundColor: bins.map((x, i) => i * 10 >= P.pass ? '#22c55e' : '#f59e0b'), borderRadius: 8 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
-    chart('erP', { type: 'doughnut', data: { labels: ['ผ่าน', 'ไม่ผ่าน'], datasets: [{ data: [pass, cur.length - pass], backgroundColor: ['#22c55e', '#ef4444'], borderWidth: 0 }] }, options: { maintainAspectRatio: false, cutout: '62%' } });
+    chart('erP', donutCfg(['ผ่าน', 'ไม่ผ่าน'], [pass, cur.length - pass], ['#22c55e', '#ef4444'], '', 'คน'));
     const byC = {}; cur.forEach(r => (byC[r.grade + '/' + r.room] = byC[r.grade + '/' + r.room] || []).push(r.pct)); const ck = Object.keys(byC).sort(natural);
     chart('erB', { type: 'bar', data: { labels: ck, datasets: [{ data: ck.map(k => r2(byC[k].reduce((a, b) => a + b, 0) / byC[k].length)), backgroundColor: '#6366f1', borderRadius: 8 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } } });
     const byE = {}; cur.forEach(r => { (byE[r.examId] = byE[r.examId] || { name: r.exam, at: r.at, v: [] }).v.push(r.pct); if (r.at < byE[r.examId].at) byE[r.examId].at = r.at; }); const ek = Object.values(byE).sort((a, b) => String(a.at).localeCompare(String(b.at)));
@@ -6534,7 +6689,7 @@ const scoreHeadHtml = u => `<div class="ms-head"><div><small>ชื่อ-นา
 PAGES.scorebook = { admin: true, async render(el, p = {}) {
   const books = await apiQ('scoreBooks'), tkey = S.viewAll ? '' : tk(viewT());
   const vis = books.filter(b => !tkey || !b.terms.length || b.terms.includes(tkey));
-  const head = sub => `<div class="page-head"><h3>คะแนนนักเรียน<small class="d-block fs-6 text-muted fw-semibold mt-1">${sub || 'ดึงจากทุกแผ่นงานใน Google Sheet ที่ตั้งไว้ (ชื่อแผ่นงาน = ห้อง) · คำนวณสรุปให้อัตโนมัติ'}</small></h3>${termSelect()}<button class="btn btn-primary" data-sbprintall><i class="fa-solid fa-print"></i> พิมพ์รายงาน</button><button class="btn btn-soft" data-go="settings" data-tab="scores"><i class="fa-solid fa-gear"></i> ตั้งค่าที่มาของคะแนน</button></div>${pastBanner()}`;
+  const head = sub => `<div class="page-head"><h3>คะแนนนักเรียน<small class="d-block fs-6 text-muted fw-semibold mt-1">${sub || 'ดึงจากทุกแผ่นงานใน Google Sheet ที่ตั้งไว้ (ชื่อแผ่นงาน = ห้อง) · คำนวณสรุปให้อัตโนมัติ'}</small></h3><div class="ph-btns">${termSelect()}<button class="btn btn-primary text-nowrap" data-sbprintall title="พิมพ์รายงาน" aria-label="พิมพ์รายงาน"><i class="fa-solid fa-print"></i><span class="bt"> พิมพ์รายงาน</span></button><button class="btn btn-soft text-nowrap" data-go="settings" data-tab="scores" title="ตั้งค่าที่มาของคะแนน" aria-label="ตั้งค่าที่มาของคะแนน"><i class="fa-solid fa-gear"></i><span class="bt"> ตั้งค่าที่มาของคะแนน</span></button></div></div>${pastBanner()}`;
   if (!vis.length) { el.innerHTML = head() + empty('fa-table', 'ยังไม่มีที่มาของคะแนนสำหรับภาคเรียนนี้ — ตั้งค่าได้ที่ ตั้งค่า → คะแนนเก็บ'); return; }
   const BK = {}, termLb = b => b.terms.length ? b.terms.map(k => 'ภาคเรียนที่ ' + k.split('/')[1] + '/' + k.split('/')[0]).join(', ') : 'ทุกภาคเรียน';
   const load = (id, refresh) => (refresh || !BK[id] ? (BK[id] = apiQ('scoreBook', id, !!refresh).catch(e => ({ error: e.message, sheets: [] }))) : BK[id]);
@@ -6746,7 +6901,7 @@ async function attCheck(slotId, date, done, opt = {}) {
   const m = modal(`เช็คชื่อ: ${x.courseName}`, `<div class="att-head"><div><b>${esc((x.courseCode ? x.courseCode + ' ' : '') + x.courseName)}</b><div class="small text-muted">วัน${DAY_TH[x.day]} คาบ ${x.period}${x.span > 1 ? '–' + (x.period + x.span - 1) : ''} · ${tDot(x.start)} - ${tDot(x.end)} น. · ${esc((x.grade || '-') + '/' + (x.room || '-'))} · ${d.students.length} คน · วันที่ ${thDate(d.date)}${x.mine ? '' : ' · ครูเจ้าของคาบ ' + esc(x.ownerName)}</div></div>
       <span class="chip ${d.done ? 'ok' : 'warn'}">${d.done ? '<i class="fa-solid fa-circle-check"></i> เช็คชื่อแล้ว — โหมดแก้ไข' : 'ยังไม่ได้บันทึก'}</span></div>
     ${d.dowOk ? '' : `<div class="gb-alert warn mb-2"><i class="fa-solid fa-triangle-exclamation"></i><div>วันที่ ${thDate(d.date)} ไม่ตรงกับวันของคาบนี้ (${DAY_TH[x.day]})</div></div>`}
-    <div class="att-bulk">${ATT_KEYS.map(k => `<button type="button" class="btn btn-sm att-bk" style="--c:${ATT[k][1]}" data-bulk="${k}"><i class="fa-solid ${ATT[k][2]}"></i><span class="d-none d-md-inline">${ATT[k][0]}ทั้งหมด</span><span class="d-md-none">${ATT_SH[k]}</span></button>`).join('')}<span class="flex-fill"></span><span class="chip info" id="atCnt"></span></div>
+    <div class="att-bulk">${ATT_KEYS.map(k => `<button type="button" class="btn btn-sm att-bk" style="--c:${ATT[k][1]}" data-bulk="${k}"><i class="fa-solid ${ATT[k][2]}"></i> <span>${ATT[k][0]}ทั้งหมด</span></button>`).join('')}<span class="flex-fill"></span><span class="chip info" id="atCnt"></span></div>
     <div class="att-tbl-wrap"><table class="att-tbl"><thead><tr><th class="ac-no">เลขที่</th><th class="ac-code att-code">รหัสนักเรียน</th><th class="ac-name">ชื่อ-สกุล</th>${ATT_KEYS.map(k => `<th class="ac-r" style="--c:${ATT[k][1]}"><label class="ac-hd" title="เลือก${ATT[k][0]}ทั้งหมด / ยกเลิก"><input type="checkbox" data-colall="${k}"><span class="d-none d-md-inline">${ATT[k][0]}</span><span class="d-md-none">${ATT_SH[k]}</span></label></th>`).join('')}<th class="ac-nt"><i class="fa-solid fa-pen-to-square"></i></th></tr></thead>
     <tbody>${d.students.map(row).join('')}</tbody></table></div>`,
     `<button class="btn btn-soft" data-bs-dismiss="modal">ปิด</button><button class="btn btn-primary" id="atSave"><i class="fa-solid fa-floppy-disk"></i> ${d.done ? 'บันทึกการแก้ไข' : 'บันทึกการเช็คชื่อ'}</button>`, 'modal-xl modal-wide',

@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '6.1.0';
+const APP_VERSION = '6.2.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -1008,7 +1008,9 @@ function examCfg_(c) {
     sets: Math.min(6, Math.max(1, n(c.sets) || 1)), cols: Math.min(5, Math.max(0, n(c.cols))), layout: c.layout === 'side' ? 'side' : 'inline', sheet: {} };
   if (out.fmt === 'tf') out.nopt = 2; else if (out.fmt !== 'custom') out.nopt = Number(out.fmt.slice(1));
   const s = c.sheet || {}; ['info', 'howto', 'idbox', 'logo', 'qr', 'setbox', 'tips', 'part2', 'page', 'foot', 'score'].forEach(k => out.sheet[k] = s[k] !== false);
-  [['cmd', 300], ['part1', 60], ['tipsText', 400], ['part2Title', 120], ['part2Cmd', 300], ['part2Text', 600], ['grade', 20], ['term', 10]].forEach(x => out.sheet[x[0]] = str_(s[x[0]], x[1]));
+  [['cmd', 300], ['part1', 60], ['part1Type', 120], ['tipsText', 400], ['part2Title', 120], ['part2Cmd', 300], ['part2Text', 600], ['grade', 20], ['term', 10]].forEach(x => out.sheet[x[0]] = str_(s[x[0]], x[1]));
+  out.grid = ['none', 'h', 'v', 'hv'].indexOf(c.grid) >= 0 ? c.grid : 'none'; out.flow = c.flow === 'below' ? 'below' : 'side';
+  const ly = s.lay && typeof s.lay === 'object' ? s.lay : {}, col = v => /^#[0-9a-fA-F]{6}$/.test(String(v || '')) ? String(v) : ''; out.sheet.lay = { logo: Math.min(36, Math.max(10, Number(ly.logo) || 23)), lgap: Math.min(8, Math.max(3.5, Number(ly.lgap) || 4.8)), qrSwap: ly.qrSwap === true, text: col(ly.text) || '#111111', line: col(ly.line) || '#000000' };
   out.sheet.font = str_(s.font, 40); out.sheet.fs = Math.min(1.35, Math.max(.8, Number(s.fs) || 1)); const hi = String(s.howtoImg || ''); out.sheet.howtoImg = /^data:image\/(png|jpe?g|webp);base64,/.test(hi) && hi.length <= 30000 ? hi : '';
   out.sheet.howtoText = str_(s.howtoText, 600); out.sheet.school = str_(s.school, 120); out.sheet.subtitle = str_(s.subtitle, 200); out.sheet.courseCode = str_(s.courseCode, 30); out.sheet.courseName = str_(s.courseName, 120);
   return out;
