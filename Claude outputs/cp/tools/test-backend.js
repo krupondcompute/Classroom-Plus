@@ -237,7 +237,7 @@ ok(JSON.parse(R('bootstrap', null).data.config.studentMenus).custom[0].grades[0]
 ok(R('me', s1).data.user.courseIds.indexOf(kc.id) >= 0, 'student courseIds');
 // ดูข้อมูลย้อนหลังตามภาคเรียน
 const dNow = R('adminDashboard', AD).data, dOld = R('adminDashboard', AD, { year: '2550', term: '1' }).data;
-ok(dOld.past && dOld.cards.courses <= dNow.cards.courses && dOld.days.length === 14 && dOld.days[13] === '2007-10-20', 'dashboard past term');
+ok(dOld.past && dOld.cards.courses <= dNow.cards.courses && dOld.days.length === 7 && dOld.days[6] === '2007-10-20' && dOld.sub7 && 'missing' in dOld.sub7, 'dashboard past term');
 ok(R('adminDashboard', AD, { year: 'x', term: '9' }).data.view === null, 'dashboard bad view ignored');
 ok(R('studentHome', s1, { year: '2550', term: '2' }).data.courses.length === 0, 'student home past term');
 // ---------- v4.9 ----------
@@ -515,5 +515,16 @@ ok(R('examPrefs', AD, { pass: 60, auto: true }).data.pass === 60 && JSON.parse(c
 const cb = R('classBulkAdd', AD, [['ม.4', '1'], ['ม.4', '2'], ['ม.4', '1']]).data; ok(cb.added === 2 && cb.skipped === 1, 'class bulk add skips duplicates');
 ok(R('classRemove2', AD, 'ม.4', '2').ok, 'remove empty class');
 ok(R('classRemove2', AD, 'ม.1', '1').code === 'HAS_STUDENTS', 'class with students needs move/delete');
+// ---- v6.0 ----
+const dn = R('adminDashboard', AD).data; ok(dn.days.length === 7 && dn.logins.length === 7 && typeof dn.sub7.graded === 'number', 'dashboard: 7 days + submission status (7 days)');
+const pf = R('examFolderSave', AD, { name: 'กลางภาค', kind: 'paper' }).data; ok(pf.kind === 'paper', 'paper folder kind');
+const pid = R('paperList', AD).data[0].id; ok(R('examMove', AD, 'paper', [pid], pf.id).data.moved === 1 && R('paperList', AD).data.find(x => x.id === pid).folderId === pf.id, 'drag paper into folder');
+ok(R('paperSave', AD, { id: pid, title: 'กลางภาค', data: { parts: [] } }).ok && R('paperList', AD).data.find(x => x.id === pid).folderId === pf.id, 'paper edit keeps folder');
+ok(R('examMove', AD, 'sheet', [pid], pf.id).code === 'NOTFOUND', 'cannot move answer sheet into question-paper folder');
+const sf = R('examFolderSave', AD, { name: 'ชีต' }).data, exM = R('examSave', AD, { name: 'ย้าย', cfg: { count: 5 } }).data; ok(R('examMove', AD, 'sheet', [exM.id], sf.id).data.moved === 1 && R('examAll', AD).data.exams.find(x => x.id === exM.id).folderId === sf.id, 'import answer sheet into folder');
+ok(R('examFolderRemove', AD, pf.id, 'move').data.papers === 1 && !R('paperList', AD).data.find(x => x.id === pid).folderId, 'delete paper folder moves papers out');
+const cfgS = R('examSave', AD, { name: 'แม่แบบ', cfg: { count: 10, sheet: { part2: false, cmd: 'ระบาย', part2Title: 'ตอนที่ 2', grade: 'ม.2', term: '2569/2', tips: false } } }).data.cfg.sheet; ok(cfgS.part2 === false && cfgS.tips === false && cfgS.cmd === 'ระบาย' && cfgS.grade === 'ม.2' && cfgS.page === true, 'answer sheet template fields');
+const bigLogo = 'data:image/png;base64,' + 'A'.repeat(42000); const qx = R('qrSave', AD, { text: 'https://x.y', style: { fg: '#000', logo: bigLogo, logoSize: 26 } }); ok(qx.ok, 'qr save with big logo');
+ok(JSON.parse(R('qrList', AD).data.items.find(x => x.text === 'https://x.y') ? JSON.stringify(R('qrList', AD).data.items.find(x => x.text === 'https://x.y').style) : '{}').logoSize === 26, 'qr style stays valid JSON (logo dropped when too big)');
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

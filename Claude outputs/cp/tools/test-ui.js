@@ -339,7 +339,7 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
   await page.click('[data-slot]'); await page.waitForSelector('.swal2-popup'); ok((await page.textContent('.swal2-popup')).includes('มีการเช็คชื่อเรียบร้อยแล้ว'), 'already checked notice'); await page.click('.swal2-confirm'); await page.waitForTimeout(300);
   await page.screenshot({ path: SHOT + '/42-attendance-check.png' });
   await page.click('#modal .btn-close'); await page.waitForTimeout(500);
-  await page.evaluate(() => go('dash')); await idle(); ok(await page.isVisible('.att-dash2') && (await page.textContent('.att-dash2')).includes('%'), 'dashboard attendance card with percent');
+  await page.evaluate(() => go('dash')); await idle(); await page.waitForTimeout(500); ok(await page.evaluate(() => !!document.querySelector('#chAtt') && S.charts.chAtt.config.type === 'doughnut'), 'dashboard attendance today = donut');
   // ---------- v5.6: คะแนนนักเรียน ----------
   await page.evaluate(async () => { const b = SpreadsheetApp.create('สมุดคะแนน UI'), sh = b.insertSheet('ม.1/1');
     [['เลขที่', 'คำนำหน้าชื่อ', 'ชื่อ - นามสกุล', 'ตัวชี้วัดที่ 1', 'รวมคะแนนทั้งหมด', 'เกรด'], ['', '', '', '10', '100', ''], ['1', 'เด็กชาย', 'ทดสอบ หนึ่ง', '9', '88', '4'], ['สรุป', '', '', '', '', ''], ['', '', '', 'จำนวนนักเรียนที่ได้ระดับผลการเรียน', '', ''], ['', '', '', '4', '3', 'รวม'], ['จำนวนนักเรียน', '1', '', '1', '0', '1']].forEach(r => sh.appendRow(r));
@@ -364,13 +364,13 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
   await page.click('#rptPrint'); await page.waitForTimeout(800); ok(await page.evaluate(() => !!document.querySelector('#cpPrintFrame') && document.querySelector('#cpPrintFrame').contentDocument.body.textContent.includes('ลงชื่อ')), 'print same template via iframe');
   await closeM();
   // แม่แบบเอกสาร: ห้องที่พอดีหน้าเดียว และห้องที่มีหลายหน้า — ทุกหน้าต้องไม่ล้น (ตาราง/ลายเซ็น/เลขหน้าไม่ทับกัน)
-  const fitCheck = async n => page.evaluate(n => { const rows = Array.from({ length: n }, (x, i) => [i + 1, String(10000 + i), 'เด็กชายทดสอบ นามสกุลยาวมากพอสมควร ' + (i + 1), 'ใช้งาน', '']);
+  const fitCheck = async n => page.evaluate(async n => { const rows = Array.from({ length: n }, (x, i) => [i + 1, String(10000 + i), 'เด็กชายทดสอบ นามสกุลยาวมากพอสมควร ' + (i + 1), 'ใช้งาน', '']);
     const R = rptPreview({ name: 'ทดสอบ ' + n, cols: [{ h: 'เลขที่', w: 12, al: 'c' }, { h: 'รหัสนักเรียน', w: 22, al: 'c' }, { h: 'ชื่อ-สกุล', w: 60 }, { h: 'สถานะการใช้งาน', w: 26, al: 'c' }, { h: 'หมายเหตุ', w: 30 }], sections: [{ title: 'รายชื่อนักเรียน ประจำชั้น ม.1 ห้อง 1', sub: termLine(), summary: genderLine(rows.map(() => 'เด็กชาย')), rows }] });
-    const d = document.querySelector('#rptFrame').contentDocument; d.body.style.zoom = 1; const pages = [...d.querySelectorAll('.rpt-page')];
+    await new Promise(r => { let k = 0; const t = setInterval(() => { const dd = document.querySelector('#rptFrame').contentDocument; if ((dd.body && dd.body.dataset.ready === '1') || ++k > 50) { clearInterval(t); r(); } }, 100); }); const d = document.querySelector('#rptFrame').contentDocument; d.body.style.zoom = 1; const pages = [...d.querySelectorAll('.rpt-page')]; R.pages = pages.length;
     const bad = pages.filter(pg => { const t = pg.querySelector('.rpt-tbl'), sg = pg.querySelector('.rpt-sig'), f = pg.querySelector('.rpt-foot'), b = pg.getBoundingClientRect();
       const tb = t ? t.getBoundingClientRect().bottom : 0; return (t && tb > (sg ? sg.getBoundingClientRect().top : f.getBoundingClientRect().top) + 1) || f.getBoundingClientRect().bottom > b.bottom + 1; }).length;
-    const rowsShown = d.querySelectorAll('.rpt-tbl tbody tr').length, heads = d.querySelectorAll('.rpt-tbl thead').length, nums = [...d.querySelectorAll('.rpt-foot')].map(x => x.textContent.trim());
-    return { pages: R.pages, bad, rowsShown, heads, nums, sig: d.querySelectorAll('.rpt-sig').length }; }, n);
+    const rowsShown = d.querySelectorAll('#out .rpt-tbl tbody tr').length, heads = d.querySelectorAll('#out .rpt-tbl thead').length, nums = [...d.querySelectorAll('.rpt-foot')].map(x => x.textContent.trim());
+    return { pages: R.pages, bad, rowsShown, heads, nums, sig: d.querySelectorAll('#out .rpt-sig').length }; }, n);
   await page.waitForTimeout(300); const f1 = await fitCheck(12); await page.waitForTimeout(600);
   ok(f1.pages === 1 && f1.bad === 0 && f1.rowsShown === 12 && f1.sig === 1, 'template: one-page room fits ' + JSON.stringify(f1));
   await page.screenshot({ path: SHOT + '/46-report-1page.png' }); await closeM();
@@ -398,15 +398,16 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
 
   // ---------- v5.9 ----------
   // แม่แบบ: ห้อง 45 คน ต้องอยู่หน้าเดียว (onePage)
-  const one45 = await page.evaluate(() => { const rows = Array.from({ length: 45 }, (x, i) => [i + 1, String(20000 + i), 'เด็กหญิงทดสอบ คนที่ ' + (i + 1), '', '']);
+  const one45 = await page.evaluate(async () => { const rows = Array.from({ length: 45 }, (x, i) => [i + 1, String(20000 + i), 'เด็กหญิงทดสอบ คนที่ ' + (i + 1), '', '']);
     const R = rptPreview({ name: 'ห้อง 45', key: 't45', onePage: true, cols: [{ h: 'เลขที่', w: 12, al: 'c' }, { h: 'รหัสนักเรียน', w: 22, al: 'c' }, { h: 'ชื่อ-สกุล', w: 60 }, { h: '', w: 30 }, { h: 'หมายเหตุ', w: 26 }], sections: [{ title: 'รายชื่อนักเรียน ประจำชั้น ม.1 ห้อง 1', sub: termLine(), summary: genderLine(rows.map(() => 'เด็กหญิง')), rows }] });
-    const d = document.querySelector('#rptFrame').contentDocument, pg = d.querySelector('.rpt-page'), t = pg.querySelector('.rpt-tbl').getBoundingClientRect(), sg = (pg.querySelector('.rpt-sig,.rpt-sig1') || pg.querySelector('.rpt-foot')).getBoundingClientRect();
+    await new Promise(r => { let k = 0; const t = setInterval(() => { const dd = document.querySelector('#rptFrame').contentDocument; if ((dd.body && dd.body.dataset.ready === '1') || ++k > 50) { clearInterval(t); r(); } }, 100); }); const d = document.querySelector('#rptFrame').contentDocument, pg = d.querySelector('.rpt-page'); R.pages = d.querySelectorAll('.rpt-page').length; const t = pg.querySelector('.rpt-tbl').getBoundingClientRect(), sg = (pg.querySelector('.rpt-sig,.rpt-sig1') || pg.querySelector('.rpt-foot')).getBoundingClientRect();
     return { pages: R.pages, fit: t.bottom <= sg.top + 1 }; });
   ok(one45.pages === 1 && one45.fit, 'template: 45-student room fits on ONE page ' + JSON.stringify(one45)); await page.waitForTimeout(700); await closeM();
   // บัญชีของฉัน = เมนูพื้นฐาน
   await page.evaluate(() => go('account')); await idle(); ok(await page.isVisible('#sideNav [data-go=account]') && (await page.textContent('#page h3')).includes('บัญชีของฉัน'), 'account menu separated from settings');
   // ระบบสอบ: สร้างข้อสอบ → รายละเอียด → เฉลย → สแกน (ภาพจำลอง) → สถิติ/วิเคราะห์
-  await page.evaluate(() => go('exam')); await idle(); ok(await page.isVisible('[data-ext=papers]'), 'exam page tabs'); await page.waitForSelector('#modal', { state: 'hidden' });
+  await page.evaluate(() => go('exam')); await idle(); ok(await page.isVisible('[data-ext=papers]') && await page.evaluate(() => document.querySelector('[data-ext]').dataset.ext === 'papers' && document.querySelector('[data-ext=papers]').classList.contains('active')), 'exam page tabs: question paper first'); await page.waitForSelector('#modal', { state: 'hidden' });
+  await page.evaluate(() => go('exam', { tab: 'sheets' })); await idle();
   await page.click('#fab'); await page.waitForSelector('#exName'); ok((await page.inputValue('#exName')) === 'ข้อสอบ 1', 'exam default name');
   await page.fill('#exCount', '20'); await page.click('#exNext'); await page.waitForSelector('.sheet-prev svg'); await page.screenshot({ path: SHOT + '/50-exam-preview.png' });
   await page.click('#exOk'); await idle(); await page.waitForSelector('.ex-menu'); ok(await page.isVisible('[data-act=key]'), 'exam created → detail');
@@ -437,12 +438,50 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
   ok(await page.evaluate(() => { const d = document.querySelector('#ppFrame').contentDocument; return d.querySelectorAll('.pg').length >= 1 && d.body.textContent.includes('แบบทดสอบ') && d.body.textContent.includes('มะม่วง'); }), 'question paper preview (auto pagination)');
   await page.screenshot({ path: SHOT + '/53-paper.png' }); await closeM();
   await page.evaluate(() => go('exam', { tab: 'classes' })); await idle(); await page.click('#fab'); await page.waitForSelector('#caBody'); await page.click('#caBody label:has(input[value="ม.5"])'); await page.click('#caBody label:has(input[data-r][value="1"])'); await page.click('#caBody label:has(input[data-r][value="2"])');
-  ok((await page.textContent('#caPrev')).includes('ม.5/2'), 'class bulk add preview combos'); await page.click('#caOk'); await page.click('.swal2-confirm'); await idle(); await page.waitForTimeout(500); ok((await page.textContent('#ecT')).includes('ม.5/1'), 'classes created');
+  ok((await page.textContent('#caPrev')).includes('ม.5/2'), 'class bulk add preview combos'); await page.click('#caOk'); await page.click('.swal2-confirm'); await idle(); await page.waitForTimeout(500);
+  ok(!(await page.textContent('#ecT')).includes('ม.5/1'), 'classes tab shows only classes used in exams'); await page.check('#exAllC'); await idle(); await page.waitForTimeout(400); ok((await page.textContent('#ecT')).includes('ม.5/1'), 'classes created (show all)'); await page.uncheck('#exAllC'); await idle();
   await page.evaluate(() => go('exam', { tab: 'settings' })); await idle(); await page.check('#ep_auto'); await page.click('#epSave'); await idle(); ok(exPrefsOk = await page.evaluate(() => exPrefs().auto === true), 'exam settings saved per user');
   // QR Code
   await page.evaluate(() => go('tools')); await idle(); await page.click('[data-tool=qrcode]'); await page.waitForSelector('#qrCv'); await page.fill('#qrText', 'https://example.com/qr'); await page.click('[data-dot=dots]'); await page.waitForTimeout(300);
   await page.click('#qrSave'); await idle(); await page.waitForSelector('#qrRows tr'); await page.waitForTimeout(500); ok((await page.textContent('#qrRows')).includes('example.com/qr'), 'qr code saved and listed'); await page.screenshot({ path: SHOT + '/54-qr.png' });
   await page.fill('#qrQ', 'zzz'); await page.waitForTimeout(300); ok((await page.textContent('#qrRows')).includes('ไม่พบข้อมูล'), 'qr real-time search'); await page.fill('#qrQ', '');
+  await page.click('[data-tvclose] >> nth=0');
+  // ---------- v6.0 ----------
+  ok(await page.evaluate(() => getComputedStyle(document.querySelector('#authView')).display === 'none'), 'login screen hidden after login (no overlay)');
+  await page.evaluate(() => go('dash')); await idle(); await page.waitForTimeout(1500);
+  ok(await page.evaluate(() => !!document.querySelector('.dash-g2') && document.querySelector('.dash-g2').children.length === 5 && /7 วัน/.test(document.querySelector('.dash-g2').textContent)), 'dashboard: 2 cards per row, 7-day charts');
+  ok(await page.evaluate(() => !!document.querySelector('#dashSum') && (!!document.querySelector('#dsG') || /ยังไม่มีข้อมูลคะแนน/.test(document.querySelector('#dashSum').textContent))), 'dashboard: term summary donuts');
+  ok(await page.evaluate(() => !document.querySelector('#chSub') || S.charts.chSub.config.type === 'doughnut'), 'dashboard: submission donut');
+  await page.evaluate(() => go('aassign')); await idle(); await page.waitForTimeout(300);
+  ok(await page.evaluate(() => { const r = document.querySelector('#al .ttl-row'); if (!r) return 'none'; const c = r.querySelector('.chip').getBoundingClientRect(), t = r.querySelector('.ttl').getBoundingClientRect(); return Math.abs((c.top + c.bottom) / 2 - (t.top + t.bottom) / 2) < 8; }) !== false, 'assignment: type chip on the title row');
+  await page.evaluate(() => go('scorebook')); await idle(); ok(await page.isVisible('[data-sbprintall]') || (await page.textContent('#page')).includes('ยังไม่มีที่มาของคะแนน'), 'scores: print-all report button');
+  // แม่แบบใหม่: หัวตาราง 5 บรรทัด (แนวนอน) ต้องไม่ทับเลขหน้า
+  const ov6 = await page.evaluate(async () => { const rows = Array.from({ length: 34 }, (x, i) => [i + 1, String(18965 + i), 'เด็กชายทดสอบ ' + i].concat(Array(12).fill(10)));
+    const cols = [{ h: 'เลขที่', w: 8, al: 'c' }, { h: 'รหัส<br>นักเรียน', w: 12, al: 'c' }, { h: 'ชื่อ-นามสกุล', w: 40 }].concat(Array.from({ length: 12 }, (x, i) => ({ h: 'สอบเก็บ<br>คะแนน<br>ระหว่าง<br>เรียน<br>(' + i + ')', w: 9, al: 'c' })));
+    const R = rptPreview({ name: 'ทับเลขหน้า', key: 'ov6', land: true, onePage: true, cols, sections: [{ title: 'ผลการเรียน', sub: termLine(), summary: 'x', rows }] });
+    await new Promise(r => { let k = 0; const t = setInterval(() => { const dd = document.querySelector('#rptFrame').contentDocument; if ((dd.body && dd.body.dataset.ready === '1') || ++k > 50) { clearInterval(t); r(); } }, 100); }); R.pages = document.querySelector('#rptFrame').contentDocument.querySelectorAll('.rpt-page').length; const d = document.querySelector('#rptFrame').contentDocument; d.body.style.zoom = 1;
+    const bad = [...d.querySelectorAll('.rpt-page')].filter(pg => { const f = pg.querySelector('.rpt-foot').getBoundingClientRect().top, last = [...pg.querySelectorAll('.rpt-tbl tr, .rpt-sig')].pop(); return last && last.getBoundingClientRect().bottom > f + .5; }).length;
+    return { pages: R.pages, bad, rows: d.querySelectorAll('#out .rpt-tbl tbody tr').length, blue: getComputedStyle(d.querySelector('.rpt-tbl th')).backgroundColor }; });
+  ok(ov6.bad === 0 && ov6.rows === 34 && ov6.blue === 'rgb(74, 134, 232)', 'report: last row never overlaps the page footer + blue header ' + JSON.stringify(ov6)); await closeM();
+  // เช็คชื่อ: เลือกข้อมูลหลังชื่อ (ช่องว่าง / สถานะ / จำนวน)
+  await page.evaluate(() => go('attendance', { tab: 'hist' })); await idle(); await page.click('[data-att=hist]').catch(() => {}); await page.waitForTimeout(400); await page.click('[data-exp=print]'); await page.waitForSelector('#rptFrame'); await page.waitForTimeout(600);
+  await page.click('#rptSetBtn'); ok(await page.$$eval('[data-rv] option', o => o.length) === 3, 'attendance print: 3 data modes');
+  await page.selectOption('[data-rv]', 'count'); await page.waitForTimeout(500); ok(await page.evaluate(() => document.querySelector('#rptFrame').contentDocument.body.textContent.includes('ร้อยละ')), 'attendance print: counts mode');
+  await page.selectOption('[data-rv]', 'blank'); await page.waitForTimeout(500); ok(await page.evaluate(() => document.querySelector('#rptFrame').contentDocument.querySelectorAll('.rpt-tbl thead th').length >= 12), 'attendance print: blank check columns'); await closeM();
+  // ระบบสอบ: โฟลเดอร์กระดาษคำถาม + นำเข้า + แม่แบบใหม่
+  await page.evaluate(() => api('paperSave', { title: 'ชุด v6', data: { type: 'กลางภาค', code: 'ว22101', course: 'วิทยาศาสตร์', grade: 'ม.2', rooms: '2/1 - 2/2', labels: 'th', parts: [{ title: 'ตอนที่ 1', cmd: 'เลือกคำตอบ', questions: Array.from({ length: 12 }, (x, i) => ({ q: 'คำถาม ' + (i + 1), choices: ['ก1', 'ข1', 'ค1', 'ง1'], ans: 0 })) }] } }));
+  await page.evaluate(() => go('exam', { tab: 'papers' }, { force: true })); await idle(); await page.click('#ppNewF'); await page.fill('.swal2-input', 'โฟลเดอร์ทดสอบ'); await page.click('.swal2-confirm'); await idle(); await page.waitForTimeout(500);
+  ok(await page.isVisible('.ex-folder'), 'question paper: create folder');
+  await page.click('.ex-folder'); await idle(); await page.click('[data-fimp]'); await page.waitForSelector('#eiL'); await page.check('#eiAll'); await page.click('#eiGo'); await idle(); await page.waitForTimeout(500);
+  ok(await page.evaluate(() => document.querySelectorAll('#ppRows [data-drag]').length >= 1), 'folder: import existing question papers');
+  await page.click('[data-pprint] >> nth=0'); await page.waitForSelector('#ppFrame'); await page.waitForTimeout(1200);
+  ok(await page.evaluate(() => { const d = document.querySelector('#ppFrame').contentDocument; return !!d.querySelector('.qbox') && d.querySelectorAll('.qbox .qc').length >= 2 && d.body.textContent.includes('ข้อสอบรหัสวิชา') && d.body.textContent.includes('กระดาษคำถาม'); }), 'question paper: new template (2-column box + footer)');
+  await page.screenshot({ path: SHOT + '/55-paper-v6.png' }); await closeM();
+  ok(await page.evaluate(() => { const svg = sheetSvg({ id: 'x1', name: 't', cfg: { digits: 5, count: 20, fmt: 'c4', nopt: 4, labels: 'th', sets: 1, cols: 0, layout: 'inline', sheet: {} } }); return svg.includes('กระดาษคำตอบ') && svg.includes('ข้อเสนอแนะ') && svg.includes('ตอนที่ 2') && buildLayout({ digits: 5, count: 20, fmt: 'c4', nopt: 4, sets: 1, cols: 0 }).mode === 'T'; }), 'answer sheet: new template layout');
+  // QR: ไอคอนในระบบ + ขนาดโลโก้
+  await page.evaluate(() => go('tools')); await idle(); await page.click('[data-tool=qrcode]'); await page.waitForSelector('#qrCv'); await page.click('#qrIconBtn'); await page.click('[data-qric] >> nth=0'); await page.waitForTimeout(600);
+  await page.fill('#qrLogoSz', '28').catch(() => page.evaluate(() => { const r = document.querySelector('#qrLogoSz'); r.value = 28; r.dispatchEvent(new Event('input', { bubbles: true })); })); await page.waitForTimeout(300);
+  ok(await page.evaluate(() => document.querySelector('#qrLogoSzV').textContent === '28' && document.querySelector('[data-qric].on') !== null), 'qr: system icon as logo + logo size');
   await page.click('[data-tvclose] >> nth=0');
   // ตารางสอน: สีเช็คชื่อ
   await page.evaluate(() => go('attendance')); await idle(); ok(await page.evaluate(() => !!document.querySelector('.tt-slot.att-ok, .tt-slot.att-no, .tt-slot')), 'timetable renders with check colors');
@@ -461,6 +500,15 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
   await mp.click('.dock [data-go=users]'); await mp.waitForFunction(() => !document.querySelector('#loader.show')); await mp.waitForTimeout(400);
   await mp.screenshot({ path: SHOT + '/10-mobile-users-dark.png' });
   const ov = await mp.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1); ok(!ov, 'no horizontal overflow on mobile');
+  ok(await mp.evaluate(() => getComputedStyle(document.querySelector('#authView')).display === 'none'), 'mobile: login screen gone after login');
+  await mp.evaluate(() => go('aassign')); await mp.waitForFunction(() => !document.querySelector('#loader.show')); await mp.waitForTimeout(500);
+  ok(await mp.evaluate(() => { const r = document.querySelector('#al .ttl-row'); if (!r) return true; const c = r.querySelector('.chip').getBoundingClientRect(), t = r.querySelector('.ttl').getBoundingClientRect(); return c.left > t.left && Math.abs(c.top - t.top) < 14 && getComputedStyle(r.querySelector('.ttl')).textOverflow === 'ellipsis'; }), 'mobile: assignment type chip right of title, ellipsis');
+  const aid = await mp.evaluate(() => (document.querySelector('#al [data-go=grade]') || {}).dataset?.id);
+  if (aid) { await mp.evaluate(id => go('grade', { id }), aid); await mp.waitForFunction(() => !document.querySelector('#loader.show')); await mp.waitForTimeout(600);
+    ok(await mp.evaluate(() => { const a = document.querySelector('#gG').getBoundingClientRect(), b = document.querySelector('#gst').getBoundingClientRect(); return Math.abs(a.top - b.top) < 4; }), 'mobile grading: grade/room/status filters on one row');
+    const k = await mp.evaluate(() => (document.querySelector('[data-openroom]:not([data-openroom=""])') || {}).dataset?.openroom); if (k) { await mp.click(`[data-openroom="${k}"]`); await mp.waitForTimeout(500);
+      ok(await mp.evaluate(() => { const p = document.querySelectorAll('.rn-pn .btn'); return p.length === 2 && Math.abs(p[0].getBoundingClientRect().top - p[1].getBoundingClientRect().top) < 4; }), 'mobile grading: prev/next room on one row');
+      ok(await mp.evaluate(() => { const b = document.querySelector('.stu-row [data-view]'); if (!b) return true; const l = b.querySelector('.bl'); return getComputedStyle(l).display === 'none'; }), 'mobile grading: icon-only buttons'); } }
   ok(!errs.length, 'console errors: ' + errs.join(' | '));
   console.log(`ui tests: ${pass} passed, ${fail} failed`);
   await browser.close(); process.exit(fail ? 1 : 0);

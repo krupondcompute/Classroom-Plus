@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '5.9.0';
+const APP_VERSION = '6.0.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -50,8 +50,8 @@ const SCHEMA = {
   LiveSessions: ['id','kind','title','pin','ownerId','data','settings','status','startedAt','endsAt','createdAt','updatedAt'],
   ToolLogs: ['id','ownerId','tool','term','data','createdAt'],
   QrCodes: ['id','ownerId','text','note','status','useDate','style','imgId','fileJson','createdAt','updatedAt'],
-  ExamPapers: ['id','ownerId','title','data','createdAt','updatedAt'],
-  ExamFolders: ['id','ownerId','name','createdAt'],
+  ExamPapers: ['id','ownerId','title','data','createdAt','updatedAt','folderId'],
+  ExamFolders: ['id','ownerId','name','createdAt','kind'],
   Exams: ['id','ownerId','name','folderId','cfg','key','classes','tags','createdAt','updatedAt'],
   ExamResults: ['id','examId','ownerId','studentId','code','set','answers','score','max','img','meta','history','createdAt','updatedAt'],
   LiveAnswers: ['id','sessionId','pid','name','userId','answers','score','correct','timeMs','finishedAt','createdAt','updatedAt'],
@@ -186,7 +186,7 @@ const ROUTES = {
   attOpen: ['staff', attOpen_], attSave: ['staff', attSave_], attHistory: ['staff', attHistory_], attSummary: ['staff', attSummary_], attDecode: ['staff', attDecode_],
   qrList: ['staff', qrList_], qrSave: ['staff', qrSave_], qrStatus: ['staff', qrStatus_], qrRemove: ['staff', qrRemove_],
   paperList: ['staff', paperList_], paperSave: ['staff', paperSave_], paperRemove: ['staff', paperRemove_],
-  examAll: ['staff', examAll_], examFolderSave: ['staff', examFolderSave_], examFolderRemove: ['staff', examFolderRemove_], examSave: ['staff', examSave_], examRemove: ['staff', examRemove_], examGet: ['staff', examGet_],
+  examAll: ['staff', examAll_], examFolderSave: ['staff', examFolderSave_], examFolderRemove: ['staff', examFolderRemove_], examMove: ['staff', examMove_], examSave: ['staff', examSave_], examRemove: ['staff', examRemove_], examGet: ['staff', examGet_],
   examKey: ['staff', examKey_], examResultSave: ['staff', examResultSave_], examResultUpdate: ['staff', examResultUpdate_], examResultRemove: ['staff', examResultRemove_], examResults: ['staff', examResults_], examPrefs: ['staff', examPrefs_],
   classBulkAdd: ['staff', classBulkAdd_], classRemove2: ['admin', classRemove2_],
   toolLogAdd: ['staff', toolLogAdd_], toolLogList: ['staff', toolLogList_], toolLogClear: ['staff', toolLogClear_],
@@ -973,7 +973,7 @@ function qrSave_(ctx, d) {
   d = d || {}; const me = ctx.user, text = str_(d.text, 2000);
   if (!text) throw err_('กรุณากรอกข้อความหรือ URL');
   const useDate = str_(d.useDate, 10); if (useDate && !/^\d{4}-\d{2}-\d{2}$/.test(useDate)) throw err_('วันที่ไม่ถูกต้อง');
-  const style = JSON.stringify(json_(JSON.stringify(d.style || {}), {})).slice(0, 4000);
+  const so = json_(JSON.stringify(d.style || {}), {}); if (so.logo && String(so.logo).length > 40000) delete so.logo; let style = JSON.stringify(so); if (style.length > 45000) { delete so.logo; style = JSON.stringify(so).slice(0, 4000); } // ไม่ตัด JSON กลางคัน
   const file = d.file && d.file.id ? cleanFiles_([d.file])[0] || null : null;
   return lock_(() => {
     const r = d.id ? find_('QrCodes', d.id) : null; if (d.id && !qrOwn_(me, r)) throw err_('ไม่พบ QR Code นี้', 'NOTFOUND');
@@ -995,8 +995,9 @@ function paperList_(ctx) { return rows_('ExamPapers').filter(r => exOwn_(ctx.use
 function paperSave_(ctx, d) {
   d = d || {}; const title = str_(d.title, 200) || 'แบบทดสอบ', js = JSON.stringify(d.data || {}); if (js.length > 45000) throw err_('ข้อสอบยาวเกินไป (แบ่งเป็นหลายชุด)');
   return lock_(() => { const r = d.id ? find_('ExamPapers', d.id) : null; if (d.id && !exOwn_(ctx.user, r)) throw err_('ไม่พบข้อสอบนี้', 'NOTFOUND');
-    if (r) { updateRow_('ExamPapers', r, { title: title, data: js, updatedAt: now_() }); return { id: r.id }; }
-    return { id: insert_('ExamPapers', { id: id_(), ownerId: ctx.user.id, title: title, data: js, createdAt: now_(), updatedAt: now_() }).id }; });
+    const fo = d.folderId !== undefined ? str_(d.folderId, 20) : (r ? r.folderId || '' : '');
+    if (r) { updateRow_('ExamPapers', r, { title: title, data: js, folderId: fo, updatedAt: now_() }); return { id: r.id }; }
+    return { id: insert_('ExamPapers', { id: id_(), ownerId: ctx.user.id, title: title, data: js, folderId: fo, createdAt: now_(), updatedAt: now_() }).id }; });
 }
 function paperRemove_(ctx, id) { const r = find_('ExamPapers', id); if (!exOwn_(ctx.user, r)) throw err_('ไม่พบข้อสอบนี้', 'NOTFOUND'); return lock_(() => { deleteWhere_('ExamPapers', x => x.id === r.id); return true; }); }
 /** ค่าตั้งของกระดาษคำตอบ */
@@ -1006,7 +1007,8 @@ function examCfg_(c) {
     fmt: ['tf', 'c2', 'c3', 'c4', 'c5', 'custom'].indexOf(c.fmt) >= 0 ? c.fmt : 'c4', nopt: Math.min(10, Math.max(2, n(c.nopt) || 4)), labels: ['th', 'en', 'num'].indexOf(c.labels) >= 0 ? c.labels : 'th',
     sets: Math.min(6, Math.max(1, n(c.sets) || 1)), cols: Math.min(5, Math.max(0, n(c.cols))), layout: c.layout === 'side' ? 'side' : 'inline', sheet: {} };
   if (out.fmt === 'tf') out.nopt = 2; else if (out.fmt !== 'custom') out.nopt = Number(out.fmt.slice(1));
-  const s = c.sheet || {}; ['info', 'howto', 'idbox', 'logo', 'qr', 'setbox'].forEach(k => out.sheet[k] = s[k] !== false);
+  const s = c.sheet || {}; ['info', 'howto', 'idbox', 'logo', 'qr', 'setbox', 'tips', 'part2', 'page', 'foot', 'score'].forEach(k => out.sheet[k] = s[k] !== false);
+  [['cmd', 300], ['part1', 60], ['tipsText', 400], ['part2Title', 120], ['part2Cmd', 300], ['part2Text', 600], ['grade', 20], ['term', 10]].forEach(x => out.sheet[x[0]] = str_(s[x[0]], x[1]));
   out.sheet.howtoText = str_(s.howtoText, 600); out.sheet.school = str_(s.school, 120); out.sheet.subtitle = str_(s.subtitle, 200); out.sheet.courseCode = str_(s.courseCode, 30); out.sheet.courseName = str_(s.courseName, 120);
   return out;
 }
@@ -1032,11 +1034,20 @@ function examAll_(ctx) {
     exams: rows_('Exams').filter(r => exOwn_(me, r)).map(r => Object.assign(examOut_(r), { done: res[r.id] || 0 })).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))) };
 }
 const natural_ = (a, b) => String(a).localeCompare(String(b), 'th', { numeric: true });
+/** v6.0 ย้ายกระดาษคำถาม/กระดาษคำตอบเข้า-ออกโฟลเดอร์ (ลากวาง / นำเข้าข้อสอบ) */
+function examMove_(ctx, kind, ids, folderId) {
+  const tb = kind === 'paper' ? 'ExamPapers' : 'Exams', fo = str_(folderId, 20), set = {}; (Array.isArray(ids) ? ids : []).slice(0, 300).forEach(x => set[String(x)] = 1);
+  if (fo) { const f = find_('ExamFolders', fo); if (!exOwn_(ctx.user, f) || (f.kind || 'sheet') !== (kind === 'paper' ? 'paper' : 'sheet')) throw err_('ไม่พบโฟลเดอร์', 'NOTFOUND'); }
+  return lock_(() => { let n = 0; rows_(tb).filter(r => set[r.id] && exOwn_(ctx.user, r)).forEach(r => { updateRow_(tb, r, { folderId: fo, updatedAt: now_() }); n++; }); return { moved: n }; });
+}
 function examFolderSave_(ctx, d) { d = d || {}; const name = str_(d.name, 80); if (!name) throw err_('กรุณาตั้งชื่อโฟลเดอร์');
   return lock_(() => { const r = d.id ? find_('ExamFolders', d.id) : null; if (d.id && !exOwn_(ctx.user, r)) throw err_('ไม่พบโฟลเดอร์', 'NOTFOUND');
-    if (r) { updateRow_('ExamFolders', r, { name: name }); return { id: r.id, name: name }; } return { id: insert_('ExamFolders', { id: id_(), ownerId: ctx.user.id, name: name, createdAt: now_() }).id, name: name }; }); }
+    if (r) { updateRow_('ExamFolders', r, { name: name }); return { id: r.id, name: name }; } const kind = d.kind === 'paper' ? 'paper' : 'sheet'; return { id: insert_('ExamFolders', { id: id_(), ownerId: ctx.user.id, name: name, kind: kind, createdAt: now_() }).id, name: name, kind: kind }; }); }
 function examFolderRemove_(ctx, id, mode) {
   const r = find_('ExamFolders', id); if (!exOwn_(ctx.user, r)) throw err_('ไม่พบโฟลเดอร์', 'NOTFOUND');
+  if (r.kind === 'paper') return lock_(() => { const ps = rows_('ExamPapers').filter(e => e.folderId === r.id);
+    if (mode === 'all') deleteWhere_('ExamPapers', e => e.folderId === r.id); else ps.forEach(e => updateRow_('ExamPapers', e, { folderId: '', updatedAt: now_() }));
+    deleteWhere_('ExamFolders', x => x.id === r.id); return { papers: ps.length }; });
   return lock_(() => { const ex = rows_('Exams').filter(e => e.folderId === r.id);
     if (mode === 'all') { const ids = {}; ex.forEach(e => ids[e.id] = 1); rows_('ExamResults').filter(x => ids[x.examId]).forEach(x => trash_(json_(x.img, {}).id)); deleteWhere_('ExamResults', x => ids[x.examId]); deleteWhere_('Exams', e => ids[e.id]); }
     else ex.forEach(e => updateRow_('Exams', e, { folderId: '', updatedAt: now_() }));
@@ -2043,8 +2054,8 @@ function adminDashboard_(ctx, view) {
   const me = ctx.user, admin = isAdmin_(me), users = rows_('Users');
   const cur = term_(), vt = view && /^25\d\d$/.test(String(view.year)) && /^[12]$/.test(String(view.term)) ? { year: String(view.year), term: String(view.term) } : null;
   const past = vt && (vt.year + '/' + vt.term) !== (cur.year + '/' + cur.term), key = vt ? vt.year + '/' + vt.term : '';
-  let d = days_(14);
-  if (past) { const end = new Date(termSpan_(vt)[1] + 'T12:00:00'); d = []; for (let i = 13; i >= 0; i--) d.push(Utilities.formatDate(new Date(end.getTime() - i * 864e5), TZ, 'yyyy-MM-dd')); }
+  let d = days_(7);
+  if (past) { const end = new Date(termSpan_(vt)[1] + 'T12:00:00'); d = []; for (let i = 6; i >= 0; i--) d.push(Utilities.formatDate(new Date(end.getTime() - i * 864e5), TZ, 'yyyy-MM-dd')); }
   const count = (list, field) => d.map(day => list.filter(x => String(x[field]).slice(0, 10) === day).length);
   const cIn = c => !vt || (c.acadYear ? (c.term ? c.acadYear + '/' + c.term === key : String(c.acadYear) === vt.year) : (!past || termKeyOf_(c.createdAt) === key));
   const aIn = a => !vt || termKeyOf_(a.createdAt) === key || (a.dueAt && termKeyOf_(a.dueAt) === key);
@@ -2061,6 +2072,14 @@ function adminDashboard_(ctx, view) {
       teachers: admin ? users.filter(u => u.role === 'teacher').length : 0 },
     days: d, logins: count(logs.filter(l => l.action === 'login'), 'createdAt'), views: count(logs.filter(l => l.action === 'view_lesson' && (admin || lid[l.detail])), 'createdAt'),
     submissions: count(subs, 'submittedAt'),
+    sub7: (() => { // v6.0 สถานะการส่งงานในช่วง 7 วัน (งานที่ครบกำหนดในช่วงนี้ + งานที่ส่งเข้ามาในช่วงนี้)
+      const d0 = d[0], d1 = d[d.length - 1], inW = v => { const x = String(v || '').slice(0, 10); return x >= d0 && x <= d1; };
+      const sw = subs.filter(s => inW(s.submittedAt)), o = { graded: 0, ontime: 0, late: 0, missing: 0 };
+      sw.forEach(s => { if (s.score !== '') o.graded++; else if (s.status === 'late') o.late++; else o.ontime++; });
+      asg.filter(a => inW(a.dueAt)).forEach(a => { let st = []; try { st = studentsFor_(a.grade, a.room, a.courseId); } catch (e) {}
+        const got = {}; subs.filter(s => s.assignmentId === a.id).forEach(s => [s.ownerId].concat(members_(s)).forEach(id => got[id] = 1));
+        o.missing += st.filter(u => !got[u.id]).length; });
+      return o; })(),
     status: { ontime: subs.filter(s => s.status === 'ontime').length, late: subs.filter(s => s.status === 'late').length, graded: subs.filter(s => s.score !== '').length },
     attToday: (() => { try { const a = attSummary_(ctx, ''); return { present: a.day.present + a.day.late, late: a.day.late, absent: a.day.absent + a.day.skip, sessions: a.sessions, day: a.day }; } catch (e) { return null; } })(),
     recent: logs.slice(-10).reverse().map(l => ({ action: l.action, at: l.createdAt, user: (find_('Users', l.userId) || {}).fullName || '-' }))
