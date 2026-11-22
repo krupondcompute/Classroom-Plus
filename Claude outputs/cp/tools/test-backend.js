@@ -541,5 +541,18 @@ const c62 = R('examSave', AD, { name: 'v62', cfg: { count: 10, grid: 'hv', flow:
   R('evDue', AD); ok(ctx.rows_('Announcements').length === an0 + 1, 'v6.3 announcement only once');
   ok(R('evSave', AD, { title: 'ไม่เตือน', date: td, allDay: true, remind: -1 }).ok && !R('evDue', AD).data.some(x => x.title === 'ไม่เตือน'), 'v6.3 no-reminder event not due');
   ok(R('evRemove', AD, ev.id).ok && !R('evList', AD, {}).data.some(x => x.id === ev.id), 'v6.3 event remove'); }
+// ---- v6.4 ----
+{ const exM2 = R('examSave', AD, { name: 'ข้อสอบ 1', cfg: { digits: 5, count: 5, fmt: 'c4' }, classes: ['ม.1/1'] }).data; R('examKey', AD, exM2.id, { A: [{ a: [0], p: 1 }, { a: [1], p: 1 }, { a: [2, 3], p: 2 }, { a: [3], p: 1 }, { a: [0], p: 1 }] }, false);
+  const many = R('examResultSaveMany', AD, exM2.id, [{ studentId: s9u.id, answers: [[0], [1], [2], [3], [0]] }, { studentId: 'nope', answers: [] }]).data;
+  ok(many.length === 2 && many[0].ok && many[0].score === 6 && many[1].ok === false, 'v6.4 continuous scan: save many (partial fail reported)');
+  const hm = R('studentHome', s9).data; ok(hm.latestScores.some(x => x.exam && x.title === 'ข้อสอบ 1' && +x.sub.score === 6), 'v6.4 scanned exam score in student latest scores');
+  const c64 = R('examSave', AD, { name: 'v64', cfg: { count: 10, sheet: { lay: { boxDy: 99, sepT: true }, ed: { 3: { dx: 5, dy: -2, t: 'x', a: 'middle', b: true, del: true, bad: 1 }, zz: { dx: 1 } }, add: [{ x: 50, y: 60, t: 'เพิ่ม', s: 3.5, a: 'end' }] } } }).data.cfg.sheet;
+  ok(c64.lay.boxDy === 20 && c64.lay.sepT === true && c64.ed['3'].dx === 5 && c64.ed['3'].a === 'middle' && c64.ed['3'].del === true && !c64.ed['3'].bad && !c64.ed.zz && c64.add[0].t === 'เพิ่ม' && c64.add[0].a === 'end', 'v6.4 answer sheet: on-page edits + box offset + separators sanitized');
+  ok(R('saveStaffMenus', AD, JSON.stringify({ order: ['calendar', 'dash', 'BAD!', 'dash'] })).data === JSON.stringify({ order: ['calendar', 'dash'] }) && ctx.cfg_().staffMenus.includes('calendar'), 'v6.4 staff menu order saved');
+  ok(R('saveStaffMenus', s9, '{}').ok === false, 'v6.4 staff menu order admin only');
+  const td = ctx.now_().slice(0, 10), e1 = R('evSave', AD, { title: 'ทดสอบไอคอน', date: td, allDay: true, remind: 1440, icon: 'fa-star', img: 'javascript:alert(1)' }).data;
+  ok(e1.icon === 'fa-star' && e1.img === '', 'v6.4 event icon saved, bad image rejected');
+  const n0 = ctx.rows_('Notifications').length, fired = ctx.eventJob(); ok(fired === 1 && ctx.rows_('Notifications').length > n0 && ctx.rows_('Notifications').some(n => n.link === 'calendar:' + e1.id), 'v6.4 event trigger: bell notification for everyone (no one online)');
+  ok(ctx.eventJob() === 0, 'v6.4 event trigger fires once'); R('evRemove', AD, e1.id); }
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

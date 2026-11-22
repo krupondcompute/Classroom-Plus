@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '6.3.0';
+const APP_VERSION = '6.4.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -20,6 +20,7 @@ const CONFIG_DEFAULTS = {
   emailNotify: 'false', lineToken: '', demoEnabled: 'true', autoBackup: 'true', webNotify: 'true', siteUrl: '',
   assignmentTypes: 'การบ้าน,ใบงาน,แบบฝึกหัด,สรุปเนื้อหา,งานเดี่ยว,งานกลุ่ม',
   themeColor: '#2563eb',   // สีหลักของระบบ
+  staffMenus: '',          // v6.4 JSON {order:[...]} ลำดับเมนูฝั่งครู/แอดมิน
   studentMenus: '',        // JSON {hidden:[...], custom:[{name,url,icon}]} เมนูฝั่งนักเรียน
   scoreSources: '[]'       // JSON [{id,name,url,terms:[ปี/ภาค],courseIds,grades,rooms}] ที่มาของ "รวมคะแนนทั้งหมด"
 };
@@ -50,7 +51,7 @@ const SCHEMA = {
   LiveSessions: ['id','kind','title','pin','ownerId','data','settings','status','startedAt','endsAt','createdAt','updatedAt'],
   ToolLogs: ['id','ownerId','tool','term','data','createdAt'],
   QrCodes: ['id','ownerId','text','note','status','useDate','style','imgId','fileJson','createdAt','updatedAt'],
-  Events: ['id','ownerId','title','detail','date','endDate','start','end','allDay','color','remind','notified','createdAt','updatedAt'],
+  Events: ['id','ownerId','title','detail','date','endDate','start','end','allDay','color','remind','notified','createdAt','updatedAt','icon','img'],
   ExamPapers: ['id','ownerId','title','data','createdAt','updatedAt','folderId'],
   ExamFolders: ['id','ownerId','name','createdAt','kind'],
   Exams: ['id','ownerId','name','folderId','cfg','key','classes','tags','createdAt','updatedAt'],
@@ -172,7 +173,7 @@ const ROUTES = {
   report: ['staff', report_], classSummary: ['staff', classSummary_], addAssignmentType: ['staff', addAssignmentType_],
   myTeachers: ['user', myTeachers_], staffContact: ['user', staffContact_],
   listUsers: ['staff', listUsers_], saveUser: ['staff', saveUser_], importStudents: ['staff', importStudents_],
-  listTeachers: ['staff', listTeachers_], saveStudentMenus: ['staff', saveStudentMenus_], uploadFinish: ['user', uploadFinish_],
+  listTeachers: ['staff', listTeachers_], saveStudentMenus: ['staff', saveStudentMenus_], saveStaffMenus: ['admin', saveStaffMenus_], uploadFinish: ['user', uploadFinish_],
   chatContacts: ['user', chatContacts_], chatList: ['user', chatList_], chatOpen: ['user', chatOpen_], chatMessages: ['user', chatMessages_],
   chatSend: ['user', chatSend_], chatEdit: ['user', chatEdit_], chatDelete: ['user', chatDelete_], chatHide: ['user', chatHide_], chatRename: ['user', chatRename_], chatTeamMembers: ['user', chatTeamMembers_], chatPurge: ['user', chatPurge_], chatCreateTeam: ['user', chatCreateTeam_], chatUnread: ['user', chatUnread_],
   // admin (ผู้ดูแลระบบคนเดียว)
@@ -188,7 +189,7 @@ const ROUTES = {
   qrList: ['staff', qrList_], qrSave: ['staff', qrSave_], qrStatus: ['staff', qrStatus_], qrRemove: ['staff', qrRemove_],
   paperList: ['staff', paperList_], paperSave: ['staff', paperSave_], paperRemove: ['staff', paperRemove_],
   examAll: ['staff', examAll_], examFolderSave: ['staff', examFolderSave_], examFolderRemove: ['staff', examFolderRemove_], evList: ['user', evList_], evSave: ['staff', evSave_], evMove: ['staff', evMove_], evRemove: ['staff', evRemove_], evDue: ['user', evDue_], examMove: ['staff', examMove_], examSave: ['staff', examSave_], examRemove: ['staff', examRemove_], examGet: ['staff', examGet_],
-  examKey: ['staff', examKey_], examResultSave: ['staff', examResultSave_], examResultUpdate: ['staff', examResultUpdate_], examResultRemove: ['staff', examResultRemove_], examResults: ['staff', examResults_], examPrefs: ['staff', examPrefs_],
+  examKey: ['staff', examKey_], examResultSave: ['staff', examResultSave_], examResultSaveMany: ['staff', examResultSaveMany_], examResultUpdate: ['staff', examResultUpdate_], examResultRemove: ['staff', examResultRemove_], examResults: ['staff', examResults_], examPrefs: ['staff', examPrefs_],
   classBulkAdd: ['staff', classBulkAdd_], classRemove2: ['admin', classRemove2_],
   toolLogAdd: ['staff', toolLogAdd_], toolLogList: ['staff', toolLogList_], toolLogClear: ['staff', toolLogClear_],
   myAttend: ['user', myAttend_], myScores: ['user', myScores_], attCheckIn: ['user', attCheckIn_],
@@ -1012,9 +1013,10 @@ function evClean_(d) {
   const allDay = d.allDay === true || d.allDay === 'true', endDate = okD(d.endDate) && d.endDate >= d.date ? d.endDate : d.date;
   const start = allDay ? '' : (okT(d.start) ? d.start : '08:00'), end = allDay ? '' : (okT(d.end) ? d.end : start);
   const remind = EV_REMIND_.indexOf(Number(d.remind)) >= 0 ? String(Number(d.remind)) : '-1';
-  return { title: title, detail: str_(d.detail, 2000), date: d.date, endDate: endDate, start: start, end: end, allDay: String(allDay), color: /^#[0-9a-fA-F]{6}$/.test(String(d.color || '')) ? d.color : '#e11d48', remind: remind };
+  return { title: title, detail: str_(d.detail, 2000), date: d.date, endDate: endDate, start: start, end: end, allDay: String(allDay), color: /^#[0-9a-fA-F]{6}$/.test(String(d.color || '')) ? d.color : '#e11d48', remind: remind, icon: /^fa-[a-z0-9-]{1,40}$/.test(String(d.icon || '')) ? d.icon : '', img: (/^data:image\/(png|jpe?g|webp|gif);base64,[\w+/=]+$/.test(String(d.img || '')) || /^https:\/\/(lh3\.googleusercontent\.com|drive\.google\.com)\/[\w\-/?=&.]+$/.test(String(d.img || ''))) && String(d.img).length < 40000 ? String(d.img) : '' };
 }
-function evSave_(ctx, d) { d = d || {}; const v = evClean_(d);
+function evTrig_() { try { if (!ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'eventJob')) ScriptApp.newTrigger('eventJob').timeBased().everyMinutes(10).create(); } catch (e) {} }
+function evSave_(ctx, d) { d = d || {}; const v = evClean_(d); if (Number(d.remind) >= 0) evTrig_();
   return lock_(() => { const r = d.id ? find_('Events', d.id) : null; if (d.id && !r) throw err_('ไม่พบกิจกรรม', 'NOTFOUND');
     if (r && r.ownerId !== ctx.user.id && !isAdmin_(ctx.user)) throw err_('แก้ไขได้เฉพาะกิจกรรมของคุณ', 'FORBIDDEN');
     const changed = !r || r.date !== v.date || r.start !== v.start || r.remind !== v.remind;
@@ -1033,11 +1035,25 @@ function evDue_(ctx) {
   list.forEach(r => { const st = r.date + 'T' + (r.allDay === 'true' ? '07:00' : (r.start || '08:00')), rm = Number(r.remind); if (isNaN(rm) || rm < 0) return;
     const at = naiveAdd_(st, -rm), endAt = (r.endDate || r.date) + 'T' + (r.allDay === 'true' ? '23:59' : (r.end || r.start || '23:59'));
     if (now >= at && now <= endAt) out.push(Object.assign(evOut_(r), { at: at })); });
-  const due = out.filter(x => rows_('Events').some(r => r.id === x.id && r.notified !== 'true'));
-  if (due.length && !isDemo_(ctx.user)) { try { lock_(() => { due.forEach(x => { const r = find_('Events', x.id); if (!r || r.notified === 'true') return;
-    updateRow_('Events', r, { notified: 'true' });
-    insert_('Announcements', { id: id_(), type: 'กิจกรรม', title: '📅 ' + r.title, body: (r.allDay === 'true' ? 'ทั้งวัน' : (r.start || '') + (r.end ? ' – ' + r.end : '') + ' น.') + ' · วันที่ ' + r.date + (r.endDate && r.endDate !== r.date ? ' ถึง ' + r.endDate : '') + (r.detail ? '\n' + r.detail : ''), attachments: '[]', image: '', pinned: 'true', courseId: '', grade: '', room: '', ownerId: r.ownerId, createdAt: now_(), updatedAt: now_() }); }); }); } catch (e) {} }
+  if (!isDemo_(ctx.user)) evFire_(out);
   return out;
+}
+/** แจ้งเตือนกิจกรรมที่ถึงเวลา (ครั้งเดียว): ประกาศในระบบ + กระดิ่งแจ้งเตือนของทุกคน — เรียกจากหน้าเว็บและจาก Trigger ทุก 10 นาที (กรณีไม่มีใครเปิดระบบ) */
+function evFire_(out) {
+  const due = out.filter(x => rows_('Events').some(r => r.id === x.id && r.notified !== 'true')); if (!due.length) return 0; let n = 0;
+  try { lock_(() => { due.forEach(x => { const r = find_('Events', x.id); if (!r || r.notified === 'true') return; n++;
+    updateRow_('Events', r, { notified: 'true' });
+    insert_('Announcements', { id: id_(), type: 'กิจกรรม', title: '📅 ' + r.title, body: (r.allDay === 'true' ? 'ทั้งวัน' : (r.start || '') + (r.end ? ' – ' + r.end : '') + ' น.') + ' · วันที่ ' + r.date + (r.endDate && r.endDate !== r.date ? ' ถึง ' + r.endDate : '') + (r.detail ? '\n' + r.detail : ''), attachments: '[]', image: '', pinned: 'true', courseId: '', grade: '', room: '', ownerId: r.ownerId, createdAt: now_(), updatedAt: now_() });
+    const when = (r.allDay === 'true' ? 'ทั้งวัน' : (r.start || '') + (r.end ? ' – ' + r.end : '') + ' น.') + ' · ' + r.date;
+    try { notifyUsers_(rows_('Users').filter(u => u.status !== 'disabled' && u.status !== 'pending').map(u => u.id), '📅 ' + r.title, when + (r.detail ? ' · ' + String(r.detail).slice(0, 120) : ''), 'calendar:' + r.id); } catch (e) {} }); }); } catch (e) {}
+  return n;
+}
+/** Trigger ทุก 10 นาที: ตรวจกิจกรรมที่ถึงเวลาแจ้งเตือน แม้ไม่มีผู้ใช้เปิดระบบ */
+function eventJob() {
+  const now = now_().slice(0, 16), today = now.slice(0, 10), out = [];
+  rows_('Events').filter(r => String(r.endDate || r.date) >= today).forEach(r => { const st = r.date + 'T' + (r.allDay === 'true' ? '07:00' : (r.start || '08:00')), rm = Number(r.remind); if (isNaN(rm) || rm < 0) return;
+    const at = naiveAdd_(st, -rm), endAt = (r.endDate || r.date) + 'T' + (r.allDay === 'true' ? '23:59' : (r.end || r.start || '23:59')); if (now >= at && now <= endAt) out.push({ id: r.id }); });
+  return evFire_(out);
 }
 function examCfg_(c) {
   c = c || {}; const n = x => Math.round(Number(x) || 0);
@@ -1048,7 +1064,12 @@ function examCfg_(c) {
   const s = c.sheet || {}; ['info', 'howto', 'idbox', 'logo', 'qr', 'setbox', 'tips', 'part2', 'page', 'foot', 'score'].forEach(k => out.sheet[k] = s[k] !== false);
   [['cmd', 300], ['part1', 60], ['part1Type', 120], ['tipsText', 400], ['part2Title', 120], ['part2Cmd', 300], ['part2Text', 600], ['grade', 20], ['term', 10]].forEach(x => out.sheet[x[0]] = str_(s[x[0]], x[1]));
   out.grid = ['none', 'h', 'v', 'hv'].indexOf(c.grid) >= 0 ? c.grid : 'none'; out.flow = c.flow === 'below' ? 'below' : 'side';
-  const ly = s.lay && typeof s.lay === 'object' ? s.lay : {}, col = v => /^#[0-9a-fA-F]{6}$/.test(String(v || '')) ? String(v) : ''; out.sheet.lay = { logo: Math.min(36, Math.max(10, Number(ly.logo) || 23)), lgap: Math.min(8, Math.max(3.5, Number(ly.lgap) || 4.8)), qrSwap: ly.qrSwap === true, text: col(ly.text) || '#111111', line: col(ly.line) || '#000000' };
+  const ly = s.lay && typeof s.lay === 'object' ? s.lay : {}, col = v => /^#[0-9a-fA-F]{6}$/.test(String(v || '')) ? String(v) : ''; out.sheet.lay = { logo: Math.min(36, Math.max(10, Number(ly.logo) || 23)), lgap: Math.min(8, Math.max(3.5, Number(ly.lgap) || 4.8)), qrSwap: ly.qrSwap === true, text: col(ly.text) || '#111111', line: col(ly.line) || '#000000', boxDy: Math.min(20, Math.max(-6, Number(ly.boxDy) || 0)), sepT: ly.sepT === true, sepI: ly.sepI === true, sepP: ly.sepP === true, sepF: ly.sepF === true };
+  { const num = (v, a, b) => Math.min(b, Math.max(a, Number(v) || 0)), ed = s.ed && typeof s.ed === 'object' ? s.ed : {}, oe = {}; // v6.4 แก้ไขข้อความบนกระดาษคำตอบ
+    Object.keys(ed).slice(0, 300).forEach(k => { if (!/^\d{1,4}$/.test(k)) return; const e = ed[k] || {}, r = {};
+      if (e.dx) r.dx = num(e.dx, -200, 200); if (e.dy) r.dy = num(e.dy, -290, 290); if (typeof e.t === 'string') r.t = e.t.slice(0, 300); if (['start', 'middle', 'end'].indexOf(e.a) >= 0) r.a = e.a;
+      if (typeof e.b === 'boolean') r.b = e.b; if (e.i === true) r.i = true; if (e.fs) r.fs = num(e.fs, .5, 3); if (e.del === true) r.del = true; if (Object.keys(r).length) oe[k] = r; });
+    out.sheet.ed = oe; out.sheet.add = (Array.isArray(s.add) ? s.add : []).slice(0, 30).map(a => ({ x: num(a && a.x, 0, 210), y: num(a && a.y, 0, 297), t: String((a && a.t) || '').slice(0, 300), s: num(a && a.s, 1.5, 8) || 3, a: ['start', 'middle', 'end'].indexOf(a && a.a) >= 0 ? a.a : 'start', b: !!(a && a.b), i: !!(a && a.i) })); }
   out.sheet.font = str_(s.font, 40); out.sheet.fs = Math.min(1.35, Math.max(.8, Number(s.fs) || 1)); const hi = String(s.howtoImg || ''); out.sheet.howtoImg = /^data:image\/(png|jpe?g|webp);base64,/.test(hi) && hi.length <= 30000 ? hi : '';
   out.sheet.howtoText = str_(s.howtoText, 600); out.sheet.school = str_(s.school, 120); out.sheet.subtitle = str_(s.subtitle, 200); out.sheet.courseCode = str_(s.courseCode, 30); out.sheet.courseName = str_(s.courseName, 120);
   return out;
@@ -1138,6 +1159,11 @@ function examResultSave_(ctx, examId, d) {
     if (img) lock_(() => { const x = find_('ExamResults', row.id); if (x) updateRow_('ExamResults', x, { img: JSON.stringify(img) }); }); } catch (e) { imgErr = e.message || String(e); } }
   return { id: row.id, score: s.score, max: s.max, right: s.right, replaced: !!row.replaced, img: img, imgError: imgErr };
 }
+/** v6.4 โหมดสแกนต่อเนื่อง: บันทึกผลหลายคนในครั้งเดียว (หลังตรวจครบห้อง) */
+function examResultSaveMany_(ctx, examId, list) {
+  return (Array.isArray(list) ? list : []).slice(0, 60).map(d => { try { return Object.assign({ ok: true, studentId: (d && d.studentId) || '' }, examResultSave_(ctx, examId, Object.assign({}, d, { overwrite: true }))); }
+    catch (e) { return { ok: false, studentId: (d && d.studentId) || '', error: e.message || String(e) }; } });
+}
 function examResultUpdate_(ctx, id, d) {
   d = d || {}; const x = find_('ExamResults', id), r = x && find_('Exams', x.examId); if (!x || !exOwn_(ctx.user, r)) throw err_('ไม่พบผลสอบ', 'NOTFOUND');
   const cfg = examCfg_(json_(r.cfg, {})), key = examKeyClean_(json_(r.key, {}), cfg);
@@ -1226,7 +1252,9 @@ function studentHome_(ctx, view) {
       submitted: asg.filter(a => a.sub).length, pending: asg.filter(a => !a.sub).length,
       avgScore: scores.length ? Math.round(scores.reduce((s, x) => s + x, 0) / scores.length) : null },
     pending: asg.filter(a => !a.sub).sort((a, b) => dt_(a.dueAt).localeCompare(dt_(b.dueAt))).slice(0, 6),
-    latestScores: graded.slice(0, 5),
+    latestScores: (() => { let exr = []; try { const ex = {}; rows_('Exams').forEach(e => ex[e.id] = e); // v6.4 รวมผลสอบที่ตรวจด้วยการสแกน
+      exr = rows_('ExamResults').filter(r => r.studentId === u.id && ex[r.examId]).map(r => ({ id: 'x' + r.id, title: String(ex[r.examId].name || 'ข้อสอบ').replace(/\s*\(กระดาษคำตอบ\)$/, ''), maxScore: r.max, exam: true, sub: { score: r.score, feedback: 'ผลสอบ (ตรวจด้วยการสแกน)', gradedAt: r.updatedAt || r.createdAt } })); } catch (e) {}
+      return graded.concat(exr).sort((a, b) => String(b.sub.gradedAt).localeCompare(String(a.sub.gradedAt))).slice(0, 5); })(),
     announcements: listAnnouncements_(ctx).slice(0, 3),
     term: term_(), view: vf.vt, past: vf.past, total: (() => { try { return totalScore_(u); } catch (e) { return null; } })()
   };
@@ -2375,6 +2403,10 @@ function addAssignmentType_(ctx, name) {
   return lock_(() => { delete MEM_.Config; const list = cfg_().assignmentTypes.split(',').filter(Boolean); const isNew = list.indexOf(v) < 0; if (isNew) list.push(v); setCfg_('assignmentTypes', list.slice(0, 30).join(',')); if (isNew) settingsChanged_(ctx.user, 'เพิ่มประเภทงาน "' + v + '"', 'general'); return cfg_().assignmentTypes; });
 }
 /** ครูผู้สอนจัดการเมนูนักเรียน (ลิงก์เพิ่มเติม / ลำดับ) ได้เหมือนผู้ดูแลระบบ */
+function saveStaffMenus_(ctx, v) {
+  const o = json_(v, {}) || {}, order = (Array.isArray(o.order) ? o.order : []).map(String).filter(k => /^[a-z]{2,20}$/.test(k)).filter((k, i, a) => a.indexOf(k) === i).slice(0, 40), out = JSON.stringify({ order: order });
+  lock_(() => { delete MEM_.Config; setCfg_('staffMenus', out); }); log_(ctx.user.id, 'save_staff_menus', ''); return out;
+}
 function saveStudentMenus_(ctx, v) {
   const out = menus_(v);
   if (out.length > 30000) throw err_('ข้อมูลเมนูยาวเกินไป');
@@ -2755,6 +2787,8 @@ function liveSubmit_(ctx, pin, pid, answers, timings, tkey) {
 function installTriggers_() {
   ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'dailyJob').forEach(t => ScriptApp.deleteTrigger(t));
   ScriptApp.newTrigger('dailyJob').timeBased().everyDays(1).atHour(6).inTimezone(TZ).create();
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'eventJob').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('eventJob').timeBased().everyMinutes(10).create();
   return { ok: true };
 }
 /** Trigger รายวัน: เตือนงานใกล้ครบกำหนด, สำรองข้อมูล, ล้างเซสชันหมดอายุ */
