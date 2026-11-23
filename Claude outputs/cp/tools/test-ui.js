@@ -15,6 +15,9 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
   const confirm = async () => { await page.click('.swal2-confirm'); await idle(); };
   await page.goto(url); await idle();
   ok(await page.isVisible('text=เข้าสู่ระบบ'), 'login visible');
+  await page.waitForTimeout(600); ok(await page.evaluate(() => { const el = document.querySelector('#welcomeText'); return parseFloat(getComputedStyle(el).fontSize) >= 18 || innerWidth < 900; }), 'v6.5 login: welcome text large enough');
+  await page.evaluate(() => document.querySelector('#guideBtn').click()); await page.waitForSelector('.guide-card'); await page.waitForTimeout(500); ok(await page.evaluate(() => { const g = document.querySelector('.guide-card').getBoundingClientRect(), m = document.querySelector('#modal .modal-body').getBoundingClientRect(); return g.width > m.width * .7 && Math.abs((g.left + g.right) / 2 - (m.left + m.right) / 2) < 12; }), 'v6.5 guide: card wide and centered');
+  await page.evaluate(() => document.querySelector('#modal [data-bs-dismiss=modal]').click()); await page.waitForTimeout(700);
   await page.screenshot({ path: SHOT + '/01-login.png' });
   // register student
   await page.click('#toReg');
@@ -537,7 +540,7 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
   ok(await page.evaluate(() => { const o = S.config.staffMenus; S.config.staffMenus = JSON.stringify({ order: ['calendar'] }); const f = staffNav()[0][0]; S.config.staffMenus = o; return f === 'calendar'; }), 'v6.4 staff menu order applied');
   ok(!!(await page.$('.side-user .role-tag.rt-admin')), 'v6.4 sidebar role tag (admin red)');
   await page.evaluate(() => go('calendar')); await idle(); await page.waitForSelector('#calLists .ev-col-card'); ok(await page.$$eval('#calLists .ev-col-card', x => x.length) === 3, 'v6.4 calendar: past / now / upcoming cards');
-  await page.click('[data-eadd]'); await page.waitForSelector('#evWheel .cw'); ok(await page.$$eval('.ev-icb', x => x.length) > 10, 'v6.4 calendar form: color wheel + icons');
+  await page.click('[data-eadd]'); await page.waitForSelector('#evT'); await page.click('[data-evp=col]'); await page.waitForSelector('#evWheel .cw'); ok(await page.$$eval('.ev-icb', x => x.length) > 10, 'v6.4 calendar form: color wheel + icons');
   await page.evaluate(() => { const w = document.querySelector('#evWheel .cw'), b = w.getBoundingClientRect(); w.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: b.left + b.width / 2 + 40, clientY: b.top + b.height / 2, pointerId: 1 })); w.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1 })); });
   ok(await page.$eval('.cw-hex', x => /^#[0-9a-f]{6}$/.test(x.value) && x.value !== '#e11d48'), 'v6.4 color wheel picks a color'); await closeM();
   // แก้ไขบนหน้าตัวอย่าง: ขนาด/จัดชิด + หัวตารางมีผลทุกหน้า
@@ -547,6 +550,14 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
     return th.style.fontSize === '16pt' && th.style.textAlign === 'right' && Object.keys(JSON.parse(Object.entries(localStorage).find(([k]) => k.startsWith('cp_pved_'))[1]).E).some(k => k[0] === 'G'); }), 'v6.4 preview edit: font size/align on table header (applies to every page)');
   ok(await page.evaluate(() => { const f = document.querySelector('#rptFrame'), d = f.contentDocument, t = d.querySelector('#out .rpt-title'); t.click(); f.contentWindow.__pvFmt('add'); const a = d.querySelector('.pv-add'); f.contentWindow.__pvFmt('del'); return !!a && !d.querySelector('.pv-add'); }), 'v6.4 preview edit: add then delete text');
   await page.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('cp_pved_')).forEach(k => localStorage.removeItem(k))); await closeM();
+  // ---------- v6.5 ----------
+  ok(await page.evaluate(() => { const q = parseBulkQ('1. ปกติ\nก. a\n*ข. b\n[ตัวเลือกร่วม ข้อ 2-3] วัสดุ\nก. พลาสติก\nข. ไม้\n2. ขวด (ตอบ ก)\n3. โต๊ะ (ตอบ ข)\n4. หลังกลุ่ม\nก. x\n*ข. y', ['ก', 'ข', 'ค', 'ง']);
+    return q.length === 5 && q[1].grp && q[1].choices.length === 2 && q[2].share && q[2].ans === 0 && q[3].share && q[3].ans === 1 && !q[4].share && q[4].ans === 1; }), 'v6.5 bulk paste: shared choices syntax');
+  ok(await page.evaluate(() => { const h = pagedTable('t65', ['a'], Array.from({ length: 65 }, (_, i) => [i])), d = document.createElement('div'); d.innerHTML = h; return d.querySelectorAll('tbody tr').length === 30 && !!d.querySelector('[data-ptnav]'); }), 'v6.5 paged table: 30 rows per page');
+  ok(await page.evaluate(() => holOf('2026-12-05').includes('วันพ่อ') && holOf('2026-03-03').includes('มาฆบูชา') && thDayFull('2026-11-23', '14:00') === 'วันจันทร์ที่ 23 พฤศจิกายน 2569 เวลา 14.00 น.'), 'v6.5 Thai holidays + full Thai date/time');
+  ok(await page.evaluate(() => sheetSvg({ id: 'x', name: 't', cfg: { digits: 2, count: 20, fmt: 'c4', nopt: 4, sets: 1, cols: 0, sheet: { p2max: 10 } }, key: {} }).includes('คะแนนตอนที่ 2')), 'v6.5 answer sheet: part 2 score box');
+  ok(await page.evaluate(() => { const P = { title: 't', labels: 'th', autoSheet: true, parts: [{ title: 'ก', questions: [{ q: 'a', choices: ['1', '2', '3'], ans: 0 }, { q: 'b', choices: ['x', ''], cimg: ['', 'data:image/png;base64,AA'], ans: 1 }] }] }, d = paperExamDraft(P, null); return d && d.cfg.count === 2 && d.cfg.nopt === 3 && paperDoc(P, {}).includes('class="ci"'); }), 'v6.5 paper: choice images + draft answer sheet always current');
+  await page.evaluate(() => go('aann')); await idle(); ok(!!(await page.$('#annTypeAdd')), 'v6.5 announcements: add type button');
   // QR: ไอคอนในระบบ + ขนาดโลโก้
   await page.evaluate(() => go('tools')); await idle(); await page.click('[data-tool=qrcode]'); await page.waitForSelector('#qrCv'); await page.click('#qrIconBtn'); await page.click('[data-qric] >> nth=0'); await page.waitForTimeout(600);
   await page.fill('#qrLogoSz', '28').catch(() => page.evaluate(() => { const r = document.querySelector('#qrLogoSz'); r.value = 28; r.dispatchEvent(new Event('input', { bubbles: true })); })); await page.waitForTimeout(300);
@@ -563,6 +574,7 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
   ok(await mp.evaluate(() => { const d = document.querySelector('#demoFill'); return d && d.getBoundingClientRect().bottom <= innerHeight; }), 'mobile demo box fully visible');
   ok(await mp.isVisible('.bubble') && await mp.isVisible('.brand-line'), 'login bubble + line');
   await mp.evaluate(() => document.querySelector('#guideBtn').click()); await mp.waitForSelector('.guide-card'); ok(await mp.$$eval('.guide-card', x => x.length) === 1 && await mp.$$eval('.guide-warn', x => x.length) === 1 && (await mp.textContent('.guide-card')).includes('นักเรียน'), 'v6.4 login guide: only the selected tab (student)'); await mp.waitForTimeout(700); await mp.evaluate(() => { const b = document.querySelector('#modal .btn-close, #modal [data-bs-dismiss=modal]'); b && b.click(); }); await mp.waitForSelector('#modal.show', { state: 'detached', timeout: 3000 }).catch(() => {}); await mp.waitForTimeout(700);
+  ok(await mp.evaluate(() => { const el = document.querySelector('#welcomeText'), bb = el.closest('.bubble').getBoundingClientRect(); return [...el.querySelectorAll('.ln')].every(l => { const r = l.getBoundingClientRect(); return r.right <= bb.right + 2 && r.left >= bb.left - 2; }); }), 'v6.5 mobile: welcome text inside bubble');
   await mp.click('[data-tab=admin]'); await mp.fill('#lgUser', 'admin'); await mp.fill('#lgPass', 'admin123'); await mp.click('#loginForm button[type=submit]');
   await mp.waitForSelector('#appView:not(.hidden)'); await mp.waitForFunction(() => !document.querySelector('#loader.show')); await mp.waitForTimeout(600);
   await mp.evaluate(() => { localStorage.setItem('cp_theme', 'dark'); document.documentElement.dataset.theme = 'dark'; document.documentElement.setAttribute('data-bs-theme', 'dark'); });

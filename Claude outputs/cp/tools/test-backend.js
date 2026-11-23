@@ -554,5 +554,22 @@ const c62 = R('examSave', AD, { name: 'v62', cfg: { count: 10, grid: 'hv', flow:
   ok(e1.icon === 'fa-star' && e1.img === '', 'v6.4 event icon saved, bad image rejected');
   const n0 = ctx.rows_('Notifications').length, fired = ctx.eventJob(); ok(fired === 1 && ctx.rows_('Notifications').length > n0 && ctx.rows_('Notifications').some(n => n.link === 'calendar:' + e1.id), 'v6.4 event trigger: bell notification for everyone (no one online)');
   ok(ctx.eventJob() === 0, 'v6.4 event trigger fires once'); R('evRemove', AD, e1.id); }
+// ---- v6.5 ----
+{ ok(ctx.cell_('08:00') === "'08:00" && ctx.cell_('2026-11-23') === "'2026-11-23" && ctx.cell_('0123') === "'0123" && ctx.cell_('abc') === 'abc', 'v6.5 times/dates/leading zeros kept as text');
+  const td = ctx.now_().slice(0, 10), ev = R('evSave', AD, { title: 'เวลา', date: td, start: '14:00', end: '15:30', remind: -1 }).data; const got = R('evList', AD, { from: td, to: td }).data.find(x => x.id === ev.id);
+  ok(got.start === '14:00' && got.end === '15:30', 'v6.5 event time stays HH:mm');
+  const sev = R('evSave', s9, { title: 'อ่านหนังสือ', date: td, allDay: true, remind: 1440, scope: 'all' }); ok(sev.ok && sev.data.scope === 'me', 'v6.5 student can add private events (forced private)');
+  ok(!R('evList', AD, { from: td, to: td }).data.some(x => x.id === sev.data.id) && R('evList', s9, { from: td, to: td }).data.some(x => x.id === sev.data.id), 'v6.5 private events visible only to owner');
+  ok(R('evRemove', s9, ev.id).ok === false, 'v6.5 student cannot remove staff event');
+  const an0 = ctx.rows_('Announcements').length, nt0 = ctx.rows_('Notifications').filter(n => n.ownerId === s9u.id).length; ctx.eventJob();
+  ok(ctx.rows_('Announcements').length === an0 && ctx.rows_('Notifications').filter(n => n.ownerId === s9u.id).length === nt0 + 1, 'v6.5 private reminder → bell for owner only, no announcement');
+  ok(/^วัน.+ที่ \d+ .+ 25\d\d เวลา 14\.00 น\./.test(ctx.thFull_('2026-11-23', '14:00')) && ctx.thFull_('2026-11-23').startsWith('วันจันทร์ที่ 23 พฤศจิกายน 2569'), 'v6.5 Thai full date format');
+  const ax = R('save', AD, 'Assignments', { courseId: R('list', AD, 'Courses').data[0].id, title: 'งานปฏิทิน', type: 'การบ้าน', grade: 'ม.1', room: '1', dueAt: td + 'T16:00', maxScore: 10 });
+  ok(R('evList', AD, { from: td, to: td }).data.some(x => x.ro && x.kind === 'due' && x.title.includes('งานปฏิทิน') && x.start === '16:00'), 'v6.5 assignment due date shown on calendar ' + (ax.error || ''));
+  const t2 = R('annTypeAdd', AD, 'ทุนการศึกษา').data; ok(t2.split(',').includes('ทุนการศึกษา') && R('annTypeAdd', AD, '').ok === false, 'v6.5 add announcement type');
+  const exP = R('examSave', AD, { name: 'สองตอน', cfg: { digits: 5, count: 5, fmt: 'c4', sheet: { p2max: 10, p2count: 2, lay: { sep12: false } } }, classes: ['ม.1/1'] }).data; ok(exP.cfg.sheet.p2max === 10 && exP.cfg.sheet.p2count === 2 && exP.cfg.sheet.lay.sep12 === false && exP.cfg.sheet.lay.sepFt === true, 'v6.5 answer sheet part 2 settings');
+  R('examKey', AD, exP.id, { A: [{ a: [0], p: 1 }, { a: [1], p: 1 }, { a: [2], p: 1 }, { a: [3], p: 1 }, { a: [0], p: 1 }] }, false);
+  const rr = R('examResultSave', AD, exP.id, { studentId: s9u.id, answers: [[0], [1], [2], [0], [0]] }).data; ok(R('examResultUpdate', AD, rr.id, { score2: 11 }).ok === false && R('examResultUpdate', AD, rr.id, { score2: 7.5 }).ok, 'v6.5 part 2 score validated');
+  const ls = R('studentHome', s9).data.latestScores.find(x => x.exam && x.title === 'สองตอน'); ok(ls && +ls.sub.score === 11.5 && +ls.maxScore === 15, 'v6.5 total score (part 1 + part 2) in student latest scores ' + JSON.stringify(ls && [ls.sub.score, ls.maxScore])); }
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
