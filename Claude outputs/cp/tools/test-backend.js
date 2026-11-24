@@ -571,5 +571,22 @@ const c62 = R('examSave', AD, { name: 'v62', cfg: { count: 10, grid: 'hv', flow:
   R('examKey', AD, exP.id, { A: [{ a: [0], p: 1 }, { a: [1], p: 1 }, { a: [2], p: 1 }, { a: [3], p: 1 }, { a: [0], p: 1 }] }, false);
   const rr = R('examResultSave', AD, exP.id, { studentId: s9u.id, answers: [[0], [1], [2], [0], [0]] }).data; ok(R('examResultUpdate', AD, rr.id, { score2: 11 }).ok === false && R('examResultUpdate', AD, rr.id, { score2: 7.5 }).ok, 'v6.5 part 2 score validated');
   const ls = R('studentHome', s9).data.latestScores.find(x => x.exam && x.title === 'สองตอน'); ok(ls && +ls.sub.score === 11.5 && +ls.maxScore === 15, 'v6.5 total score (part 1 + part 2) in student latest scores ' + JSON.stringify(ls && [ls.sub.score, ls.maxScore])); }
+// ---- v6.6 ----
+{ const T1 = R('listTeachers', AD).data[0]; const tu = ctx.rows_('Users').find(u => u.role === 'teacher');
+  const sv = R('saveUser', AD, { id: tu.id, prefix: tu.prefix, fullName: tu.fullName, position: 'ครูชำนาญการพิเศษ', dept: 'วิทยาศาสตร์และเทคโนโลยี' }); const tu2 = ctx.find_('Users', tu.id);
+  ok(sv.ok && tu2.position === 'ครูชำนาญการพิเศษ' && tu2.dept === 'วิทยาศาสตร์และเทคโนโลยี', 'v6.6 teacher position / learning area saved ' + (sv.error || ''));
+  ok(R('cfgListAdd', AD, 'positions', 'ครูพี่เลี้ยง').data.split(',').includes('ครูพี่เลี้ยง') && R('cfgListAdd', AD, 'learnAreas', 'ศิลปะการแสดง').data.includes('ศิลปะการแสดง') && R('cfgListAdd', AD, 'bad', 'x').ok === false && R('cfgListAdd', s9, 'positions', 'x').ok === false, 'v6.6 add positions / learning areas (staff only)');
+  const cat = R('save', AD, 'Categories', { code: 'ว21101', name: 'วิทยาศาสตร์ 1', area: 'วิทยาศาสตร์และเทคโนโลยี' }).data; ok(cat.area === 'วิทยาศาสตร์และเทคโนโลยี', 'v6.6 category learning area saved');
+  ok(ctx.catArea_('ว21101|วิทยาศาสตร์ 1') === 'วิทยาศาสตร์และเทคโนโลยี' && ctx.catArea_('ค21101|คณิต') === 'คณิตศาสตร์' && ctx.catArea_('') === '', 'v6.6 course learning area (set or from code prefix)');
+  const c0 = R('list', AD, 'Courses').data[0]; ok('area' in c0, 'v6.6 course list exposes learning area');
+  const td = ctx.now_().slice(0, 10), ev = R('evSave', AD, { title: 'ลบแล้วหาย', date: td, allDay: true, remind: 1440 }).data; ctx.eventJob();
+  const evr = ctx.find_('Events', ev.id); ok(evr.annId && ctx.rows_('Announcements').some(a => a.id === evr.annId) && ctx.rows_('Notifications').some(n => n.link === 'calendar:' + ev.id), 'v6.6 event reminder linked to its announcement');
+  R('evRemove', AD, ev.id); ok(!ctx.rows_('Notifications').some(n => n.link === 'calendar:' + ev.id) && !ctx.rows_('Announcements').some(a => a.id === evr.annId), 'v6.6 deleting an event removes its notifications + announcement');
+  const an = R('save', AD, 'Announcements', { title: 'ประกาศทดสอบลบ', type: 'ข่าวสาร', content: 'x' }).data; const hasN = ctx.rows_('Notifications').some(n => n.link === 'announcement:' + an.id);
+  R('remove', AD, 'Announcements', an.id); ok(hasN && !ctx.rows_('Notifications').some(n => n.link === 'announcement:' + an.id), 'v6.6 deleting an announcement removes its notifications');
+  const ex6 = R('examSave', AD, { name: 'v66', cfg: { count: 5, sheet: { p2max: 8, examType: 'ปลายภาค', area: 'คณิตศาสตร์', lay: { hgap: 9, p2gap: 2, blk: { info: { dx: 3, dy: 4 }, bad: { dx: 1 }, p2b: { dx: 0, dy: 0 } } } } } }).data;
+  const s6 = ex6.cfg.sheet; ok(s6.examType === 'ปลายภาค' && s6.area === 'คณิตศาสตร์' && s6.lay.hgap === 1.6 && s6.lay.p2gap === 5 && s6.lay.blk.info.dx === 3 && !s6.lay.blk.bad && !s6.lay.blk.p2b, 'v6.6 answer sheet course info + spacing + section offsets sanitized');
+  R('examKey', AD, ex6.id, { A: [0, 1, 2, 3, 0].map(a => ({ a: [a], p: 1 })) }, false); const r6 = R('examResultSave', AD, ex6.id, { studentId: s9u.id, answers: [[0], [1], [2], [3], [0]] }).data; R('examResultUpdate', AD, r6.id, { score2: 6 });
+  const er = R('examResults', AD).data.find(x => x.id === r6.id); ok(er && +er.score2 === 6 && er.p2max === 8, 'v6.6 exam results include part 2 score + max'); }
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
