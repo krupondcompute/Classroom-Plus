@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '6.8.0';
+const APP_VERSION = '6.9.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -184,7 +184,7 @@ const ROUTES = {
   setRole: ['admin', setRole_], getSettings: ['admin', getSettings_], saveSettings: ['admin', saveSettings_],
   auditLog: ['admin', auditLog_], backupNow: ['admin', function () { return backup_(); }],
   listBackups: ['admin', listBackups_], liveList: ['staff', liveList_], liveGet: ['staff', liveGet_], liveSave: ['staff', liveSave_], liveRemove: ['staff', liveRemove_],
-  liveControl: ['staff', liveControl_], liveStatus: ['staff', liveStatus_], liveInfo: ['public', liveInfo_], liveJoin: ['public', liveJoin_], liveSubmit: ['public', liveSubmit_], termSources: ['staff', termSources_], peekTerm: ['staff', peekTerm_], importTerm: ['staff', importTerm_], saveTermDb: ['admin', saveTermDb_], createTermDb: ['admin', createTermDb_], removeTermDb: ['admin', removeTermDb_],
+  liveControl: ['staff', liveControl_], liveStatus: ['staff', liveStatus_], liveInfo: ['public', liveInfo_], liveJoin: ['public', liveJoin_], liveSubmit: ['public', liveSubmit_], termSources: ['staff', termSources_], repairFiles: ['staff', repairFiles_], peekTerm: ['staff', peekTerm_], importTerm: ['staff', importTerm_], saveTermDb: ['admin', saveTermDb_], createTermDb: ['admin', createTermDb_], removeTermDb: ['admin', removeTermDb_],
   fileData: ['user', fileData_],
   scoreTest: ['staff', scoreTest_], scoreBooks: ['staff', scoreBooks_], scoreBook: ['staff', scoreBook_], attCopyFrom: ['staff', attCopyFrom_], attExport: ['staff', attExport_],
   ttGet: ['staff', ttGet_], ttSaveCfg: ['staff', ttSaveCfg_], ttSaveSlot: ['staff', ttSaveSlot_], ttDeleteSlot: ['staff', ttDeleteSlot_],
@@ -1109,7 +1109,7 @@ function examCfg_(c) {
       if (typeof e.b === 'boolean') r.b = e.b; if (e.i === true) r.i = true; if (e.fs) r.fs = num(e.fs, .5, 3); if (e.del === true) r.del = true; if (Object.keys(r).length) oe[k] = r; });
     out.sheet.ed = oe; out.sheet.add = (Array.isArray(s.add) ? s.add : []).slice(0, 30).map(a => ({ x: num(a && a.x, 0, 210), y: num(a && a.y, 0, 297), t: String((a && a.t) || '').slice(0, 300), s: num(a && a.s, 1.5, 8) || 3, a: ['start', 'middle', 'end'].indexOf(a && a.a) >= 0 ? a.a : 'start', b: !!(a && a.b), i: !!(a && a.i) })); }
   out.sheet.font = str_(s.font, 40); out.sheet.fs = Math.min(1.35, Math.max(.8, Number(s.fs) || 1)); const hi = String(s.howtoImg || ''); out.sheet.howtoImg = /^data:image\/(png|jpe?g|webp);base64,/.test(hi) && hi.length <= 30000 ? hi : '';
-  out.sheet.howtoText = str_(s.howtoText, 600); out.sheet.school = str_(s.school, 120); out.sheet.subtitle = str_(s.subtitle, 200); out.sheet.courseCode = str_(s.courseCode, 30); out.sheet.courseName = str_(s.courseName, 120); out.sheet.examType = str_(s.examType, 40); out.sheet.area = str_(s.area, 80); out.sheet.courseId = str_(s.courseId, 40); // v6.6 ข้อมูลรายวิชา
+  out.sheet.howtoText = str_(s.howtoText, 600); out.sheet.school = str_(s.school, 120); out.sheet.subtitle = str_(s.subtitle, 200); out.sheet.courseCode = str_(s.courseCode, 30); out.sheet.courseName = str_(s.courseName, 120); out.sheet.hdr = s.hdr === true; out.sheet.examType = str_(s.examType, 40); out.sheet.area = str_(s.area, 80); out.sheet.courseId = str_(s.courseId, 40); // v6.6 ข้อมูลรายวิชา
   return out;
 }
 /** เฉลย: { A: [{ a: [ตัวเลือกที่ถูก...], p: คะแนน }] } */
@@ -1871,6 +1871,7 @@ function remove_(ctx, entity, id) {
     const counts = {};
     if (entity === 'Courses') {
       const asg = rows_('Assignments').filter(a => a.courseId === id).map(a => a.id);
+      try { const lk = {}; asg.forEach(x => lk['assignment:' + x] = 1); rows_('Lessons').filter(l => l.courseId === id).forEach(l => lk['lesson:' + l.id] = 1); deleteWhere_('Notifications', n => !!lk[n.link]); } catch (e) {}
       purgeRows_('Submissions', s => asg.indexOf(s.assignmentId) >= 0); purgeRows_('Assignments', a => a.courseId === id); purgeRows_('Lessons', l => l.courseId === id);
       counts.Submissions = deleteWhere_('Submissions', s => asg.indexOf(s.assignmentId) >= 0);
       counts.Assignments = deleteWhere_('Assignments', a => a.courseId === id);
@@ -1878,6 +1879,9 @@ function remove_(ctx, entity, id) {
       counts.Lessons = deleteWhere_('Lessons', l => l.courseId === id);
     }
     if (entity === 'Lessons') counts.Progress = deleteWhere_('Progress', p => p.lessonId === id);
+    if (entity === 'Lessons' || entity === 'Assignments') { try { const links = {}; // v6.9 ลบบทเรียน/งาน/รายวิชา → ลบการแจ้งเตือนของนักเรียนด้วย
+        if (entity === 'Lessons') links['lesson:' + id] = 1; if (entity === 'Assignments') links['assignment:' + id] = 1;
+        deleteWhere_('Notifications', n => !!links[n.link]); } catch (e) {} }
     if (entity === 'Announcements') { try { const evs = {}; rows_('Events').forEach(ev => { if (ev.annId === id || (row.type === 'กิจกรรม' && '📅 ' + ev.title === row.title && ev.ownerId === row.ownerId)) evs['calendar:' + ev.id] = 1; }); // v6.7 ประกาศจากกิจกรรม → ลบการแจ้งเตือนของกิจกรรมด้วย
       counts.Notifications = deleteWhere_('Notifications', n => n.link === 'announcement:' + id || !!evs[n.link]); } catch (e) {} } // v6.6 ลบการแจ้งเตือนของประกาศนี้
     if (entity === 'Assignments') { purgeRows_('Submissions', s => s.assignmentId === id); counts.Submissions = deleteWhere_('Submissions', s => s.assignmentId === id); }
@@ -2660,7 +2664,7 @@ function importTerm_(ctx, from, kind, ids, opts) {
       const due = Utilities.formatDate(new Date(Date.now() + 7 * 864e5), TZ, "yyyy-MM-dd'T'23:59:00"), keyOf = c => (c.code || '') + '|' + c.name;
       const add = pick.rows.filter(a => !have[a.id]).map(a => { let c = cur.find(x => x.id === a.courseId); if (!c) { const old = pick.courses[a.courseId]; c = old && cur.find(x => keyOf(x) === keyOf(old) && (isAdmin_(u) || teaches_(u, x))); }
         if (!c) return null; return Object.assign(a, { courseId: c.id, dueAt: due, createdAt: t, updatedAt: t, ownerId: u.id }); }).filter(Boolean);
-      if (add.length) insertMany_('Assignments', add); n = add.length; }
+      if (add.length) { insertMany_('Assignments', add); try { add.forEach(a => notifyUsers_(studentsFor_(a.grade, a.room, a.courseId).map(x => x.id), (a.type || 'งาน') + 'ใหม่: ' + a.title, 'กำหนดส่ง ' + dt_(a.dueAt).replace('T', ' ').slice(0, 16), 'assignment:' + a.id)); } catch (e) {} } n = add.length; }
     else if (kind === 'papers' || kind === 'exams') { const table = kind === 'papers' ? 'ExamPapers' : 'Exams'; Object.keys(MEM_).forEach(k => delete MEM_[k]); const have = {}, fold = {}; rows_(table).forEach(r => have[r.id] = 1); rows_('ExamFolders').forEach(f => fold[f.id] = 1);
       const add = pick.rows.filter(r => !have[r.id]).map(r => { r.folderId = fold[r.folderId] ? r.folderId : ''; r.createdAt = t; r.updatedAt = t; r.ownerId = r.ownerId || u.id;
         if (kind === 'papers') { const d = json_(r.data, {}); if (tk && /^25\d\d\//.test(tk)) d.term = tk; r.data = JSON.stringify(d); } else { const c = json_(r.cfg, {}); if (c.sheet && tk && /^25\d\d\//.test(tk)) c.sheet.term = tk; r.cfg = JSON.stringify(c); } return r; });
@@ -2672,11 +2676,26 @@ function importTerm_(ctx, from, kind, ids, opts) {
       const add = pick.rows.filter(r => !have[r.id] && !(kind === 'students' && codes[r.studentCode]) && !(kind === 'categories' && codes[(r.code || '') + '|' + r.name]))
         .map(r => { if (kind === 'students' && year) r.acadYear = year; if (kind === 'courses' && year) { r.acadYear = year; r.term = tk.split('/')[1]; } if (kind === 'announcements') { r.createdAt = t; r.updatedAt = t; } return r; });
       if (add.length) insertMany_(table, add); n = add.length;
-      if (kind === 'courses' && pick.lessons.length) { const lh = {}; rows_('Lessons').forEach(l => lh[l.id] = 1); const la = pick.lessons.filter(l => !lh[l.id]); if (la.length) insertMany_('Lessons', la); }
+      if (kind === 'courses' && pick.lessons.length) { const lh = {}; rows_('Lessons').forEach(l => lh[l.id] = 1); const la = pick.lessons.filter(l => !lh[l.id]); if (la.length) insertMany_('Lessons', la);
+        try { add.forEach(c => { const ls = la.filter(l => l.courseId === c.id).sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0)); if (ls.length) notifyUsers_(studentsFor_('', '', c.id).map(x => x.id), 'บทเรียนใหม่: ' + c.name, ls.length + ' บทเรียน · ' + ls.slice(0, 3).map(l => l.title).join(', '), 'lesson:' + ls[0].id); }); } catch (e) {} } // v6.8 แจ้งเตือนนักเรียน
     }
     log_(u.id, 'import_' + kind, from + ' → ' + n);
     return { added: n, skipped: Object.keys(want).length - n };
   });
+}
+/** v6.9 ตรวจสอบ/ซ่อมไฟล์ของรายวิชา: กู้จากถังขยะ · คัดลอกไฟล์ที่อยู่นอกโฟลเดอร์ภาคเรียนนี้ · ตั้งแชร์ให้นักเรียนเปิดได้ */
+function repairFiles_(ctx, courseId) {
+  const u = ctx.user, c = find_('Courses', courseId); if (!c || !(isAdmin_(u) || teaches_(u, c))) throw err_('ไม่พบรายวิชา', 'NOTFOUND');
+  const rows = [['Courses', c, c.name]].concat(rows_('Lessons').filter(l => l.courseId === c.id).map(l => ['Lessons', l, 'บทเรียน: ' + l.title]), rows_('Assignments').filter(a => a.courseId === c.id).map(a => ['Assignments', a, 'งาน: ' + a.title]));
+  const st = { ok: 0, copied: 0, restored: 0, shared: 0, missing: 0, where: [] }, term = driveId_(), map = {}, seen = {}, t0 = Date.now(); let folder = null;
+  const inTerm = f => { let q = [f.getParents()], d = 0; while (q.length && d < 8) { const nq = []; for (const it of q) while (it.hasNext()) { const p = it.next(); if (p.getId() === term) return true; nq.push(p.getParents()); } q = nq; d++; } return false; };
+  rows.forEach(([t, r, label]) => fileIds_(r).forEach(id => { if (seen[id] || Date.now() - t0 > 240000) return; seen[id] = 1;
+    try { const f = DriveApp.getFileById(id); try { if (f.isTrashed()) { f.setTrashed(false); st.restored++; } } catch (e) {}
+      if (!inTerm(f) && f.getSize() <= 300 * 1048576) { folder = folder || folderFor_(u, 'ไฟล์นำเข้าจากภาคเรียนก่อน'); const cp = f.makeCopy(f.getName(), folder); try { cp.setDescription(f.getDescription() || ('cp:' + u.id)); } catch (e) {} if (share_(cp)) st.shared++; map[id] = cp.getId(); st.copied++; }
+      else { let pub = false; try { pub = f.getSharingAccess() === DriveApp.Access.ANYONE_WITH_LINK; } catch (e) {} if (!pub && share_(f)) st.shared++; st.ok++; }
+    } catch (e) { st.missing++; if (st.where.indexOf(label) < 0) st.where.push(label); } }));
+  if (Object.keys(map).length) lock_(() => rows.forEach(([t, r]) => { const patch = {}; Object.keys(r).forEach(k => { if (k[0] === '_' || typeof r[k] !== 'string' || !r[k]) return; let v = r[k]; Object.keys(map).forEach(a => { if (v.indexOf(a) >= 0) v = v.split(a).join(map[a]); }); if (v !== r[k]) patch[k] = v; }); if (Object.keys(patch).length) updateRow_(t, r, patch); }));
+  log_(u.id, 'repair_files', c.id + ' ' + JSON.stringify(st)); return st;
 }
 /** คัดลอกไฟล์ Drive ที่อ้างถึงในแถวข้อมูล → { idเดิม: idใหม่ } (ข้ามไฟล์ใหญ่เกิน 300 MB / เกินเวลา) */
 function copyFiles_(rows, user) {

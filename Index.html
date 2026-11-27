@@ -1505,6 +1505,12 @@ body.app footer{align-items:center!important;text-align:center!important;justify
 .swal2-close{border-radius:50%!important;width:2.1rem!important;height:2.1rem!important;font-size:1.6rem!important;line-height:1!important}
 @media (max-width:767.98px){.stu-row>:nth-child(5){justify-self:stretch!important}.stu-row .sub-acts{width:100%}.stu-row .sub-acts [data-grade]{flex:1 1 auto!important;width:auto!important;border-radius:999px!important;padding:0 18px!important;display:inline-flex!important;gap:6px;justify-content:center;align-items:center;font-weight:700}.stu-row .sub-acts [data-grade] .bl{display:inline!important}}
 
+/* v6.9 */
+.ss-scope{min-width:0;max-width:100%}.ss-scope .chip{white-space:normal;max-width:100%;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35;text-align:left;word-break:break-word}
+.file-row:has(.ss-scope){overflow:hidden}.file-row:has(.ss-scope)>.flex-fill{min-width:0!important;flex:1 1 100%}
+@media (min-width:576px){.la-card [data-import] .bt{display:inline!important}.la-card [data-import]{width:auto!important;padding:.25rem .6rem!important;display:inline-flex!important}}
+@media (max-width:575.98px){.sec-btns [data-import] .bt{display:none}.sec-btns [data-import]{width:34px;padding:0;display:inline-grid;place-items:center}}
+@media (min-width:1200px){.cls-grid{grid-template-columns:minmax(330px,1fr) minmax(0,1.3fr) minmax(0,1fr)!important}}
 /* v6.8 */
 .sbc-row+.sbc-row{border-top:2px solid var(--border);padding-top:18px;margin-top:4px}.sbc-row{padding-bottom:4px}
 html{touch-action:manipulation;-webkit-tap-highlight-color:transparent}@media (hover:none){.ccard:hover,.dcell[data-dk]:hover{transform:none;box-shadow:inherit}}
@@ -1806,7 +1812,10 @@ function call(fn, args, o = {}) {
       .withFailureHandler(e => rej(Object.assign(new Error(/network|NetworkError|timed? ?out/i.test(String(e && e.message)) ? 'การเชื่อมต่อขัดข้อง กรุณาตรวจสอบอินเทอร์เน็ต' : 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์: ' + (e && e.message || e)), { code: 'NET' })))
       .rpc(fn, S.token, args, curVt());
   });
-  const attempt = n => run().catch(e => e.code === 'NET' && n > 0 ? new Promise(r => setTimeout(r, 800)).then(() => attempt(n - 1)) : Promise.reject(e));
+  // v6.9 กันค้าง: หมดเวลา → แจ้งเตือน (คำสั่งอ่านข้อมูลลองใหม่อัตโนมัติ 1 ครั้ง)
+  const LONG = /^(importTerm|peekTerm|repairFiles|docExport|backup|restoreBackup|scoreBook|scoreBooks|attExport|report|createTermDb|examResultSaveMany)$/.test(fn), TMO = LONG ? 300000 : 75000;
+  const timed = () => new Promise((res, rej) => { const t = setTimeout(() => rej(Object.assign(new Error('เซิร์ฟเวอร์ตอบช้า กรุณาลองใหม่อีกครั้ง'), { code: 'TIMEOUT' })), TMO); run().then(v => { clearTimeout(t); res(v); }, e => { clearTimeout(t); rej(e); }); });
+  const attempt = n => timed().catch(e => (e.code === 'NET' || (e.code === 'TIMEOUT' && !MUTATING.has(fn))) && n > 0 ? new Promise(r => setTimeout(r, 800)).then(() => attempt(n - 1)) : Promise.reject(e));
   let warm = null; if (MUTATING.has(fn)) { warm = [...CACHE.values()].filter(v => v.fn).sort((x, y) => (y.used || 0) - (x.used || 0)).slice(0, 8).map(v => [v.fn, v.a]); CACHE.clear(); PC.clear(); }
   if (o.loader !== false) Loader.show(o.msg);
   return attempt(o.retry ?? 1).then(d => { if (warm && warm.length) setTimeout(() => warm.forEach(([f, a]) => { if (f) apiWarm(f, a); }), 30); return d; }) // v6.7 โหลดข้อมูลที่ใช้บ่อยล่วงหน้าหลังบันทึก (เปิดหน้าถัดไปเร็วขึ้น)
@@ -1817,7 +1826,7 @@ function call(fn, args, o = {}) {
 const api = (fn, ...a) => call(fn, a);
 /* แคชข้อมูลฝั่งเว็บ: แสดงข้อมูลเดิมทันที แล้วอัปเดตเบื้องหลัง (เปิดหน้าเดิมซ้ำแทบไม่ต้องรอ) */
 const CACHE = new Map();
-const MUTATING = new Set(['cfgListAdd', 'qrSave', 'qrStatus', 'qrRemove', 'paperSave', 'paperRemove', 'examFolderSave', 'examFolderRemove', 'examSave', 'examRemove', 'examKey', 'examResultSave', 'examResultUpdate', 'examResultRemove', 'examPrefs', 'classBulkAdd', 'classRemove2', 'toolLogClear', 'chatPurge', 'ttSaveSlot', 'ttDeleteSlot', 'ttSaveCfg', 'attSave', 'attCheckIn', 'save', 'remove', 'submitWork', 'deleteSubmission', 'saveUser', 'deleteUser', 'deleteUsers', 'chatTeamMembers', 'setCoAdmin', 'importStudents', 'setRole', 'gradeSubmission', 'saveSettings', 'updateProfile', 'saveProgress', 'restoreBackup', 'changeCredentials', 'markRead', 'login', 'logout', 'registerStudent', 'registerAdmin', 'addAssignmentType', 'saveStudentMenus', 'chatSend', 'chatCreateTeam', 'editSubmission', 'removeSubmission', 'renameClass', 'saveTermDb', 'createTermDb', 'removeTermDb', 'importTerm', 'liveSave', 'liveRemove', 'liveControl']);
+const MUTATING = new Set(['repairFiles', 'cfgListAdd', 'qrSave', 'qrStatus', 'qrRemove', 'paperSave', 'paperRemove', 'examFolderSave', 'examFolderRemove', 'examSave', 'examRemove', 'examKey', 'examResultSave', 'examResultUpdate', 'examResultRemove', 'examPrefs', 'classBulkAdd', 'classRemove2', 'toolLogClear', 'chatPurge', 'ttSaveSlot', 'ttDeleteSlot', 'ttSaveCfg', 'attSave', 'attCheckIn', 'save', 'remove', 'submitWork', 'deleteSubmission', 'saveUser', 'deleteUser', 'deleteUsers', 'chatTeamMembers', 'setCoAdmin', 'importStudents', 'setRole', 'gradeSubmission', 'saveSettings', 'updateProfile', 'saveProgress', 'restoreBackup', 'changeCredentials', 'markRead', 'login', 'logout', 'registerStudent', 'registerAdmin', 'addAssignmentType', 'saveStudentMenus', 'chatSend', 'chatCreateTeam', 'editSubmission', 'removeSubmission', 'renameClass', 'saveTermDb', 'createTermDb', 'removeTermDb', 'importTerm', 'liveSave', 'liveRemove', 'liveControl']);
 let rerenderT = 0;
 function rerender() { clearTimeout(rerenderT); rerenderT = setTimeout(() => { if (S.user && !document.querySelector('.modal.show') && !document.querySelector('.swal2-container')) go(S.page, S.params, { quiet: true }); }, 250); }
 /* แคชถาวรในเครื่อง (เปิดหน้าเว็บใหม่ก็แสดงข้อมูลล่าสุดทันที แล้วอัปเดตเบื้องหลัง) */
@@ -2065,7 +2074,9 @@ function bindForm(root, fields = []) {
   });
   $$('[data-cdadd]', root).forEach(b => b.onclick = async ev => { ev.preventDefault(); ev.stopPropagation(); const box = b.closest('[data-cdrop]'), fn = b.dataset.addfn; // v6.7 + เพิ่ม ในดรอปดาวน์เลือกหลายรายการ
     let val = '', lb = '';
-    if (fn === 'subject') { const r = await Sw.fire({ title: 'เพิ่มรายวิชา (หมวดหมู่รายวิชา)', html: '<input id="swC" class="form-control mb-2" placeholder="รหัสวิชา เช่น ว21102"><input id="swN" class="form-control" placeholder="ชื่อวิชา เช่น วิทยาการคำนวณ">', showCancelButton: true, confirmButtonText: 'เพิ่ม', cancelButtonText: 'ยกเลิก', preConfirm: () => { const n = $('#swN').value.trim(); if (!n) return Swal.showValidationMessage('กรุณาพิมพ์ชื่อวิชา'); return { code: $('#swC').value.trim(), name: n }; } });
+    if (fn === 'course') { const r = await Sw.fire({ title: 'เพิ่มรายวิชา', html: '<input id="swC" class="form-control mb-2" placeholder="รหัสวิชา เช่น ว21102"><input id="swN" class="form-control" placeholder="ชื่อวิชา">', showCancelButton: true, confirmButtonText: 'เพิ่ม', cancelButtonText: 'ยกเลิก', preConfirm: () => { const n = $('#swN').value.trim(); if (!n) return Swal.showValidationMessage('กรุณาพิมพ์ชื่อวิชา'); return { code: $('#swC').value.trim(), name: n }; } });
+      if (!r.isConfirmed) return; const c = await api('save', 'Courses', Object.assign({ category: r.value.name, teacher: S.user.prefix + S.user.fullName, acadYear: viewT().year, term: viewT().term }, r.value)); (S.cache.courses = S.cache.courses || []).push(c); val = c.id; lb = (c.code ? c.code + ' ' : '') + c.name; }
+    else if (fn === 'subject') { const r = await Sw.fire({ title: 'เพิ่มรายวิชา (หมวดหมู่รายวิชา)', html: '<input id="swC" class="form-control mb-2" placeholder="รหัสวิชา เช่น ว21102"><input id="swN" class="form-control" placeholder="ชื่อวิชา เช่น วิทยาการคำนวณ">', showCancelButton: true, confirmButtonText: 'เพิ่ม', cancelButtonText: 'ยกเลิก', preConfirm: () => { const n = $('#swN').value.trim(); if (!n) return Swal.showValidationMessage('กรุณาพิมพ์ชื่อวิชา'); return { code: $('#swC').value.trim(), name: n }; } });
       if (!r.isConfirmed) return; const k = await api('save', 'Categories', r.value); (S.cache.categories = S.cache.categories || []).push(k); val = (r.value.code || '') + '|' + r.value.name; lb = (r.value.code ? r.value.code + ' ' : '') + r.value.name; }
     else { const r = await Sw.fire({ title: 'เพิ่ม' + (b.textContent.trim().replace(/^เพิ่ม/, '') || 'รายการ'), input: 'text', showCancelButton: true, confirmButtonText: 'เพิ่ม', cancelButtonText: 'ยกเลิก',
         inputValidator: v => { v = String(v || '').trim(); return !v ? 'กรุณาพิมพ์ค่า' : /[,|]/.test(v) ? 'ห้ามใช้ , หรือ |' : $$('input[data-lb]', box).some(x => x.value === v) ? 'มีค่านี้แล้ว' : null; } });
@@ -3904,7 +3915,7 @@ PAGES.acourse = { admin: true, parent: 'acourses', async render(el, p) {
   const ls = lessons.filter(l => l.courseId === course.id), as = asg.filter(a => a.courseId === course.id), n = nowStr();
   const state = l => l.publishAt && l.publishAt > n ? '<span class="chip warn">รอเผยแพร่</span>' : l.closeAt && l.closeAt <= n ? '<span class="chip danger">ปิดแล้ว</span>' : '<span class="chip ok">เผยแพร่</span>';
   el.innerHTML = `<button class="btn btn-soft mb-3" data-go="acourses"><i class="fa-solid fa-arrow-left"></i> รายวิชาทั้งหมด</button>
-  <div class="card-x mb-3 d-flex gap-3 align-items-center flex-wrap"><div style="width:200px;max-width:100%">${coverHtml(course)}</div><div class="flex-fill"><h4 class="fw-bold mb-1">${esc(course.name)}</h4><div class="text-muted small">${esc(course.code)} · ${esc(targetTxt(course.grade, course.room))} · ${esc(course.teacher)}</div></div><button class="btn btn-soft" id="eC"><i class="fa-solid fa-pen"></i> แก้ไขรายวิชา</button></div>
+  <div class="card-x mb-3 d-flex gap-3 align-items-center flex-wrap"><div style="width:200px;max-width:100%">${coverHtml(course)}</div><div class="flex-fill"><h4 class="fw-bold mb-1">${esc(course.name)}</h4><div class="text-muted small">${esc(course.code)} · ${esc(targetTxt(course.grade, course.room))} · ${esc(course.teacher)}</div></div><div class="d-flex gap-2 flex-wrap"><button class="btn btn-soft" id="eC"><i class="fa-solid fa-pen"></i> แก้ไขรายวิชา</button><button class="btn btn-soft" id="fixF" title="ตรวจสอบรูปปก/ไฟล์แนบ/วิดีโอ ที่นักเรียนเปิดไม่ได้ (เช่น ดึงมาจากภาคเรียนก่อน) → คัดลอกมาไว้ภาคเรียนนี้และแชร์ให้นักเรียนเปิดได้"><i class="fa-solid fa-screwdriver-wrench"></i><span class="bt"> ตรวจสอบ/ซ่อมไฟล์</span></button></div></div>
   <div class="card-x mb-3"><div class="d-flex mb-2 align-items-center"><h5 class="fw-bold flex-fill m-0">บทเรียน (${ls.length})</h5><button class="btn btn-primary btn-sm" id="aL"><i class="fa-solid fa-plus"></i> เพิ่มบทเรียน</button></div>
     <div id="tl">${ls.length ? `<div class="grid g3 lgrid">${ls.map((l, i) => `<div class="card-x lcard">${coverHtml(l, 'fa-book-open-reader')}
       <div class="d-flex align-items-center gap-2"><span class="ord">${i + 1}</span><div style="min-width:0" class="flex-fill"><div class="small text-muted text-truncate">${esc(l.unit || 'บทเรียน')}</div><b class="d-block text-truncate" title="${esc(l.title)}">${esc(l.title)}</b></div></div>
@@ -3915,6 +3926,10 @@ PAGES.acourse = { admin: true, parent: 'acourses', async render(el, p) {
   <div class="card-x"><div class="d-flex mb-2 align-items-center"><h5 class="fw-bold flex-fill m-0">งานที่มอบหมาย (${as.length})</h5><button class="btn btn-primary btn-sm" id="aA"><i class="fa-solid fa-plus"></i> สร้างงาน</button></div>
     ${pagedTable('cAsg', ['งาน', 'มอบหมายให้', 'กำหนดส่ง', 'คะแนนเต็ม', ''], as.map(a => [ttlCell(a.type, a.title), esc(targetTxt(a.grade, a.room)), thDate(a.dueAt, true), esc(a.maxScore), `<button class="btn btn-sm btn-primary" data-go="grade" data-id="${esc(a.id)}">ตรวจงาน</button>`]))}</div>`;
   const re = () => go('acourse', p);
+  $('#fixF').onclick = async () => { if (!await confirmBox({ title: 'ตรวจสอบ/ซ่อมไฟล์ของรายวิชานี้?', html: 'ตรวจรูปปก ไฟล์แนบ และวิดีโอ ของรายวิชา บทเรียน และงานทั้งหมด<br><small class="text-muted">ไฟล์ที่อยู่ในภาคเรียนเดิมจะถูกคัดลอกมาไว้ภาคเรียนนี้ · กู้ไฟล์ที่อยู่ในถังขยะ · ตั้งแชร์ให้นักเรียนเปิดได้ (อาจใช้เวลา 1–3 นาที)</small>' })) return;
+    const r = await apiMsg('กำลังตรวจสอบไฟล์...', 'repairFiles', course.id); S.cache.at = 0;
+    await Sw.fire({ icon: r.missing ? 'warning' : 'success', title: 'ตรวจสอบไฟล์แล้ว', html: `<div class="text-start">ปกติ ${r.ok} ไฟล์<br>คัดลอกมาภาคเรียนนี้ ${r.copied} ไฟล์<br>กู้จากถังขยะ ${r.restored} ไฟล์<br>ตั้งแชร์ให้นักเรียน ${r.shared} ไฟล์${r.missing ? `<br><b class="text-danger">ไม่พบ/ถูกลบถาวร ${r.missing} ไฟล์</b> — กรุณาอัปโหลดใหม่${(r.where || []).length ? '<br><small>' + r.where.slice(0, 8).map(esc).join('<br>') + '</small>' : ''}` : ''}</div>` });
+    go('acourse', p, { force: true }); };
   $('#eC').onclick = () => crudForm('Courses', course, re);
   $('#aL').onclick = () => crudForm('Lessons', { courseId: course.id, order: ls.length + 1, unit: ls.length ? ls[ls.length - 1].unit : '' }, re);
   $('#aA').onclick = () => crudForm('Assignments', { courseId: course.id }, re);
@@ -4379,7 +4394,10 @@ function pvToPng(svgEl, wpx, hpx) { return new Promise(res => { try { const c = 
   const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(c)], { type: 'image/svg+xml' })), im = new Image(), k = 2;
   im.onload = () => { try { const cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(wpx * k)); cv.height = Math.max(1, Math.round(hpx * k)); const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(im, 0, 0, cv.width, cv.height); res(cv.toDataURL('image/png')); } catch (e) { res(''); } URL.revokeObjectURL(url); };
   im.onerror = () => { URL.revokeObjectURL(url); res(''); }; im.src = url; } catch (e) { res(''); } }); }
-const pvImgData = src => new Promise(res => { if (/^data:/.test(src)) return res(src); fetch(src).then(r => r.ok ? r.blob() : null).then(b => { if (!b) return res(''); const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => res(''); fr.readAsDataURL(b); }).catch(() => res('')); });
+const pvImgData0 = src => new Promise(res => { if (/^data:/.test(src)) return res(src); fetch(src).then(r => r.ok ? r.blob() : null).then(b => { if (!b || !/^image\//.test(b.type)) return res(''); const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => res(''); fr.readAsDataURL(b); }).catch(() => res('')); });
+/** v6.9 รูปจาก Google Drive (เช่น โลโก้โรงเรียน) โหลดผ่านระบบเมื่อดึงตรงไม่ได้ → ฝังในไฟล์ Word/Google Doc ได้ */
+const pvImgData = async src => { const u = await pvImgData0(src); if (u) return u; const id = (String(src).match(/(?:\/d\/|[?&]id=|googleusercontent\.com\/d\/|^drive:)([-\w]{20,})/) || [])[1]; if (!id) return '';
+  const hit = DIMG.get(id); if (typeof hit === 'string') return hit; try { const d = await (hit instanceof Promise ? hit : apiQ('fileData', id)); if (d) DIMG.set(id, d); return d || ''; } catch (e) { return ''; } };
 async function pvDocHtml(f) {
   const d = f.contentDocument, w = f.contentWindow, SV = 'http://www.w3.org/2000/svg';
   const src = [...((d.getElementById('out') || {}).children || [])].concat([...((d.getElementById('after') || {}).children || [])]);
@@ -4699,8 +4717,8 @@ function drawScores(B, c0) {
   let ft = S.ssTerm !== undefined ? S.ssTerm : tk(viewT()); // v6.7 แยกตามภาคเรียน/ปีการศึกษา (ดูย้อนหลังได้)
   const edit = async i => { await lists(); const x = i >= 0 ? list[i] : { id: '', name: 'คะแนนเก็บ', url: '', terms: ft ? [ft] : [], courseIds: [], grades: [], rooms: [] };
     const F = [{ k: 'name', label: 'ชื่อที่แสดงในหน้าหลักนักเรียน', req: true }, { k: 'url', label: 'Google Sheet ID หรือ URL (ต้องมีคอลัมน์ "รวมคะแนนทั้งหมด")', req: true, attrs: 'placeholder="https://docs.google.com/spreadsheets/d/..."', valid: v => /docs\.google\.com\/spreadsheets\/d\/|^[\w-]{25,}$/.test(v) ? '' : 'กรุณาวางลิงก์ Google Sheet หรือ Sheet ID' },
-      { k: 'terms', label: 'ภาคเรียน / ปีการศึกษา', type: 'checkdrop', allText: 'ทุกภาคเรียน', opts: termOpts, help: 'เลือกภาคเรียนของนักเรียน (ตามฐานข้อมูลที่นักเรียนอยู่) — ถ้าไม่แน่ใจให้เลือก "ทุกภาคเรียน"' }, { k: 'courseIds', label: 'รายวิชา', type: 'multi', noAdd: true, opts: () => (S.cache.courses || []).map(k => [k.id, k.name + (k.subjectCode ? ' (' + k.subjectCode + ')' : '')]) },
-      { k: 'grades', label: 'ระดับชั้น', type: 'multi', opts: grades }, { k: 'rooms', label: 'ห้องเรียน', type: 'multi', opts: rooms }];
+      { k: 'terms', label: 'ภาคเรียน / ปีการศึกษา', type: 'checkdrop', allText: 'ทุกภาคเรียน', opts: termOpts, help: 'เลือกภาคเรียนของนักเรียน (ตามฐานข้อมูลที่นักเรียนอยู่) — ถ้าไม่แน่ใจให้เลือก "ทุกภาคเรียน"' }, { k: 'courseIds', label: 'รหัสวิชา / ชื่อวิชา', type: 'checkdrop', allText: 'ทุกรายวิชา', add: 'course', addLabel: 'รายวิชา', opts: () => (S.cache.courses || []).map(k => [k.id, (k.code ? k.code + ' ' : '') + k.name]) },
+      { k: 'grades', label: 'ระดับชั้น', type: 'checkdrop', allText: 'ทุกชั้น', add: 'grade', addLabel: 'ระดับชั้น', col: 'col-6', opts: grades }, { k: 'rooms', label: 'ห้องเรียน', type: 'checkdrop', allText: 'ทุกห้อง', add: 'room', addLabel: 'ห้อง', col: 'col-6', opts: () => rooms().map(r => [r, 'ห้อง ' + r]), prefix: 'ห้อง ' }];
     const m = modal(i >= 0 ? 'แก้ไขที่มาของคะแนนเก็บ' : 'เพิ่มที่มาของคะแนนเก็บ', `<div class="gb-alert info mb-3"><i class="fa-solid fa-circle-info"></i><div>ระบบอ่านคอลัมน์ <b>"รวมคะแนนทั้งหมด"</b> และค้นหานักเรียนจาก <b>รหัสนักเรียน</b> หรือ <b>ชื่อ-สกุล</b> · เลือก "ทั้งหมด" = ไม่จำกัด · แชร์ชีตให้บัญชีที่ deploy เว็บแอปอ่านได้ (หรือเปิดลิงก์ให้ทุกคนดูได้) · <a href="${SCORE_TPL}" target="_blank" rel="noopener">ดูแม่แบบ Google Sheet</a></div></div>${formHtml(F, { name: x.name, url: x.url, terms: x.terms.join(','), courseIds: x.courseIds.join(','), grades: x.grades.join(','), rooms: x.rooms.join(',') })}`,
       '<button class="btn btn-soft" data-bs-dismiss="modal">ยกเลิก</button><button class="btn btn-primary" id="ssOk"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>');
     m.body.insertAdjacentHTML('beforeend', `<div class="card-x ss-test"><b><i class="fa-solid fa-vial text-primary"></i> ทดสอบการอ่านคะแนน</b><div class="d-flex gap-2 mt-2 flex-wrap"><input class="form-control" style="max-width:220px" id="ssCode" placeholder="รหัสนักเรียน (ไม่บังคับ)" inputmode="numeric"><button type="button" class="btn btn-soft" id="ssTest"><i class="fa-solid fa-magnifying-glass"></i> ทดสอบ</button></div><div id="ssRes" class="small mt-2"></div></div>`);
@@ -4723,7 +4741,7 @@ function drawScores(B, c0) {
       <div class="d-flex flex-wrap gap-2 align-items-center mb-2"><label class="small fw-semibold text-nowrap" for="ssT"><i class="fa-solid fa-calendar-days text-primary"></i> ภาคเรียน/ปีการศึกษา</label><select class="form-select w-auto" id="ssT">${opt([['', 'ทุกภาคเรียน (ทั้งหมด)']].concat([...new Map(termOpts().concat(list.flatMap(x => x.terms).map(k => [k, 'ภาคเรียนที่ ' + k.split('/')[1] + '/' + k.split('/')[0]]))).entries()].sort((a, b) => b[0].localeCompare(a[0]))), ft)}</select><span class="small text-muted">${ft ? 'แสดงที่มาของภาคเรียนนี้ + ที่ใช้ทุกภาคเรียน' : 'แสดงทั้งหมด'}</span></div>
       <div class="d-flex flex-column gap-2 mb-3">${list.map((x, i) => [x, i]).filter(([x]) => !ft || !x.terms.length || x.terms.includes(ft)).map(([x, i]) => `<div class="file-row m-0 flex-wrap" style="gap:10px"><span class="ss-ic"><i class="fa-solid fa-table"></i></span><div class="flex-fill" style="min-width:200px"><b class="d-block">${esc(x.name)}</b>
         <a class="small text-truncate d-block" style="max-width:520px" href="${safeUrl(/^https:/.test(x.url) ? x.url : 'https://docs.google.com/spreadsheets/d/' + x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>
-        <div class="d-flex flex-wrap gap-1 mt-1">${scope(x).map(t => `<span class="chip">${esc(t)}</span>`).join('')}</div></div>
+        <div class="d-flex flex-wrap gap-1 mt-1 ss-scope">${scope(x).map(t => `<span class="chip" title="${esc(t)}">${esc(t)}</span>`).join('')}</div></div>
         <div class="d-flex gap-1"><button class="btn btn-sm btn-soft" data-sse="${i}"><i class="fa-solid fa-pen"></i> แก้ไข</button><button class="btn btn-sm btn-icon btn-soft text-danger" data-ssd="${i}" aria-label="ลบ"><i class="fa-solid fa-trash"></i></button></div></div>`).join('') || empty('fa-table', 'ยังไม่ได้ตั้งค่าที่มาของคะแนนเก็บ')}</div>
       <button class="btn btn-primary" id="ssAdd"><i class="fa-solid fa-plus"></i> เพิ่มที่มาของคะแนน</button>`;
     $('#ssAdd').onclick = () => edit(-1); $('#ssT').onchange = e => { ft = S.ssTerm = e.target.value; draw(); };
@@ -5819,7 +5837,7 @@ function wrapTh(txt, per) {
 function buildLayout(cfg) {
   const n = cfg.count, no = cfg.nopt, side = cfg.layout === 'side', fs = 5.5, P = 4.4, DX = 5.4, D = 3.6, sh = cfg.sheet || {};
   const band = sh.howto !== false || sh.tips !== false ? 31 + (sh.howto !== false && sh.howtoImg ? 20 : 0) : 0;
-  const BDY = Math.max(-6, Math.min(20, +((sh.lay || {}).boxDy) || 0)), bdh = Math.max(0, BDY); // v6.4 เลื่อนกรอบฝนคำตอบขึ้น/ลง (มม.)
+  const BDY = Math.max(-6, Math.min(20, +((sh.lay || {}).boxDy) || 0)) + (sh.hdr && sh.logo !== false ? 4.5 : 0), bdh = Math.max(0, BDY); // v6.4 เลื่อนกรอบฝนคำตอบขึ้น/ลง (มม.) · v6.9 +4.5 มม. เว้นระยะหัวกระดาษ
   const BOX = [{ m: 'T', x: 90, y: 61 + BDY, w: 101, h: 116 }, { m: 'T2', x: 90, y: 61 + BDY, w: 101, h: 211 - bdh }, { m: 'F', x: 12, y: 58 + band + BDY, w: 186, h: 214 - band - bdh }, { m: 'F0', x: 12, y: 58 + BDY, w: 186, h: 214 - bdh }];
   const strip = cfg.digits * DX + (cfg.sets > 1 ? DX + 1 : 0) + 1, sw = Math.max(strip, 14), resv = sh.qr !== false || sh.score !== false, below = cfg.flow === 'below', idH = 16.5 + 9 * P + 4;
   const fit = (bx, rhMin) => { const wide = bx.m[0] === 'F', R = below ? { x: bx.x + 9.5, y: bx.y + idH + 1.5, w: 0, h: bx.h - idH - 4.5 } : { x: bx.x + 9.5 + sw + 2.5, y: bx.y + 3, w: 0, h: bx.h - 6 }; R.w = bx.x + bx.w - 9.5 - R.x;
@@ -5889,18 +5907,19 @@ function sheetSvg(ex, o = {}) {
   const C = (x, y, r, txt, ts) => { t.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#555" stroke-width=".22"/>`); if (txt !== undefined) t.push(`<text x="${x}" y="${y + ts * .36}" font-size="${ts}" font-weight="600" text-anchor="middle" fill="#6b7280">${esc(txt)}</text>`); };
   const wrap = (txt, per) => wrapTh(txt, Math.floor(per / K));
   const cf = effCfg(), logo = o.logo !== undefined ? o.logo : cf.logo, [yy, tt] = String(sh.term || curVt() || tk(termOf())).split('/');
-  const maxS = (exKeyOf(ex, 'A').reduce((a, k) => a + (+k.p || 0), 0)) || cfg.count;
+  const maxS = Math.round(((exKeyOf(ex, 'A').reduce((a, k) => a + (+k.p || 0), 0)) || cfg.count) * 100) / 100; // v6.8 ทศนิยมไม่เกิน 2 ตำแหน่ง
   t.push(`<rect width="210" height="297" fill="#fff"/>`);
   if (sh.logo) { const lx = 104.5 - LW / 2, ly = 4 + (23 - LW) / 2; if (logo) t.push(`<image href="${esc(logo)}" x="${lx}" y="${ly}" width="${LW}" height="${LW}" preserveAspectRatio="xMidYMid meet"/>`); else t.push(DOC_LOGO().replace('<svg ', `<svg x="${lx}" y="${ly}" width="${LW}" height="${LW}" `)); }
   if (sh.page) T(186, 16, 3.2, 'หน้า ' + (o.page || 1), 'end', 400, LC.text, o.pageId || '');
-  T(105, sh.logo ? 32 : 14, 4.6, 'กระดาษคำตอบ', 'middle', 700);
-  const y0 = sh.logo ? 0 : -14;
+  const HX = !!sh.hdr; // v6.9 เว้นระยะโลโก้ / หัวข้อ / ช่องชื่อ / ตอนที่ / คำสั่ง มากขึ้น (แบบใหม่ — ข้อสอบเดิมคงตำแหน่งเดิมจนกว่าจะบันทึก/พิมพ์ใหม่)
+  T(105, sh.logo ? (HX ? 34 : 32) : 14, 4.6, 'กระดาษคำตอบ', 'middle', 700);
+  const y0 = sh.logo ? (HX ? 3 : 0) : -14;
   if (sh.info) { G0('info'); t.push(`<rect x="21.5" y="${35 + y0}" width="170" height="9.6" fill="none" stroke="${LC.line}" stroke-width=".7"/>`);
     // v6.5 ช่องกรอกเป็นเส้นประ (พอดีกรอบเสมอ ไม่ล้น)
     const DL = (x1, x2) => t.push(`<line x1="${x1}" y1="${41.9 + y0}" x2="${x2}" y2="${41.9 + y0}" stroke="#555" stroke-width=".22" stroke-dasharray=".5 .7"/>`), gw = s2 => s2.length * 3.2 * K * .43;
     const L1 = 'ชื่อ – นามสกุล :', L2 = 'เลขที่', L3 = 'ชั้น ' + (String(sh.grade || '').match(/^[มปอ]/) ? sh.grade.match(/^[มปอ]/)[0] + '.' : 'ม.');
     T(25, 41.4 + y0, 3.2, L1); const xNo = 128, xCl = 158; DL(25 + gw(L1) + 1.5, xNo - 2); T(xNo, 41.4 + y0, 3.2, L2); DL(xNo + gw(L2) + 1.2, xCl - 2); T(xCl, 41.4 + y0, 3.2, L3); DL(xCl + gw(L3) + 1, 189.5); G1(); }
-  const p1 = sh.part1 || 'ตอนที่ 1', yP1 = 44.6 + 5.8 * HG + y0, yCmd = yP1 + 5.2 * HG;
+  const p1 = sh.part1 || 'ตอนที่ 1', yP1 = 44.6 + (HX ? 6.6 : 5.8) * HG + y0, yCmd = yP1 + (HX ? 5.8 : 5.2) * HG;
   G0('p1'); T(25.4, yP1, 3.1, `${p1} : ${sh.part1Type || `ปรนัย ${cfg.count} ข้อ (${maxS} คะแนน)`}`, 'start', 700); G1();
   G0('cmd'); T(25.4, yCmd, 3.1, 'คำสั่ง :', 'start', 700); T(25.4 + 11.5 * K, yCmd, 3.1, sh.cmd || `ให้นักเรียนระบายคำตอบที่ถูกต้องที่สุด${cfg.fmt === 'tf' ? ' (ถูก/ผิด)' : 'เพียงข้อเดียว'} จำนวน ${cfg.count} ข้อ`); G1();
   // วิธีการทำ + ตัวอย่าง (แก้ไขข้อความ/ใส่รูปได้) · ข้อเสนอแนะต่อท้ายทันที
@@ -5935,17 +5954,17 @@ function sheetSvg(ex, o = {}) {
   if (sh.foot) T(25.4, 279, 2.9, sheetFoot(ex, sh, yy, tt), 'start', 400, '#222');
   // v6.4 เส้นทึบคั่น + ข้อความที่เพิ่มเอง
   const SL = y => t.push(`<line x1="21.5" y1="${y}" x2="191.5" y2="${y}" stroke="${LC.line}" stroke-width=".5"/>`);
-  if (LC.sepT) SL((sh.logo ? 32 : 14) + 1.8); if (LC.sepI && sh.info) SL(46.4 + y0); if (LC.sepP) SL(yCmd + 2); if ((LC.sepF || LC.sepFt !== false) && sh.foot) SL(274.6);
+  if (LC.sepT) SL((sh.logo ? (HX ? 34 : 32) : 14) + 1.8); if (LC.sepI && sh.info) SL(46.4 + y0); if (LC.sepP) SL(yCmd + 2); if ((LC.sepF || LC.sepFt !== false) && sh.foot) SL(274.6);
   (Array.isArray(sh.add) ? sh.add : []).forEach((a, i) => t.push(`<text data-sa="${i}" x="${+a.x || 105}" y="${+a.y || 150}" font-size="${((+a.s || 3) * K).toFixed(2)}" font-weight="${a.b ? 700 : 400}" text-anchor="${['start', 'middle', 'end'].includes(a.a) ? a.a : 'start'}" fill="${LC.text}"${a.i ? ' font-style="italic"' : ''}>${esc(a.t || '')}</text>`));
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" width="${o.w || '210mm'}" ${o.h === 'auto' ? '' : `height="${o.h || '297mm'}"`} font-family="'${font}', Sarabun, Tahoma, sans-serif"><defs><linearGradient id="half"><stop offset=".5" stop-color="#111"/><stop offset=".5" stop-color="#fff"/></linearGradient></defs>${t.join('')}</svg>`;
 }
 const sheetFoot = (ex, sh, yy, tt) => `ข้อสอบ${sh.examType ? sh.examType + ' ' : ''}รหัสวิชา ${sh.courseCode || '-'} รายวิชา ${sh.courseName || ex.name || '-'} ชั้น${gradeWord(sh.grade) || '-'} ภาคเรียนที่ ${tt || '-'} ปีการศึกษา ${yy || '-'}`;
-function part2Box(t, T, wrap, sh, py, bottom, lc = '#000', LC = {}, G0 = () => {}, G1 = () => {}) {
-  const HG = Math.max(.8, Math.min(1.6, +LC.hgap || 1)), PG = Math.max(5, Math.min(14, +LC.p2gap || 8));
-  G0('p2t'); T(25.4, py, 3.1, sh.part2Title || 'ตอนที่ 2 : อัตนัย', 'start', 700); T(25.4, py + 5.5 * HG, 3.1, 'คำสั่ง :', 'start', 700); T(37.5, py + 5.5 * HG, 3.1, sh.part2Cmd || '.................................................................................................................................................'); G1();
+function part2Box(t, T, wrap, sh, py, bottom, lc = '#000', LC = {}, G0 = () => {}, G1 = () => {}, q = 1) {
+  const HG = Math.max(.8, Math.min(1.6, +LC.hgap || 1)), PG = Math.max(5, Math.min(14, +LC.p2gap || 8)), NQ = Math.max(1, Math.min(20, +sh.p2count || 1)); // v6.9 หลายข้อ = ข้อละหน้า
+  G0('p2t'); T(25.4, py, 3.1, (sh.part2Title || 'ตอนที่ 2 : อัตนัย') + (NQ > 1 ? ` — ข้อที่ ${q}` : ''), 'start', 700); T(25.4, py + 5.5 * HG, 3.1, 'คำสั่ง :', 'start', 700); T(37.5, py + 5.5 * HG, 3.1, sh.part2Cmd || '.................................................................................................................................................'); G1();
   const by = py + 5.5 * HG + 3.5, bh = bottom - by; G0('p2b'); t.push(`<rect x="25.4" y="${by}" width="164.2" height="${bh}" fill="none" stroke="${lc}" stroke-width=".9"/>`);
   { const p2 = +sh.p2max || 0, sx = 189.6 - 34, sy = by + bh - 15.5; t.push(`<rect x="${sx - 1.5}" y="${sy - 1.5}" width="35" height="16" fill="#fff"/><rect x="${sx}" y="${sy}" width="32" height="13.5" fill="none" stroke="${lc}" stroke-width=".35"/>`); // v6.5 ช่องคะแนนตอนที่ 2
-    T(sx + 1.5, sy + 3.4, 2.3, 'คะแนนตอนที่ 2', 'start', 700, '#333'); t.push(`<text x="${sx + 30}" y="${sy + 11}" font-size="3.4" font-weight="700" text-anchor="end" fill="#111">........ / ${p2 || '......'}</text>`); }
+    T(sx + 1.5, sy + 3.4, 2.3, NQ > 1 ? `คะแนนข้อที่ ${q}` : 'คะแนนตอนที่ 2', 'start', 700, '#333'); t.push(`<text x="${sx + 30}" y="${sy + 11}" font-size="3.4" font-weight="700" text-anchor="end" fill="#111">........ / ${NQ > 1 ? (sh['p2q' + q] || '....') : (Math.round(p2 * 100) / 100 || '......')}</text>`); }
   // v6.6 เส้นบรรทัดหยุดก่อนถึงช่องคะแนน (ไม่วิ่งเข้าไปในกล่อง)
   const sx2 = 189.6 - 34 - 3, sy2 = by + bh - 15.5 - 2.5; const tx = wrap(sh.part2Text, 92); if (tx.length) tx.slice(0, Math.floor((bh - 4) / (5 * HG))).forEach((l, i) => T(28, by + 6 + i * 5 * HG, 3, l)); else for (let y = by + PG + 1; y < by + bh - 2; y += PG) t.push(`<line x1="29" y1="${y.toFixed(2)}" x2="${y > sy2 ? sx2 : 186}" y2="${y.toFixed(2)}" stroke="#bbb" stroke-width=".2" stroke-dasharray=".6 .8"/>`);
   G1();
@@ -5953,24 +5972,51 @@ function part2Box(t, T, wrap, sh, py, bottom, lc = '#000', LC = {}, G0 = () => {
 /** ทุกหน้าของกระดาษคำตอบ: หน้าแรก (ฝนคำตอบ) + หน้า "ตอนที่ 2" เมื่อกรอบคำตอบใหญ่จนไม่มีที่ */
 function sheetPages(ex, o = {}) {
   const L = buildLayout(ex.cfg), sh = Object.assign({ part2: true, logo: true, info: true, page: true, foot: true }, ex.cfg.sheet || {}), pages = [sheetSvg(ex, o)];
-  if (L.mode !== 'T' && sh.part2) { const t = [], K = Math.max(.8, Math.min(1.35, +sh.fs || 1)) * (/^TH /.test(sh.font || '') ? 1.25 : 1), font = docFontOk(sh.font), [yy, tt] = String(sh.term || curVt() || tk(termOf())).split('/');
+  const NQ = Math.max(1, Math.min(20, +sh.p2count || 1)), qs = !sh.part2 ? [] : Array.from({ length: NQ }, (_, i) => i + 1).filter(q => !(L.mode === 'T' && q === 1)); // v6.9 ตอนที่ 2 หลายข้อ → ข้อละหน้า (รูปแบบเดียวกัน)
+  qs.forEach((q, pi) => { const t = [], K = Math.max(.8, Math.min(1.35, +sh.fs || 1)) * (/^TH /.test(sh.font || '') ? 1.25 : 1), font = docFontOk(sh.font), [yy, tt] = String(sh.term || curVt() || tk(termOf())).split('/');
     const T = (x, y, s, txt, a = 'start', w = 400, f = '#111', id = '') => t.push(`<text ${id ? `id="${id}" ` : ''}x="${x}" y="${y}" font-size="${(s * K).toFixed(2)}" font-weight="${w}" text-anchor="${a}" fill="${f}">${esc(txt)}</text>`);
-    t.push(`<rect width="210" height="297" fill="#fff"/>`); if (sh.page) T(186, 16, 3.2, 'หน้า ' + ((o.page || 1) + 1), 'end', 400, '#111', o.pageId ? o.pageId + '2' : '');
+    t.push(`<rect width="210" height="297" fill="#fff"/>`); if (sh.page) T(186, 16, 3.2, 'หน้า ' + ((o.page || 1) + 1 + pi), 'end', 400, '#111', o.pageId ? o.pageId + (2 + pi) : '');
     T(105, 22, 4.6, 'กระดาษคำตอบ (ต่อ)', 'middle', 700);
     if (sh.info) { t.push(`<rect x="21.5" y="27" width="170" height="9.6" fill="none" stroke="#000" stroke-width=".7"/>`); T(26, 33.4, 3.2, 'ชื่อ – นามสกุล : ..........................................................................................  เลขที่ ...............  ชั้น ......./.......'); }
-    part2Box(t, T, (x, per) => wrapTh(x, Math.floor(per / K)), sh, 46, 266, '#000', Object.assign({}, SHEET_LAY, sh.lay || {}));
+    part2Box(t, T, (x, per) => wrapTh(x, Math.floor(per / K)), sh, 46, 266, '#000', Object.assign({}, SHEET_LAY, sh.lay || {}), undefined, undefined, q);
     if (sh.foot) T(25.4, 279, 2.9, sheetFoot(ex, sh, yy, tt), 'start', 400, '#222');
-    pages.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" width="${o.w || '210mm'}" ${o.h === 'auto' ? '' : `height="${o.h || '297mm'}"`} font-family="'${font}', Sarabun, Tahoma, sans-serif">${t.join('')}</svg>`); }
+    pages.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" width="${o.w || '210mm'}" ${o.h === 'auto' ? '' : `height="${o.h || '297mm'}"`} font-family="'${font}', Sarabun, Tahoma, sans-serif">${t.join('')}</svg>`); });
   return pages;
 }
 /** หน้าพิมพ์กระดาษคำตอบ (แม่แบบเดียวกับหน้าดูตัวอย่าง) */
-const sheetHtml = (ex, copies = 1) => `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>กระดาษคำตอบ ${esc(ex.name)}</title>${docFontLink((ex.cfg.sheet || {}).font)}
-  <style>@page{size:A4 portrait;margin:0}html,body{margin:0;background:#e5e7eb}.pg{width:210mm;height:297mm;margin:0 auto 6mm;background:#fff;page-break-after:always;overflow:hidden}.pg:last-child{page-break-after:auto}.pg svg{display:block}@media print{html,body{background:#fff}.pg{margin:0}}</style></head><body>${Array.from({ length: Math.max(1, Math.min(200, copies)) }, () => sheetPages(ex).map(s => `<div class="pg">${s}</div>`).join('')).join('')}</body></html>`;
+/* v6.9 ฝังแบบอักษรลงในภาพ SVG (ภาพ SVG ใช้แบบอักษรจากเว็บไม่ได้ → PDF/Word ตัวหนังสือไม่ตรงที่ตั้งไว้) + โลโก้จาก Drive เป็น data URI */
+const FONT_CSS = new Map();
+async function fontEmbedCss(fam) { fam = docFontOk(fam); if (/^TH /.test(fam)) fam = 'Sarabun'; if (FONT_CSS.has(fam)) return FONT_CSS.get(fam);
+  const p = (async () => { try { const css = await (await fetch(`https://fonts.googleapis.com/css2?family=${fam.replace(/ /g, '+')}:wght@400;700&display=swap`)).text(), out = [];
+    const blocks = [...css.matchAll(/\/\*\s*([\w-]+)\s*\*\/\s*@font-face\s*(\{[^}]*\})/g)].filter(m => m[1] === 'thai' || m[1] === 'latin').map(m => m[2]);
+    for (const b of blocks) { const u = (b.match(/url\(([^)]+)\)/) || [])[1]; if (!u) continue; const buf = await (await fetch(u)).arrayBuffer(); let bin = ''; const a = new Uint8Array(buf); for (let i = 0; i < a.length; i += 8192) bin += String.fromCharCode.apply(null, a.subarray(i, i + 8192));
+      out.push('@font-face' + b.replace(/url\([^)]+\)/, `url(data:font/woff2;base64,${btoa(bin)})`)); }
+    return out.join('\n'); } catch (e) { return ''; } })();
+  FONT_CSS.set(fam, p); return p; }
+const embedSvgFont = (svg, css) => css ? svg.replace(/(<svg[^>]*>)/, `$1<defs><style>${css.replace(/</g, '')}</style></defs>`) : svg;
+async function logoData() { const lg = effCfg().logo || ''; if (!lg || /^data:/.test(lg)) return lg; const id = driveId(lg) || (String(lg).match(/^drive:([-\w]{20,})/) || [])[1] || (String(lg).match(/googleusercontent\.com\/d\/([-\w]{20,})/) || [])[1];
+  if (id) { const hit = DIMG.get(id); if (typeof hit === 'string') return hit; try { const u = await (hit instanceof Promise ? hit : apiQ('fileData', id)); if (u) { DIMG.set(id, u); return u; } } catch (e) {} }
+  try { const u = await pvImgData(lg); if (u) return u; } catch (e) {} return ''; }
+async function sheetHtmlF(ex, copies = 1) { const lg = await logoData(); return sheetHtml(ex, copies, lg); }
+/** กระดาษคำตอบ → Word / Google Doc (หน้าละ 1 ภาพ เหมือนหน้าตัวอย่าง 100% — ฟองคำตอบต้องอยู่ตำแหน่งเดิมเพื่อให้สแกนได้) */
+async function sheetDocExport(ex, fmt) {
+  Loader.show('กำลังเตรียมเอกสาร...'); let html = '';
+  try { const lg = await logoData(), css = await fontEmbedCss((ex.cfg.sheet || {}).font), pages = sheetPages(ex, { logo: lg, w: 794, h: 1123 }), imgs = [];
+    for (const sv of pages) { const im = await loadImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(embedSvgFont(sv, css))); const cv = document.createElement('canvas'); cv.width = 1654; cv.height = 2339; const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(im, 0, 0, cv.width, cv.height); imgs.push(cv.toDataURL('image/png')); }
+    html = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0">${imgs.map((u, i) => (i ? '<p style="page-break-before:always;margin:0"></p>' : '') + `<p style="margin:0"><img src="${u}" width="794" height="1123" style="width:595pt;height:842pt"></p>`).join('')}</body></html>`; }
+  finally { Loader.hide(); }
+  const nm = ('กระดาษคำตอบ_' + ex.name).replace(/[\\/:*?"<>|]/g, '_');
+  try { const r = await apiMsg(fmt === 'gdoc' ? 'กำลังสร้าง Google Doc...' : 'กำลังสร้างไฟล์ Word...', 'docExport', { html, name: nm, fmt, page: { w: 595.3, h: 841.9, mt: 0, mb: 0, ml: 0, mr: 0 } });
+    if (fmt === 'gdoc') { window.open(r.url, '_blank', 'noopener'); toast('สร้าง Google Doc ใน Drive แล้ว (โฟลเดอร์ "เอกสารส่งออก")'); return; }
+    const bin = atob(r.data), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); download(new Blob([u8], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), r.name || nm + '.docx'); toast('บันทึกไฟล์ Word แล้ว'); }
+  catch (er) { toast('ส่งออกไม่สำเร็จ: ' + er.message, 'error'); } }
+const sheetHtml = (ex, copies = 1, logo) => `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>กระดาษคำตอบ ${esc(ex.name)}</title>${docFontLink((ex.cfg.sheet || {}).font)}
+  <style>@page{size:A4 portrait;margin:0}html,body{margin:0;background:#e5e7eb}.pg{width:210mm;height:297mm;margin:0 auto 6mm;background:#fff;page-break-after:always;overflow:hidden}.pg:last-child{page-break-after:auto}.pg svg{display:block}@media print{html,body{background:#fff}.pg{margin:0}}</style></head><body>${Array.from({ length: Math.max(1, Math.min(200, copies)) }, () => sheetPages(ex, logo ? { logo } : {}).map(s => `<div class="pg">${s}</div>`).join('')).join('')}</body></html>`;
 /** สร้างไฟล์ PDF จริงในเครื่อง (ภาพความละเอียด 200 dpi ต่อหน้า) */
 async function sheetPdf(ex, copies = 1) {
-  let logo = effCfg().logo || ''; if (logo && !/^data:/.test(logo)) logo = ''; // รูปจาก Drive ใช้วาดลง PDF ไม่ได้ (ข้อจำกัดความปลอดภัยของเบราว์เซอร์)
+  const logo = await logoData(), css = await fontEmbedCss((ex.cfg.sheet || {}).font); // v6.9 โลโก้จาก Drive + ฝังแบบอักษรที่ตั้งไว้
   const imgs = [];
-  for (const svg of sheetPages(ex, { logo, w: 1654, h: 2339 })) { const im = await loadImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg));
+  for (const svg of sheetPages(ex, { logo, w: 1654, h: 2339 })) { const im = await loadImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(embedSvgFont(svg, css)));
     const cv = document.createElement('canvas'); cv.width = 1654; cv.height = 2339; const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(im, 0, 0, cv.width, cv.height);
     imgs.push({ data: Uint8Array.from(atob(cv.toDataURL('image/jpeg', .92).split(',')[1]), c => c.charCodeAt(0)), w: cv.width, h: cv.height }); }
   return jpegPdf(Array.from({ length: Math.max(1, Math.min(100, copies)) }, () => imgs).flat());
@@ -6308,7 +6354,7 @@ async function exForm(ex, all, fid = '') {
   let dirty = false;
   const fillCs = () => { const a = $('#exArea').value, keep = $('#exCourse').value || sh0.courseId || ''; $('#exCourse').innerHTML = '<option value="">— เลือกรายวิชา —</option>' + cs.filter(c => !a || courseArea(c) === a || c.id === keep).map(c => `<option value="${esc(c.id)}" ${c.id === keep ? 'selected' : ''}>${esc((c.code ? c.code + ' ' : '') + c.name)}</option>`).join(''); }; fillCs();
   const read = () => { const p2 = $('#exP2').checked, p2max = Math.max(0, +$('#exP2Max').value || 0), p2count = Math.max(0, +$('#exP2Cnt').value || 0);
-    const sheet = Object.assign({}, ex ? ex.cfg.sheet : {}, { examType: $('#exEType').value.trim(), term: $('#exTerm').value.trim(), area: $('#exArea').value, courseId: $('#exCourse').value, courseCode: $('#exCCode').value.trim(), courseName: $('#exCName').value.trim(), grade: $('#exGrade').value.trim(), part2: p2, p2max: p2 ? p2max : 0, p2count: p2 ? p2count : 0 });
+    const sheet = Object.assign({ hdr: true }, ex ? ex.cfg.sheet : {}, { examType: $('#exEType').value.trim(), term: $('#exTerm').value.trim(), area: $('#exArea').value, courseId: $('#exCourse').value, courseCode: $('#exCCode').value.trim(), courseName: $('#exCName').value.trim(), grade: $('#exGrade').value.trim(), part2: p2, p2max: p2 ? p2max : 0, p2count: p2 ? p2count : 0 });
     if (p2 && (p2max || p2count) && (!sheet.part2Title || /^ตอนที่ 2 : อัตนัย( \d+ ข้อ)?( \(.*\))?$/.test(sheet.part2Title))) sheet.part2Title = `ตอนที่ 2 : อัตนัย${p2count ? ' ' + p2count + ' ข้อ' : ''}${p2max ? ' (' + p2max + ' คะแนน)' : ''}`;
     return { digits: +$('#exDigits').value, count: +$('#exCount').value, fmt: $('#exFmt').value, nopt: +$('#exNopt').value, labels: $('#exLbl').value, labelsCustom: $('#exLblC').value.trim(), sets: +$('#exSets').value, layout: $('#exLayout').value, cols: +$('#exCols').value, grid: $('#exGrid').value, flow: $('#exFlow').value, sheet }; };
   const capChk = () => { const cf = read(); if (cf.fmt === 'tf') cf.nopt = 2; else if (cf.fmt !== 'custom') cf.nopt = +cf.fmt.slice(1); const L = buildLayout(cf); $('#exCap').innerHTML = L.over ? `<i class="fa-solid fa-triangle-exclamation text-danger"></i><div>กระดาษ 1 แผ่นรองรับได้สูงสุด <b>${L.cap}</b> ข้อ สำหรับ ${cf.nopt} ตัวเลือก — ลดจำนวนข้อหรือจำนวนตัวเลือก</div>` : `<i class="fa-solid fa-circle-info"></i><div>จัดวาง ${L.cols.length} คอลัมน์ · ระยะฟอง ${r2(L.p)} มม. · รองรับสูงสุด ${L.cap} ข้อ</div>`; return !L.over; };
@@ -6388,8 +6434,10 @@ function exPrintSheet(ex) {
     <label class="form-label small mt-2 mb-1" for="ssTip">ข้อเสนอแนะ (บรรทัดละ 1 ข้อ)</label><textarea class="form-control form-control-sm" id="ssTip" data-st="tipsText" rows="2" placeholder="${esc(SHEET_TIPS)}">${esc(sh.tipsText)}</textarea>
     <div class="ss-sec mt-3"><i class="fa-solid fa-pen-nib"></i> ตอนที่ 2 แบบอัตนัย (ข้อเขียน · ตรวจเองแล้วกรอกคะแนนในระบบ)</div><div class="row g-1 mb-1"><div class="col-6"><label class="form-label small mb-1" for="ssP2Max">คะแนนเต็มตอนที่ 2</label><input class="form-control form-control-sm" type="number" min="0" max="200" step="0.5" id="ssP2Max" data-stn="p2max" value="${esc(sh.p2max || '')}" placeholder="เช่น 10"></div><div class="col-6"><label class="form-label small mb-1" for="ssP2Cnt">จำนวนข้อ</label><input class="form-control form-control-sm" type="number" min="0" max="50" id="ssP2Cnt" data-stn="p2count" value="${esc(sh.p2count || '')}" placeholder="เช่น 2"></div></div><input class="form-control form-control-sm mb-1" data-st="part2Title" value="${esc(sh.part2Title)}" placeholder="ตอนที่ 2 : อัตนัย (10 คะแนน)" aria-label="หัวข้อตอนที่ 2"><input class="form-control form-control-sm mb-1" data-st="part2Cmd" value="${esc(sh.part2Cmd)}" placeholder="คำสั่งตอนที่ 2" aria-label="คำสั่งตอนที่ 2"><textarea class="form-control form-control-sm" data-st="part2Text" rows="2" placeholder="ข้อความในกล่อง (เว้นว่าง = เส้นบรรทัดให้เขียน)" aria-label="ข้อความในกล่องตอนที่ 2">${esc(sh.part2Text)}</textarea>
     <label class="form-label small mt-2 mb-1" for="ssCopies">จำนวนแผ่น</label><input class="form-control form-control-sm" type="number" id="ssCopies" min="1" max="100" value="1"></div></div></div></div></div><div class="sheet-prev" id="ssPrev"></div>`,
-    `<div class="mf-row"><button class="btn btn-soft" id="ssSave" title="บันทึกการตั้งค่า"><i class="fa-solid fa-floppy-disk"></i><span class="bt"> บันทึกการตั้งค่า</span></button><button class="btn btn-soft" id="ssPrint" title="พิมพ์ผ่านเบราว์เซอร์"><i class="fa-solid fa-print"></i><span class="bt"> พิมพ์ผ่านเบราว์เซอร์</span></button><button class="btn btn-primary" id="ssPdf" title="บันทึกเป็น PDF"><i class="fa-solid fa-file-pdf"></i><span class="bt"> บันทึกเป็น PDF</span></button></div>`, 'modal-xl modal-wide');
+    `<div class="mf-row"><button class="btn btn-soft" id="ssSave" title="บันทึกการตั้งค่า"><i class="fa-solid fa-floppy-disk"></i><span class="bt"> บันทึกการตั้งค่า</span></button><button class="btn btn-soft" id="ssPrint" title="พิมพ์ผ่านเบราว์เซอร์"><i class="fa-solid fa-print"></i><span class="bt"> พิมพ์ผ่านเบราว์เซอร์</span></button><div class="btn-group dropup"><button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" id="ssPdf" title="บันทึกเป็นไฟล์" aria-expanded="false"><i class="fa-solid fa-floppy-disk"></i><span class="bt"> บันทึกเป็นไฟล์</span></button><ul class="dropdown-menu dropdown-menu-end"><li><button class="dropdown-item" data-ssx="pdf"><i class="fa-solid fa-file-pdf text-danger me-2"></i>PDF</button></li><li><button class="dropdown-item" data-ssx="docx"><i class="fa-solid fa-file-word text-primary me-2"></i>Word (.docx)</button></li><li><button class="dropdown-item" data-ssx="gdoc"><i class="fa-brands fa-google-drive text-success me-2"></i>Google Doc</button></li></ul></div></div>`, 'modal-xl modal-wide');
   const cur = () => Object.assign({}, ex, { cfg: Object.assign({}, cfg, { sheet: sh }) });
+  let hdrNew = false; if (!sh.hdr) { sh.hdr = true; hdrNew = true; } // v6.9 ระยะหัวกระดาษแบบใหม่ → บันทึกอัตโนมัติก่อนพิมพ์ (ให้สแกนตรงกับที่พิมพ์)
+  const ensureSaved = async () => { if (!hdrNew || ex.id === 'preview' || !ex.id) return; try { await call('examSave', [{ id: ex.id, name: ex.name, folderId: ex.folderId, cfg: cur().cfg, classes: ex.classes, tags: ex.tags }], { loader: false }); ex.cfg = cur().cfg; hdrNew = false; } catch (e) {} };
   let sedOn = false, ssSel = null; const ssMark = () => { $$('#ssPrev text.sel').forEach(x => x.classList.remove('sel')); if (!ssSel) return; const el = $(ssSel.k !== undefined ? `#ssPrev text[data-sk="${ssSel.k}"]` : `#ssPrev text[data-sa="${ssSel.a}"]`); if (el) el.classList.add('sel'); else ssSel = null; };
   const draw = debounce(() => { const pg = sheetPages(cur(), { w: '100%', h: 'auto', edit: sedOn }); $('#ssPrev').innerHTML = pg.map((x, i) => (i ? '<div class="small text-muted my-2 text-center">— หน้าถัดไป —</div>' : '') + x).join(''); $('#ssPrev').classList.toggle('sed', sedOn); ssMark(); const L = buildLayout(cur().cfg);
     $('#ssMode').innerHTML = `<i class="fa-solid fa-circle-info"></i> กรอบคำตอบ: ${L.mode === 'T' ? 'ครึ่งหน้า (ตามแม่แบบ)' : L.mode === 'T2' ? 'ครึ่งหน้า ยาวถึงท้ายกระดาษ' : L.mode === 'F' ? 'เต็มความกว้าง (วิธีทำ/ข้อเสนอแนะอยู่ด้านบน)' : 'เต็มหน้า (ข้อสอบจำนวนมาก)'} · ${L.cols.length} คอลัมน์ · ${pg.length} หน้า`; }, 80); draw();
@@ -6433,10 +6481,12 @@ function exPrintSheet(ex) {
     upd(); }
   m.body.addEventListener('input', e => { const t = e.target; if (t.dataset.sk) sh[t.dataset.sk] = t.checked; if (t.dataset.st) sh[t.dataset.st] = t.value; if (t.dataset.stn) { sh[t.dataset.stn] = Math.max(0, +t.value || 0); if (t.dataset.stn === 'p2count' || t.dataset.stn === 'p2max') sh.part2Title = sh.part2Title && !/^ตอนที่ 2 : อัตนัย( \d+ ข้อ)?( \(.*\))?$/.test(sh.part2Title) ? sh.part2Title : `ตอนที่ 2 : อัตนัย${sh.p2count ? ' ' + sh.p2count + ' ข้อ' : ''}${sh.p2max ? ' (' + sh.p2max + ' คะแนน)' : ''}`; } if (t.id === 'ssLay') cfg.layout = t.value; if (t.id === 'ssCols') cfg.cols = +t.value; draw(); });
   m.body.addEventListener('change', e => { const t = e.target; if (t.id === 'ssLay') cfg.layout = t.value; if (t.id === 'ssCols') cfg.cols = +t.value; if (t.id === 'ssDig') cfg.digits = +t.value; if (t.id === 'ssGrid') cfg.grid = t.value; if (t.id === 'ssFlow') cfg.flow = t.value; if (t.id === 'ssFs') sh.fs = +t.value; if (t.id === 'ssFont') { sh.font = t.value; loadDocFont(t.value); } draw(); });
-  $('#ssSave').onclick = async () => { await apiMsg('กำลังบันทึก...', 'examSave', { id: ex.id, name: ex.name, folderId: ex.folderId, cfg: cur().cfg, classes: ex.classes, tags: ex.tags }); ex.cfg = cur().cfg; toast('บันทึกการตั้งค่าหัวกระดาษแล้ว'); };
-  $('#ssPrint').onclick = () => printHtml('กระดาษคำตอบ ' + ex.name, sheetHtml(cur(), +$('#ssCopies').value || 1));
-  $('#ssPdf').onclick = async () => { try { Loader.show('กำลังสร้างไฟล์ PDF...'); const b = await sheetPdf(cur(), +$('#ssCopies').value || 1); download(b, 'กระดาษคำตอบ_' + ex.name + '.pdf'); toast('บันทึกไฟล์ PDF แล้ว'); }
-    catch (e) { toast('สร้าง PDF ไม่สำเร็จ — เปิดหน้าพิมพ์แทน (เลือก "บันทึกเป็น PDF")', 'warning'); printHtml('กระดาษคำตอบ ' + ex.name, sheetHtml(cur(), +$('#ssCopies').value || 1)); } finally { Loader.hide(); } };
+  $('#ssSave').onclick = async () => { hdrNew = false; await apiMsg('กำลังบันทึก...', 'examSave', { id: ex.id, name: ex.name, folderId: ex.folderId, cfg: cur().cfg, classes: ex.classes, tags: ex.tags }); ex.cfg = cur().cfg; toast('บันทึกการตั้งค่าหัวกระดาษแล้ว'); };
+  $('#ssPrint').onclick = async () => { await ensureSaved(); printHtml('กระดาษคำตอบ ' + ex.name, await sheetHtmlF(cur(), +$('#ssCopies').value || 1)); };
+  $('#ssPdf').closest('.btn-group').addEventListener('click', async e => { const b = e.target.closest('[data-ssx]'); if (!b) return; const k = b.dataset.ssx; await ensureSaved();
+    if (k === 'pdf') { try { Loader.show('กำลังสร้างไฟล์ PDF...'); const bl = await sheetPdf(cur(), +$('#ssCopies').value || 1); download(bl, 'กระดาษคำตอบ_' + ex.name + '.pdf'); toast('บันทึกไฟล์ PDF แล้ว'); }
+      catch (er) { toast('สร้าง PDF ไม่สำเร็จ — เปิดหน้าพิมพ์แทน (เลือก "บันทึกเป็น PDF")', 'warning'); printHtml('กระดาษคำตอบ ' + ex.name, await sheetHtmlF(cur(), +$('#ssCopies').value || 1)); } finally { Loader.hide(); } return; }
+    await sheetDocExport(cur(), k); });
 }
 /* ---- แก้ไขเฉลย: หลายคำตอบถูก · คะแนนต่อข้อ · กรอกเร็ว · หลายชุด · สแกนกระดาษเฉลย · คำนวณคะแนนใหม่ ---- */
 function exKeyEditor(ex, D, done) {
@@ -6714,12 +6764,12 @@ const PQ_SYM = ['√', '∛', 'π', '∞', '±', '×', '÷', '≠', '≈', '≤'
 /** v6.5 แบบร่างกระดาษคำตอบจากกระดาษคำถาม (ใช้ทั้งตอนบันทึกและตอนดูตัวอย่าง → ข้อมูลล่าสุดเสมอ) */
 function paperExamDraft(d, old) {
   const items = []; d.parts.forEach(pt => { const nch = q => (q.choices || []).filter((x, j) => String(x).trim() !== '' || (q.cimg || [])[j]).length, mcq = pqEff(pt.questions).filter(q => nch(q) >= 2), per = +pt.points > 0 && mcq.length ? +pt.points / mcq.length : 1;
-    mcq.forEach(q => items.push({ q, p: Math.round(per * 100) / 100 })); });
+    const pr = Math.round(per * 100) / 100; mcq.forEach((q, i) => items.push({ q, p: +pt.points > 0 && i === mcq.length - 1 ? Math.round((+pt.points - pr * (mcq.length - 1)) * 100) / 100 : pr })); }); // v6.9 ข้อสุดท้ายรับเศษ → รวมได้เท่าคะแนนของตอนพอดี (ไม่เป็น 10.01)
   if (!items.length) return null;
   const nopt = Math.min(10, Math.max(2, ...items.map(x => (x.q.choices || []).filter((c, j) => String(c).trim() !== '' || (x.q.cimg || [])[j]).length)));
   const cfg = Object.assign({ digits: 2, sets: 1, cols: 0, layout: 'inline', grid: 'none', flow: 'side' }, old ? old.cfg : {}, { count: items.length, fmt: nopt <= 5 ? 'c' + nopt : 'custom', nopt, labels: d.labels || 'th', labelsCustom: d.labelsCustom || '' });
   const p0 = d.parts[0] || {}, sum = items.reduce((a, x) => a + x.p, 0);
-  cfg.sheet = Object.assign({}, old ? old.cfg.sheet : {}, { courseCode: d.code || '', courseName: d.course || '', grade: d.grade || '', term: d.term || '', examType: d.type || '', area: d.area || '', courseId: d.courseId || '', part1: String(p0.title || 'ตอนที่ 1').split(/\s+/).slice(0, 2).join(' '), part1Type: `ปรนัย ${items.length} ข้อ (${Math.round(sum * 100) / 100} คะแนน)`, cmd: p0.cmd || '' });
+  cfg.sheet = Object.assign({ hdr: true }, old ? old.cfg.sheet : {}, { courseCode: d.code || '', courseName: d.course || '', grade: d.grade || '', term: d.term || '', examType: d.type || '', area: d.area || '', courseId: d.courseId || '', part1: String(p0.title || 'ตอนที่ 1').split(/\s+/).slice(0, 2).join(' '), part1Type: `ปรนัย ${items.length} ข้อ (${Math.round(sum * 100) / 100} คะแนน)`, cmd: p0.cmd || '' });
   const key = { A: items.map(x => ({ a: x.q.ans !== '' && x.q.ans !== undefined && +x.q.ans >= 0 ? [+x.q.ans] : [], p: x.p })) };
   const cls = (() => { const g = String(d.grade || '').trim(); if (!g) return []; const r = String(d.rooms || ''), m = r.match(/(\d+)\s*\/\s*(\d+)\s*-\s*(?:\d+\s*\/\s*)?(\d+)/); if (m) return Array.from({ length: Math.max(0, +m[3] - +m[2] + 1) }, (_, i) => g + '/' + (+m[2] + i)).slice(0, 60); const one = r.match(/\/\s*(\w+)\s*$/); return [one ? g + '/' + one[1] : g]; })();
   return { cfg, key, classes: old && old.classes.length ? old.classes : cls };
