@@ -379,10 +379,10 @@ R('saveUser', AD, { prefix: 'เด็กชาย', fullName: 'คะแนน 
 const curK = R('getSettings', AD).data.curTerm;
 ok(R('saveSettings', AD, { config: { scoreSources: [{ name: 'คะแนนเก็บ ภาค 2', url: 'https://docs.google.com/spreadsheets/d/' + bk2.getId() + '/edit', terms: ['2501/1'] }] } }).ok, 'save score sources');
 ok(!('scoreSources' in R('bootstrap', null).data.config), 'score sources private');
-ok((R('studentHome', s9).data.total || {}).value === '87.5', 'source of other term ignored (falls back to menu)');
+{ const t0 = R('studentHome', s9).data.total || {}; ok(t0.value === '42' && t0.current === false && R('myScores', s9).data.items.some(x => /2501/.test(x.termLabel)), 'v6.8 score of an earlier term still shown (latest available) + term label ' + JSON.stringify(t0)); }
 R('saveSettings', AD, { config: { scoreSources: [{ name: 'คะแนนเก็บ ภาค 2', url: bk2.getId(), terms: [curK], grades: [] }] } });
 const th = R('studentHome', s9).data.total; ok(th && th.value === '42' && th.menu === 'คะแนนเก็บ ภาค 2', 'total from score source ' + JSON.stringify(th));
-R('saveSettings', AD, { config: { scoreSources: [{ name: 'x', url: bk2.getId(), grades: ['ม.6'] }] } }); ok((R('studentHome', s9).data.total || {}).value === '87.5', 'score source grade filter');
+R('saveSettings', AD, { config: { scoreSources: [{ name: 'x', url: bk2.getId(), grades: ['ม.6'] }] } }); ok((R('studentHome', s9).data.total || {}).value === '87.5', 'score source grade filter ' + JSON.stringify(R('studentHome', s9).data.total));
 ok(R('me', s9).data.user.myTerm === curK, 'student term label');
 // ---------- v5.4: ตารางสอน + เช็คชื่อ ----------
 ok(R('ttSaveCfg', AD, { periods: 8, minutes: 50, start: '00:00', breakAfter: 0, breakMin: 0, days: 7, lateMin: 15 }).data.periods === 8, 'tt cfg');
@@ -596,5 +596,8 @@ const c62 = R('examSave', AD, { name: 'v62', cfg: { count: 10, grid: 'hv', flow:
   const ls = R('studentHome', s9).data.latestScores.find(x => x.exam && x.parts && +x.parts.p2max > 0); ok(ls && ls.sub.feedback === '' && 'p1' in ls.parts && 'p2' in ls.parts, 'v6.7 latest scores: part 1 / part 2 breakdown, no scan caption');
   const td = ctx.now_().slice(0, 10), ev = R('evSave', AD, { title: 'กิจกรรมลบจากประกาศ', date: td, allDay: true, remind: 1440 }).data; ctx.eventJob(); const er = ctx.find_('Events', ev.id);
   R('remove', AD, 'Announcements', er.annId); ok(!ctx.rows_('Notifications').some(n => n.link === 'calendar:' + ev.id), 'v6.7 deleting an event announcement removes the event bell cards'); R('evRemove', AD, ev.id); }
+// ---- v6.8 ----
+{ const sh = DB.sheets.Categories; const ix = sh[0].indexOf('area'); sh.forEach(r => r.splice(ix, 1)); vm.runInContext('Object.keys(MEM_).forEach(k => delete MEM_[k])', ctx); ctx.CacheService.getScriptCache().put('v_Categories', 'zz' + Date.now(), 600);
+  const c = R('save', AD, 'Categories', { code: 'ศ21101', name: 'ทัศนศิลป์', area: 'ศิลปะ' }); ok(c.ok && DB.sheets.Categories[0].indexOf('area') >= 0 && ctx.rows_('Categories').find(x => x.id === c.data.id).area === 'ศิลปะ', 'v6.8 missing columns added automatically (old/term files) → values saved ' + JSON.stringify([c.error, DB.sheets.Categories[0], (ctx.rows_('Categories').find(x => x.id === (c.data||{}).id)||{}).area])); }
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

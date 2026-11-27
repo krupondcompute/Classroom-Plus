@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '6.7.0';
+const APP_VERSION = '6.8.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -343,7 +343,11 @@ function cachePut_(name, list, part) {
 function headers_(name, part) {
   part = part || (name === 'Users' ? 'g' : partOf_(name));
   const k = '_h_' + name + '#' + part;
-  if (!MEM_[k]) { const sh = sheet_(name, part); MEM_[k] = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String); }
+  if (!MEM_[k]) { const sh = sheet_(name, part); let h = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(String);
+    // v6.8 เติมคอลัมน์ใหม่ให้อัตโนมัติ (ไฟล์ภาคเรียน/ไฟล์เก่าที่ยังไม่มีคอลัมน์ เช่น score2 → เดิมบันทึกไม่ติด)
+    const miss = (SCHEMA[name] || []).filter(c => h.indexOf(c) < 0);
+    if (miss.length) { const n = h.filter(String).length; sh.getRange(1, n + 1, 1, miss.length).setValues([miss]).setFontWeight('bold').setBackground('#dbeafe'); try { sh.getRange(1, n + 1, sh.getMaxRows(), miss.length).setNumberFormat('@'); } catch (e) {} h = h.slice(0, n).concat(miss); }
+    MEM_[k] = h; }
   return MEM_[k];
 }
 /** คอลัมน์ที่เป็นวันที่ล้วน (กันชีตแปลงข้อความเป็นวันที่ → เทียบวันที่ไม่ตรง เช่น ประวัติการเช็คชื่อหาย) */
@@ -847,10 +851,13 @@ function totalScore_(u) {
   const ok = m => (!m.courseIds || !m.courseIds.length || m.courseIds.some(c => cids.indexOf(c) >= 0)) && (!m.grades || !m.grades.length || m.grades.indexOf(u.grade) >= 0) && (!m.rooms || !m.rooms.length || m.rooms.indexOf(u.room) >= 0);
   // 1) ที่มาของคะแนนเก็บที่ตั้งค่าไว้ (ผู้ดูแลระบบ + ครูของรายวิชา) ตามภาคเรียน/รายวิชา/ชั้น/ห้อง
   let tk = ''; try { tk = termDb_().key; } catch (e) {} if (!/^25\d\d\/[12]$/.test(tk || '')) tk = curTermKey_();
-  const srcs = json_(cfg_().scoreSources, []).concat(teacherScoreSources_(u));
-  const items = [];
-  srcs.filter(x => ok(x) && (!x.terms || !x.terms.length || x.terms.indexOf(tk) >= 0)).slice(0, 8).forEach(x => {
-    try { const r = sheetTotal_(/^[\w-]{25,}$/.test(x.url) ? 'https://docs.google.com/spreadsheets/d/' + x.url + '/edit' : x.url, u); if (r) items.push(Object.assign(r, { menu: x.name, srcId: x.id || '', courseIds: x.courseIds || [] })); } catch (e) {} });
+  const srcs = json_(cfg_().scoreSources, []).concat(teacherScoreSources_(u)), seen = {};
+  // v6.8 แสดงคะแนนทุกภาคเรียน: ภาคเรียนปัจจุบันกรองตามรายวิชา/ชั้น/ห้อง · ภาคเรียนอื่นแสดงเมื่อพบรหัส/ชื่อนักเรียนในไฟล์ (ชั้น/รายวิชาอาจเปลี่ยนแล้ว)
+  const cur = x => !x.terms || !x.terms.length || x.terms.indexOf(tk) >= 0, items = [], t0 = Date.now();
+  srcs.filter(x => x && x.url && (cur(x) ? ok(x) : true)).sort((a, b) => (cur(b) ? 1 : 0) - (cur(a) ? 1 : 0) || String((b.terms || []).slice().sort().pop() || '').localeCompare(String((a.terms || []).slice().sort().pop() || ''))).slice(0, 24).forEach(x => {
+    const url = /^[\w-]{25,}$/.test(x.url) ? 'https://docs.google.com/spreadsheets/d/' + x.url + '/edit' : x.url, key = url + '|' + (x.terms || []).join(',');
+    if (seen[key] || Date.now() - t0 > 20000) return; seen[key] = 1;
+    try { const r = sheetTotal_(url, u); if (r) items.push(Object.assign(r, { menu: x.name, srcId: x.id || '', courseIds: x.courseIds || [], terms: x.terms || [], current: cur(x) })); } catch (e) {} });
   let out = items.length ? Object.assign({}, items[0], { items: items }) : null;
   // 2) แบบเดิม: เมนูลิงก์ชื่อ "ผลการเรียน"
   const menus = out ? [] : sys.concat(teacherMenus_(u)).filter(m => ok(m) && /ผลการเรียน|รวมคะแนน|คะแนนรวม/.test(m.name || '') && /docs\.google\.com\/spreadsheets\/d\//.test(m.url || ''));
@@ -957,7 +964,10 @@ function sheetTotal_(url, u) {
   const id = (url.match(/\/d\/([\w-]{20,})/) || [])[1], gid = '';
   if (!id) return null;
   let tables = [], names = [];
-  try { const ss = SpreadsheetApp.openById(id), shs = ss.getSheets(); names = shs.map(sh => sh.getName()); tables = shs.map(sh => sh.getDataRange().getDisplayValues()); }
+  let skey = ''; try { const lu = DriveApp.getFileById(id).getLastUpdated(); if (lu) skey = 'sht_' + id + '_' + lu.getTime(); } catch (e) {} // v6.8 แคชตามเวลาแก้ไขไฟล์ (นักเรียนหลายคนอ่านไฟล์เดียวกันเร็วขึ้นมาก · แก้คะแนนแล้วเห็นทันที)
+  const hit = skey ? json_(getBig_(skey), null) : null;
+  if (hit) { tables = hit.t; names = hit.n; }
+  else try { const ss = SpreadsheetApp.openById(id), shs = ss.getSheets(); names = shs.map(sh => sh.getName()); tables = shs.map(sh => sh.getDataRange().getDisplayValues()); if (skey) putBig_(skey, JSON.stringify({ t: tables, n: names }), 3600); }
   catch (e) { // ไฟล์ที่แชร์แบบลิงก์สาธารณะ → อ่านผ่าน CSV
     const r = UrlFetchApp.fetch('https://docs.google.com/spreadsheets/d/' + id + '/gviz/tq?tqx=out:csv' + (gid ? '&gid=' + gid : ''), { muteHttpExceptions: true });
     if (r.getResponseCode() !== 200) return null; tables = [Utilities.parseCsv(r.getContentText())]; }
@@ -1265,7 +1275,7 @@ function myScores_(ctx) {
   const u = ctx.user;
   const t = u.role === 'student' ? totalScore_(u) : null, cs = {}; rows_('Courses').forEach(c => cs[c.id] = c);
   let tk = ''; try { tk = termDb_().key; } catch (e) {} if (!/^25\d\d\/[12]$/.test(tk || '')) tk = curTermKey_();
-  const items = (t ? (t.items || [t]) : []).map(x => Object.assign({}, x, { course: (x.courseIds || []).map(c => (cs[c] || {}).name).filter(Boolean).join(', ') }));
+  const items = (t ? (t.items || [t]) : []).map(x => Object.assign({}, x, { course: (x.courseIds || []).map(c => (cs[c] || {}).name).filter(Boolean).join(', '), termLabel: x.terms && x.terms.length ? x.terms.map(k => 'ภาคเรียนที่ ' + k.split('/')[1] + '/' + k.split('/')[0]).join(', ') : 'ทุกภาคเรียน' }));
   return { term: tk, student: { classNo: u.classNo || '', code: u.studentCode, name: (u.prefix || '') + u.fullName, grade: u.grade, room: u.room }, items: items };
 }
 function studentHome_(ctx, view) {
@@ -2635,6 +2645,11 @@ function importTerm_(ctx, from, kind, ids, opts) {
     if (kind === 'exams') return { rows: rows_('Exams').filter(r => want[r.id] && (isAdmin_(u) || r.ownerId === u.id)).map(clean) };
     return { rows: rows_('Announcements').filter(a => want[a.id] && rowOwned_(u, 'Announcements', a)).map(clean) };
   });
+  // v6.8 คัดลอกไฟล์ใน Google Drive (รูปปก ไฟล์แนบ วิดีโอ) มาไว้ในโฟลเดอร์ของภาคเรียนนี้ → รูป/ลิงก์แสดงได้ และไม่หายเมื่อลบข้อมูลภาคเรียนเดิม
+  if (pick.rows && /^(courses|announcements|assignments|papers)$/.test(kind)) { const tbl = { courses: 'Courses', announcements: 'Announcements', assignments: 'Assignments', papers: 'ExamPapers' }[kind], have0 = {}; rows_(tbl).forEach(r => have0[r.id] = 1);
+    const fresh = pick.rows.filter(r => !have0[r.id]), lh = {}; if (kind === 'courses') rows_('Lessons').forEach(l => lh[l.id] = 1);
+    const les = kind === 'courses' ? (pick.lessons || []).filter(l => !lh[l.id]) : [], map = copyFiles_(fresh.concat(les), u);
+    if (Object.keys(map).length) { const fix = r => { Object.keys(r).forEach(k => { let v = r[k]; if (typeof v === 'string' && v) Object.keys(map).forEach(a => { if (v.indexOf(a) >= 0) v = v.split(a).join(map[a]); }); r[k] = v; }); return r; }; fresh.forEach(fix); les.forEach(fix); } }
   return lock_(() => {
     let n = 0; const t = now_();
     if (kind === 'types') { const l = cfg_().assignmentTypes.split(',').filter(Boolean); pick.types.forEach(x => { if (l.indexOf(x) < 0) { l.push(x); n++; } }); setCfg_('assignmentTypes', l.join(',')); }
@@ -2662,6 +2677,16 @@ function importTerm_(ctx, from, kind, ids, opts) {
     log_(u.id, 'import_' + kind, from + ' → ' + n);
     return { added: n, skipped: Object.keys(want).length - n };
   });
+}
+/** คัดลอกไฟล์ Drive ที่อ้างถึงในแถวข้อมูล → { idเดิม: idใหม่ } (ข้ามไฟล์ใหญ่เกิน 300 MB / เกินเวลา) */
+function copyFiles_(rows, user) {
+  const ids = {}, map = {}, t0 = Date.now(); let folder = null;
+  rows.forEach(r => { fileIds_(r).forEach(i => ids[i] = 1); ['data', 'quiz', 'body', 'description'].forEach(k => { String(r[k] || '').replace(/(?:\/d\/|[?&]id=|drive:|googleusercontent\.com\/d\/)([-\w]{25,})/g, (m, i) => { ids[i] = 1; return m; }); }); });
+  Object.keys(ids).slice(0, 300).forEach(id => { if (Date.now() - t0 > 200000) return;
+    try { const f = DriveApp.getFileById(id); if (f.getSize() > 300 * 1048576) return; folder = folder || folderFor_(user, 'ไฟล์นำเข้าจากภาคเรียนก่อน');
+      const c = f.makeCopy(f.getName(), folder); try { c.setDescription(f.getDescription() || ('cp:' + user.id)); } catch (e) {}
+      let pub = false; try { pub = f.getSharingAccess() === DriveApp.Access.ANYONE_WITH_LINK; } catch (e) {} if (pub) share_(c); map[id] = c.getId(); } catch (e) {} });
+  return map;
 }
 function removeTermDb_(ctx, key) {
   const k = termKeyOk_(key);
@@ -3062,7 +3087,7 @@ function fileData_(ctx, id) {
   const ck = 'fd_' + id, c = getBig_(ck); if (c) return c;
   const roots = {}; [mainDriveId_(), coreDriveId_(), driveId_()].concat(Object.keys(tenants_()).map(k => tenants_()[k].driveId)).forEach(x => { if (x) roots[x] = 1; });
   try { Object.keys(dbMap_()).forEach(k => { const d = dbMap_()[k].driveId; if (d) roots[d] = 1; }); } catch (e) {}
-  const f = DriveApp.getFileById(id), mime = f.getMimeType();
+  let f = null; try { f = DriveApp.getFileById(id); } catch (e) { throw err_('ไม่พบไฟล์รูปภาพ', 'NOTFOUND'); } const mime = f.getMimeType();
   if (!/^image\//.test(mime)) throw err_('ไม่ใช่ไฟล์รูปภาพ');
   let ok = false, q = [f.getParents()], depth = 0;
   while (q.length && !ok && depth < 8) { const nq = []; q.forEach(it => { while (it.hasNext()) { const p = it.next(); if (roots[p.getId()]) ok = true; else nq.push(p.getParents()); } }); q = nq; depth++; }

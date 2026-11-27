@@ -1504,6 +1504,11 @@ body.app footer{align-items:center!important;text-align:center!important;justify
 .swal2-close{border-radius:50%!important;width:2.1rem!important;height:2.1rem!important;font-size:1.6rem!important;line-height:1!important}
 @media (max-width:767.98px){.stu-row>:nth-child(5){justify-self:stretch!important}.stu-row .sub-acts{width:100%}.stu-row .sub-acts [data-grade]{flex:1 1 auto!important;width:auto!important;border-radius:999px!important;padding:0 18px!important;display:inline-flex!important;gap:6px;justify-content:center;align-items:center;font-weight:700}.stu-row .sub-acts [data-grade] .bl{display:inline!important}}
 
+/* v6.8 */
+.sbc-row+.sbc-row{border-top:2px solid var(--border);padding-top:18px;margin-top:4px}.sbc-row{padding-bottom:4px}
+html{touch-action:manipulation;-webkit-tap-highlight-color:transparent}@media (hover:none){.ccard:hover,.dcell[data-dk]:hover{transform:none;box-shadow:inherit}}
+.guide-ok{display:flex;justify-content:center;margin:16px 0 4px}#modal:has(.guide) #modalFoot{display:none!important}
+.dcell[data-dk]{cursor:pointer;transition:transform .15s,box-shadow .15s}.dcell[data-dk]:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12)}
 /* v6.7 */
 .sec-btns{flex-wrap:nowrap!important}.la-card [data-import] .bt{display:none}.la-card [data-import]{width:34px;padding:0;display:inline-grid;place-items:center}
 @media (max-width:575.98px){.page-head>[data-import]{flex:0 0 46px!important;width:46px;padding:0;display:grid;place-items:center}.page-head>[data-import] .bt{display:none}.page-head>select,.page-head>.form-select{flex:1 1 0!important;min-width:0}}
@@ -2479,7 +2484,7 @@ function showGuide() {
       'เข้าเมนู <b>รายวิชา</b> เพื่อเรียนบทเรียน และใช้ <b>เช็คชื่อ</b> ตามที่ครูแจ้ง',
       'เปิด <b>งานของฉัน</b> เพื่ออ่านคำชี้แจง ตรวจวันครบกำหนด และส่งงาน จากนั้นดูผลได้ที่เมนู <b>คะแนน</b>'],
       'หากพบปัญหา ให้กด <b>ติดต่อครู / ผู้ดูแลระบบ</b> ที่หน้าแรกของนักเรียน');
-  modal(st ? 'คู่มือการใช้งาน — นักเรียน' : 'คู่มือการใช้งาน — ครู / ผู้ดูแลระบบ', `<div class="guide">${st ? U() : T()}</div>`, '<button class="btn btn-primary" data-bs-dismiss="modal"><i class="fa-solid fa-check"></i> เข้าใจแล้ว</button>', 'modal-lg');
+  modal(st ? 'คู่มือการใช้งาน — นักเรียน' : 'คู่มือการใช้งาน — ครู / ผู้ดูแลระบบ', `<div class="guide">${st ? U() : T()}</div><div class="guide-ok"><button class="btn btn-primary" data-bs-dismiss="modal"><i class="fa-solid fa-check"></i> เข้าใจแล้ว</button></div>`, '', 'modal-lg');
 }
 /* =========================================================
  * เข้าสู่ระบบ / ลงทะเบียน / ลืมรหัสนักเรียน
@@ -2947,6 +2952,11 @@ const hiRes = (u, w = 1920) => { u = String(u || ''); if (/^https:\/\/lh3\.googl
 const BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 const imgSrc = (u, w = 1920) => /^drive:[\w-]{20,}$/.test(String(u || '')) ? `src="${BLANK_IMG}" data-dimg="${esc(String(u).slice(6))}"` : `src="${safeUrl(hiRes(u, w))}"`;
 const DIMG = new Map();
+/* v6.8 รูปจาก Google Drive ที่เปิดไม่ได้ (ไม่ได้แชร์สาธารณะ / ย้ายภาคเรียน) → โหลดผ่านระบบแทนอัตโนมัติ */
+document.addEventListener('error', e => { const img = e.target; if (!img || img.tagName !== 'IMG' || img.dataset.dfb) return; const src = img.getAttribute('src') || '';
+  const id = (src.match(/(?:\/d\/|[?&]id=|googleusercontent\.com\/d\/)([-\w]{25,})/) || [])[1]; if (!id || !/google/.test(src)) return; img.dataset.dfb = '1';
+  const hit = DIMG.get(id); const p = typeof hit === 'string' ? Promise.resolve(hit) : hit instanceof Promise ? hit : apiQ('fileData', id).catch(() => ''); DIMG.set(id, p);
+  Promise.resolve(p).then(u => { if (u) { DIMG.set(id, u); img.src = u; } }); }, true);
 function hydrateImgs(root = document) {
   $$('img[data-dimg]:not([data-dl])', root).forEach(img => { const id = img.dataset.dimg; img.dataset.dl = '1';
     const hit = DIMG.get(id) || dimgLocal(id); if (typeof hit === 'string') { img.src = hit; return; }
@@ -2975,14 +2985,14 @@ const statCard = (icon, val, label, color = '', goTo = '', tab = '') => goTo
 function resultCard(total) {
   if (total && total.items) { // จากที่มาของคะแนนเก็บที่ตั้งค่าไว้ → แตะเพื่อดูคะแนนรายแหล่ง
     S.scoreItems = total.items;
-    return `<button type="button" class="card-x stat link" data-scoreitems aria-label="รวมคะแนนทั้งหมด — ดูรายละเอียด"><div class="ic" style="background:#fee2e2;color:#b91c1c"><i class="fa-solid fa-trophy"></i></div><div><b>${esc(total.value)}</b><small>รวมคะแนนทั้งหมด${total.items.length > 1 ? ` (${total.items.length} วิชา)` : ''}</small></div><i class="fa-solid fa-chevron-right go"></i></button>`; }
+    return `<button type="button" class="card-x stat link" data-scoreitems aria-label="รวมคะแนนทั้งหมด — ดูรายละเอียด"><div class="ic" style="background:#fee2e2;color:#b91c1c"><i class="fa-solid fa-trophy"></i></div><div><b>${esc(total.value)}</b><small>รวมคะแนนทั้งหมด${total.items.length > 1 ? ` (${total.items.length} รายการ)` : ''}${total.current === false && (total.terms || []).length ? ` · ภาคเรียนที่ ${esc(total.terms.map(k => k.split('/')[1] + '/' + k.split('/')[0]).join(', '))}` : ''}</small></div><i class="fa-solid fa-chevron-right go"></i></button>`; }
   const m = studentNavItems().find(x => /ผลการเรียน|คะแนน/.test(x.label) && x.key.startsWith('c:'));
   if (!total && !m) return `<div class="card-x stat" title="ครู/ผู้ดูแลระบบยังไม่ได้ตั้งค่าที่มาของคะแนนเก็บ"><div class="ic" style="background:#fee2e2;color:#b91c1c"><i class="fa-solid fa-trophy"></i></div><div><b>-</b><small>รวมคะแนนทั้งหมด</small></div></div>`;
   const html = statCard('fa-trophy', total ? esc(total.value) : '-', 'รวมคะแนนทั้งหมด' + (m ? '' : ''), 'background:#fee2e2;color:#b91c1c', m ? (m.href ? 'assignments' : 'web') : 'assignments', m ? '' : 'graded');
   return m && !m.href ? html.replace('data-go="web"', `data-go="web" data-id="${esc(m.id)}"`) : m && m.href ? html.replace(/^<button type="button"/, `<a href="${safeUrl(m.href)}" target="_blank" rel="noopener"`).replace(/<\/button>$/, '</a>').replace(/data-go="assignments"\s*/, '') : html;
 }
 document.addEventListener('click', e => { if (!e.target.closest('[data-scoreitems]') || !S.scoreItems) return;
-  modal('คะแนนของฉัน', `<div class="d-flex flex-column gap-3">${S.scoreItems.map(x => `<div class="sc-card"><div class="sc-top"><span class="ss-ic" style="background:#fee2e2;color:#b91c1c"><i class="fa-solid fa-trophy"></i></span><div class="sc-name"><b>${esc(x.menu || 'คะแนนเก็บ')}</b><small>${esc(x.header || 'รวมคะแนนทั้งหมด')}</small></div></div>
+  modal('คะแนนของฉัน', `<div class="d-flex flex-column gap-3">${S.scoreItems.map(x => `<div class="sc-card"><div class="sc-top"><span class="ss-ic" style="background:#fee2e2;color:#b91c1c"><i class="fa-solid fa-trophy"></i></span><div class="sc-name"><b>${esc(x.menu || 'คะแนนเก็บ')}</b><small>${esc(x.header || 'รวมคะแนนทั้งหมด')}${(x.terms || []).length ? ' · ภาคเรียนที่ ' + esc(x.terms.map(k => k.split('/')[1] + '/' + k.split('/')[0]).join(', ')) : ''}</small></div></div>
       <div class="sc-main"><div class="sc-box"><small>รวมคะแนนทั้งหมด</small><b>${esc(x.value)}${x.max ? `<span>/ ${esc(x.max)}</span>` : ''}</b></div>${x.grade ? `<div class="sc-box grade"><small>ผลการเรียน (เกรด)</small><b>${esc(x.grade)}</b></div>` : ''}</div>
       ${(x.details || []).length ? `<div class="sc-det">${x.details.map(d => `<div class="sc-it"><span>${esc(d.label)}</span><b>${esc(d.value)}${d.max ? `<small>/${esc(d.max)}</small>` : ''}</b></div>`).join('')}</div>` : ''}</div>`).join('')}</div>`, '', 'modal-lg'); });
 document.addEventListener('click', e => { const it = e.target.closest('[data-ls]'); if (!it || !S.lsItems) return; const a = S.lsItems[+it.dataset.ls]; if (!a) return;
@@ -7437,14 +7447,22 @@ const fmt1 = v => v === null ? '-' : (Math.round(v * 10) / 10).toString();
 /** หัวคอลัมน์: "สอบเก็บคะแนน ระหว่างเรียน" → 2 บรรทัด */
 const hdrLb = l => esc(String(l || '')).replace(/\s*(ระหว่างเรียน|ระหว่างภาค)/, '<br>$1');
 /** นับจำนวนนักเรียนตามระดับ (เกรด / คุณลักษณะ / อ่านฯ) */
-const distOf = studs => { const g = {}, t = {}, r = {}; GR_ORDER.forEach(k => g[k] = 0); LV4.forEach(x => { t[x[0]] = 0; r[x[0]] = 0; });
-  studs.forEach(s => { const gg = String(s.grade || '').trim(); if (gg) g[gg] = (g[gg] || 0) + 1; const a = lv4(s.trait), b = lv4(s.read); if (a) t[a]++; if (b) r[b]++; }); return { g, t, r, n: studs.length }; };
+const distOf = studs => { const g = {}, t = {}, r = {}, L = { g: {}, t: {}, r: {} }; GR_ORDER.forEach(k => g[k] = 0); LV4.forEach(x => { t[x[0]] = 0; r[x[0]] = 0; });
+  const push = (o, k, s) => (L[o][k] = L[o][k] || []).push(s);
+  studs.forEach(s => { const gg = String(s.grade || '').trim(); if (gg) { g[gg] = (g[gg] || 0) + 1; push('g', gg, s); } const a = lv4(s.trait), b = lv4(s.read); if (a) { t[a]++; push('t', a, s); } if (b) { r[b]++; push('r', b, s); } }); return { g, t, r, n: studs.length, L }; };
+/* v6.8 คลิกระดับผลการเรียน → รายชื่อนักเรียนที่ได้ระดับนั้น */
+const DIST_REG = new Map(); let distSeq = 0;
+document.addEventListener('click', e => { const c = e.target.closest('[data-dk]'); if (!c) return; e.preventDefault(); e.stopPropagation(); const D = DIST_REG.get(c.closest('[data-did]').dataset.did); if (!D) return;
+  const [o, k] = c.dataset.dk.split('|'), list = ((D.L || {})[o] || {})[k] || [], ttl = o === 'g' ? 'ผลการเรียน ' + k : (o === 't' ? 'คุณลักษณะฯ ' : 'อ่าน คิด วิเคราะห์ฯ ') + ((LV4.find(x => x[0] === k) || [])[1] || k);
+  const rows = list.slice().sort((a, b) => natural(a._room || a.room || '', b._room || b.room || '') || (num(a.no) || 999) - (num(b.no) || 999)).map(x => [esc(x.no || '-'), esc(x.code || '-'), `<b>${esc((x.prefix || '') + x.name)}</b>`, esc(x._room || x.room || '-'), esc(x.total || '-'), grBadge(x.grade)]);
+  modal(`${ttl} — ${list.length} คน`, list.length ? `<div class="tbl-keep">${pagedTable('dist' + c.dataset.dk, ['เลขที่', 'รหัสนักเรียน', 'ชื่อ-สกุล', 'ห้อง', 'รวม', 'เกรด'], rows)}</div>` : empty('fa-users', 'ไม่มีนักเรียนในระดับนี้'), '<button class="btn btn-primary" data-bs-dismiss="modal">ปิด</button>', 'modal-lg'); }, true);
 const distHtml = (D, compact) => { const pc = (n, tot) => tot ? Math.round(n * 1000 / tot) / 10 + '%' : '0%';
   const gTot = Object.values(D.g).reduce((a, b) => a + b, 0), tTot = Object.values(D.t).reduce((a, b) => a + b, 0), rTot = Object.values(D.r).reduce((a, b) => a + b, 0);
   const strip = (title, ic, cells, tot) => `<div class="dstrip"><div class="dstrip-h"><i class="fa-solid ${ic}"></i> ${title} <small>รวม ${tot} คน</small></div><div class="dcells">${cells}</div></div>`;
-  return `<div class="dist ${compact ? 'compact' : ''}">${strip('จำนวนนักเรียนที่ได้ระดับผลการเรียน', 'fa-graduation-cap', GR_ORDER.concat(Object.keys(D.g).filter(k => !GR_ORDER.includes(k) && D.g[k])).map(k => `<div class="dcell t-${grTone(k) || 'n'}"><span>${esc(k)}</span><b>${D.g[k]}</b><small>${pc(D.g[k], gTot)}</small></div>`).join(''), gTot)}
-    ${strip('ระดับคุณลักษณะอันพึงประสงค์', 'fa-heart', LV4.map(x => `<div class="dcell lv" style="--c:${x[2]}"><span>${x[1]} (${x[0]})</span><b>${D.t[x[0]]}</b><small>${pc(D.t[x[0]], tTot)}</small></div>`).join(''), tTot)}
-    ${strip('ระดับการอ่าน คิด วิเคราะห์ และเขียน', 'fa-book-open-reader', LV4.map(x => `<div class="dcell lv" style="--c:${x[2]}"><span>${x[1]} (${x[0]})</span><b>${D.r[x[0]]}</b><small>${pc(D.r[x[0]], rTot)}</small></div>`).join(''), rTot)}</div>`; };
+  const did = 'd' + (++distSeq); DIST_REG.set(did, D); if (DIST_REG.size > 300) DIST_REG.delete(DIST_REG.keys().next().value);
+  return `<div class="dist ${compact ? 'compact' : ''}" data-did="${did}">${strip('จำนวนนักเรียนที่ได้ระดับผลการเรียน', 'fa-graduation-cap', GR_ORDER.concat(Object.keys(D.g).filter(k => !GR_ORDER.includes(k) && D.g[k])).map(k => `<div class="dcell t-${grTone(k) || 'n'}" data-dk="g|${esc(k)}" role="button" tabindex="0" title="ดูรายชื่อนักเรียน"><span>${esc(k)}</span><b>${D.g[k]}</b><small>${pc(D.g[k], gTot)}</small></div>`).join(''), gTot)}
+    ${strip('ระดับคุณลักษณะอันพึงประสงค์', 'fa-heart', LV4.map(x => `<div class="dcell lv" style="--c:${x[2]}" data-dk="t|${x[0]}" role="button" tabindex="0" title="ดูรายชื่อนักเรียน"><span>${x[1]} (${x[0]})</span><b>${D.t[x[0]]}</b><small>${pc(D.t[x[0]], tTot)}</small></div>`).join(''), tTot)}
+    ${strip('ระดับการอ่าน คิด วิเคราะห์ และเขียน', 'fa-book-open-reader', LV4.map(x => `<div class="dcell lv" style="--c:${x[2]}" data-dk="r|${x[0]}" role="button" tabindex="0" title="ดูรายชื่อนักเรียน"><span>${x[1]} (${x[0]})</span><b>${D.r[x[0]]}</b><small>${pc(D.r[x[0]], rTot)}</small></div>`).join(''), rTot)}</div>`; };
 /** คอลัมน์ที่แสดง: ตัวชี้วัด/บทเรียน · สอบ (ถ้าไม่มีตัวชี้วัด ใช้คอลัมน์รวมย่อยแทน) */
 const sbCols = sh => { const ind = sh.columns.filter(c => c.kind === 'ind'), exam = sh.columns.filter(c => c.kind === 'exam');
   return { ind: ind.length ? ind : sh.columns.filter(c => c.kind === 'sub'), exam, total: sh.columns.find(c => c.j === sh.totalCol) || { label: 'รวมคะแนนทั้งหมด', max: '' } }; };
@@ -7466,7 +7484,7 @@ PAGES.scorebook = { admin: true, async render(el, p = {}) {
   const head = sub => `<div class="page-head"><h3>คะแนนนักเรียน<small class="d-block fs-6 text-muted fw-semibold mt-1">${sub || 'ดึงจากทุกแผ่นงานใน Google Sheet ที่ตั้งไว้ (ชื่อแผ่นงาน = ห้อง) · คำนวณสรุปให้อัตโนมัติ'}</small></h3><div class="ph-btns">${termSelect()}<button class="btn btn-primary text-nowrap" data-sbprintall title="พิมพ์รายงาน" aria-label="พิมพ์รายงาน"><i class="fa-solid fa-print"></i><span class="bt"> พิมพ์รายงาน</span></button><button class="btn btn-soft text-nowrap" data-go="settings" data-tab="scores" title="ตั้งค่าที่มาของคะแนน" aria-label="ตั้งค่าที่มาของคะแนน"><i class="fa-solid fa-gear"></i><span class="bt"> ตั้งค่าที่มาของคะแนน</span></button></div></div>${pastBanner()}`;
   if (!vis.length) { el.innerHTML = head() + empty('fa-table', 'ยังไม่มีที่มาของคะแนนสำหรับภาคเรียนนี้ — ตั้งค่าได้ที่ ตั้งค่า → คะแนนเก็บ'); return; }
   const BK = {}, termLb = b => b.terms.length ? b.terms.map(k => 'ภาคเรียนที่ ' + k.split('/')[1] + '/' + k.split('/')[0]).join(', ') : 'ทุกภาคเรียน';
-  const load = (id, refresh) => (refresh || !BK[id] ? (BK[id] = apiQ('scoreBook', id, !!refresh).catch(e => ({ error: e.message, sheets: [] }))) : BK[id]);
+  const load = (id, refresh) => (refresh || !BK[id] ? (BK[id] = apiQ('scoreBook', id, !!refresh).then(d => { (d.sheets || []).forEach(sh => (sh.students || []).forEach(x => { x._room = sh.name; })); return d; }).catch(e => ({ error: e.message, sheets: [] }))) : BK[id]);
   const cname = b => b.courseNames.join(', ') || b.name;
   const kpi = studs => { const v = studs.map(x => num(x.total)).filter(x => x !== null);
     return `<div class="sb-kpi"><div><small>นักเรียน</small><b>${studs.length}</b></div><div><small>คะแนนเฉลี่ย</small><b>${fmt1(avgOf(studs.map(x => x.total)))}</b></div><div><small>สูงสุด</small><b>${v.length ? Math.max(...v) : '-'}</b></div><div><small>ต่ำสุด</small><b>${v.length ? Math.min(...v) : '-'}</b></div></div>`; };
@@ -7583,7 +7601,8 @@ PAGES.myscores = { async render(el) {
   el.innerHTML = `<div class="page-head"><h3>คะแนนของฉัน<small class="d-block fs-6 text-muted fw-semibold mt-1">ผลการเรียนรายบุคคล${tt ? ` · ภาคเรียนที่ ${esc(tt)}/${esc(ty)}` : ''}</small></h3></div>
     <div class="card-x mb-3"><div class="d-flex gap-3 align-items-center mb-3">${avatarHtml(S.user, 52)}<div style="min-width:0"><b class="d-block fs-5 text-truncate">${esc(u.name)}</b><small class="text-muted">${esc(u.grade || '-')}${u.room ? '/' + esc(u.room) : ''}</small></div></div>
       ${scoreHeadHtml({ name: u.name, no: (d.items[0] && d.items[0].no) || u.classNo, code: u.code })}</div>
-    ${d.items.length ? d.items.map(scoreCardHtml).join('') : empty('fa-star-half-stroke', 'ยังไม่มีข้อมูลคะแนนของคุณในภาคเรียนนี้')}`;
+    ${d.items.length ? (() => { const g = new Map(); d.items.forEach(x => { const k = x.termLabel || 'ทุกภาคเรียน'; if (!g.has(k)) g.set(k, []); g.get(k).push(x); }); // v6.8 แยกตามภาคเรียน/ปีการศึกษา
+      return [...g.entries()].map(([k, xs]) => `<h5 class="fw-bold mb-2 mt-3"><i class="fa-solid fa-calendar-days text-primary me-2"></i>${esc(k)} <span class="chip info">${xs.length} รายการ</span></h5>` + xs.map(scoreCardHtml).join('')).join(''); })() : empty('fa-star-half-stroke', 'ยังไม่มีข้อมูลคะแนนของคุณ')}`;
 } };
 /** ส่งออก/พิมพ์รายงานการเช็คชื่อ */
 async function attExportRun(kind, from, to, hist) {
