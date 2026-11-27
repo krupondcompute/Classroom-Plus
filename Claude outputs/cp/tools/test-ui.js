@@ -72,9 +72,9 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
   await page.fill('[name=code]', 'ว21102'); await page.fill('[name=name]', 'วิทยาการคำนวณ 2'); await page.click('#crudSave'); await confirm(); await idle();
   ok(await page.isVisible('#tk >> text=ว21102'), 'category with subject code');
   await page.click('.dock [data-go=acourses]'); await idle(); ok(await page.$$eval('#cl .ccard', x => x.length) >= 1, 'course cards');
-  await page.click('#fab'); await page.waitForSelector('#modal.show'); await page.click('[data-multi=subject] label:has-text("ว21102")');
+  await page.click('#fab'); await page.waitForSelector('#modal.show'); const cd = async (k, t) => { await page.click(`[data-cdrop=${k}] .cdrop-btn`); await page.click(`[data-cdrop=${k}] label:has-text("${t}")`); await page.click(`[data-cdrop=${k}] .cdrop-btn`); await page.waitForTimeout(150); }; await cd('subject', 'ว21102');
   ok(await page.inputValue('[name=subject]') === 'ว21102|วิทยาการคำนวณ 2', 'subject checkbox');
-  await page.click('[data-multi=grade] label:has-text("ม.2")'); await page.click('[data-multi=room] label:has-text("ห้อง 3")');
+  await cd('grade', 'ม.2'); await cd('room', 'ห้อง 3');
   ok(await page.inputValue('[name=grade]') === 'ม.2' && await page.inputValue('[name=room]') === '3', 'multi checkbox values');
   await page.screenshot({ path: SHOT + '/06c-course-form.png' });
   await page.click('#crudSave'); await confirm(); await idle();
@@ -119,11 +119,11 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
   /* ===== v4.6: แบบทดสอบ → ผลการเรียน ===== */
   await page.click('#modeSwitch'); await idle();
   await page.click('.dock [data-go=aassign]'); await idle(); await page.click('#fab'); await page.waitForSelector('#modal.show');
-  await page.selectOption('[name=courseId]', { label: 'ว21103 วิทยาการคำนวณ 1' }); await page.fill('[name=title]', 'แบบทดสอบบทที่ 1');
+  { await page.click('[data-cdrop=courseId] .cdrop-btn'); await page.click('[data-cdrop=courseId] label:has-text("ว21103 วิทยาการคำนวณ 1")'); await page.click('[data-cdrop=courseId] .cdrop-btn'); } await page.fill('[name=title]', 'แบบทดสอบบทที่ 1');
   await page.fill('[name=dueAt]', '2099-01-01T10:00').catch(() => {}); await page.evaluate(() => { const f = document.querySelector('[name=dueAt]'); f._flatpickr ? f._flatpickr.setDate('2099-01-01 10:00', true) : (f.value = '2099-01-01T10:00'); });
-  await page.click('[data-multi=grade] [data-addmulti]'); await page.fill('.swal2-input', 'ปวช.1'); await page.click('.swal2-confirm'); await page.waitForTimeout(300);
-  ok(await page.inputValue('[name=grade]') === 'ปวช.1', '+ add new grade in multi');
-  await page.click('[data-multi=grade] label:has-text("ปวช.1")'); await page.click('[data-multi=grade] label:has-text("ม.1")');
+  await page.click('[data-cdrop=grade] .cdrop-btn'); await page.click('[data-cdrop=grade] [data-cdadd]'); await page.fill('.swal2-input', 'ปวช.1'); await page.click('.swal2-confirm'); await page.waitForTimeout(400);
+  ok(await page.inputValue('[name=grade]') === 'ปวช.1', '+ add new grade in dropdown');
+  await page.evaluate(() => { const b = document.querySelector('[data-cdrop=grade]'); const c = [...b.querySelectorAll('input[data-lb]')]; c.forEach(x => x.checked = x.value === 'ม.1'); c[0].dispatchEvent(new Event('change', { bubbles: true })); document.querySelector('#modalTitle').click(); });
   await page.check('#qzOn'); await page.waitForSelector('.qz-card');
   await page.fill('.qz-card [data-k=q]', '2+2 เท่ากับเท่าไร'); for (const [j, v] of ['3', '4', '5', '6'].entries()) await page.fill(`.qz-card [data-opt="${j}"]`, v);
   await page.check('.qz-card input[type=radio][value="1"]'); await page.fill('.qz-card [data-k=points]', '2');
@@ -190,8 +190,8 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
   await page.click('#sideNav [data-go=classes]'); await idle(); await page.click('[data-grade-detail] >> nth=0'); await page.waitForSelector('#modal.show');
   ok(await page.isVisible('#modal .stat'), 'grade detail'); await closeM();
   await page.click('#sideNav [data-go=acourses]'); await idle(); ok(await page.isVisible('[data-f=room]'), 'course room filter');
-  await page.click('#fab'); await page.waitForSelector('#modal.show'); ok(await page.$('[data-multi=teachers]') !== null && !(await page.$('#modal [name=order]')), 'co-teacher field, no order');
-  ok(await page.$('#modal [data-multi=subject]') !== null, 'multi subject picker');
+  await page.click('#fab'); await page.waitForSelector('#modal.show'); ok(await page.$('[data-cdrop=teachers]') !== null && !(await page.$('#modal [name=order]')), 'co-teacher field, no order');
+  ok(await page.$('#modal [data-cdrop=subject]') !== null, 'multi subject picker');
   await closeM();
   ok(await page.evaluate(() => { const t = document.querySelector('#sideToggle').getBoundingClientRect(), h = document.querySelector('.topbar').getBoundingClientRect(); return Math.abs((t.top + t.height / 2) - innerHeight / 2) < 4; }), 'round toggle vertically centered');
   ok(await page.isVisible('#sideNav > .ind.on'), 'sliding indicator');
@@ -570,6 +570,14 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
   ok(await page.evaluate(() => !!document.querySelector('[data-pvu=undo]') && !!document.querySelector('[data-pvu=redo]')), 'v6.6 preview: undo / redo buttons');
   ok(await page.evaluate(async () => { const x = await pvDocHtml(document.querySelector('#modal iframe')); return x.page && x.page.w > 500 && /font-family/.test(x.html) && !/<svg/.test(x.html) && /data:image\/png/.test(x.html); }), 'v6.6 Word/Google Doc export: inline styles, logo as PNG, page size');
   await page.evaluate(() => document.querySelector('#modal [data-bs-dismiss=modal]').click()); await page.waitForTimeout(500);
+  // ---------- v6.7 ----------
+  ok(await page.evaluate(async () => { S.lsItems = [{ exam: true, title: 'สอบ', maxScore: '15', sub: { score: '11.5', feedback: '' }, parts: { p1: '4.5', p1max: '5', p2: '7', p2max: '10' } }]; const d = document.createElement('div'); d.dataset.ls = '0'; document.body.appendChild(d); d.click(); await new Promise(r => setTimeout(r, 600)); const t = document.querySelector('#modal .ls-pop').textContent; d.remove(); document.querySelector('#modal [data-bs-dismiss=modal]').click(); return /ปรนัย/.test(t) && /อัตนัย/.test(t) && /11\.5/.test(t); }), 'v6.7 latest score popup: objective / subjective / total');
+  await page.waitForTimeout(500); await page.evaluate(() => crudForm('Assignments', {})); await page.waitForSelector('#modal [data-cdrop=courseId]'); ok(await page.evaluate(() => !!document.querySelector('[data-cdrop=grade] [data-cdadd]') && !!document.querySelector('[data-cdrop=room] [data-cdadd]')), 'v6.7 assignment form: multi-select dropdowns with + add');
+  await page.evaluate(() => document.querySelector('#modal [data-bs-dismiss=modal]').click()); await page.waitForTimeout(600);
+  await page.evaluate(() => crudForm('Courses', {})); await page.waitForSelector('#modal [data-cdrop=subject]'); ok(await page.evaluate(() => ['subject', 'grade', 'room', 'teachers'].every(k => !!document.querySelector(`[data-cdrop=${k}]`)) && document.querySelector('[name=acadYear]').value === viewT().year), 'v6.7 course form: dropdowns + year defaults to viewed term');
+  await page.evaluate(() => document.querySelector('#modal [data-bs-dismiss=modal]').click()); await page.waitForTimeout(600);
+  await page.evaluate(() => go('classes')); await idle(); ok(await page.evaluate(() => !!document.querySelector('[data-import=classes]') && !!document.querySelector('[data-import=areas]') && !!document.querySelector('#tla.la-list')), 'v6.7 classes: import buttons + vertical learning areas');
+  await page.evaluate(() => go('aassign')); await idle(); ok(!!(await page.$('[data-import=assignments]')), 'v6.7 assignments: import from previous term');
   // QR: ไอคอนในระบบ + ขนาดโลโก้
   await page.evaluate(() => go('tools')); await idle(); await page.click('[data-tool=qrcode]'); await page.waitForSelector('#qrCv'); await page.click('#qrIconBtn'); await page.click('[data-qric] >> nth=0'); await page.waitForTimeout(600);
   await page.fill('#qrLogoSz', '28').catch(() => page.evaluate(() => { const r = document.querySelector('#qrLogoSz'); r.value = 28; r.dispatchEvent(new Event('input', { bubbles: true })); })); await page.waitForTimeout(300);
@@ -608,6 +616,8 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
   ok(await mp.evaluate(() => { const r = document.querySelector('#bellBtn').getBoundingClientRect(); return Math.abs(r.width - r.height) < 1; }), 'v6.6 mobile bell button round');
   await mp.evaluate(() => go('aann')); await mp.waitForFunction(() => !document.querySelector('#loader.show')); await mp.waitForTimeout(400);
   ok(await mp.evaluate(() => { const b = document.querySelectorAll('.ann-acts > .btn'); return b.length === 2 && Math.abs(b[0].getBoundingClientRect().top - b[1].getBoundingClientRect().top) < 4; }), 'v6.6 mobile announcements: header buttons on one row');
+  await mp.evaluate(() => go('classes')); await mp.waitForFunction(() => !document.querySelector('#loader.show')); await mp.waitForTimeout(500);
+  ok(await mp.evaluate(() => { const q = document.querySelector('#tk [data-q]').getBoundingClientRect(), f = document.querySelector('#tk [data-f=sg]').getBoundingClientRect(); return Math.abs(q.top - f.top) < 4; }), 'v6.7 mobile categories: learning-area filter on the search row');
   ok(!errs.length, 'console errors: ' + errs.join(' | '));
   console.log(`ui tests: ${pass} passed, ${fail} failed`);
   await browser.close(); process.exit(fail ? 1 : 0);

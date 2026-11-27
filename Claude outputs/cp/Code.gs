@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '6.6.0';
+const APP_VERSION = '6.7.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -411,7 +411,9 @@ function deleteWhere_(name, pred) {
   const list = rows_(name).filter(pred);
   ['g', 'c', 't'].forEach(part => {
     const sub = list.filter(r => (r._db || partOf_(name, r)) === part).sort((a, b) => b._r - a._r); if (!sub.length) return;
-    const sh = sheet_(name, part); sub.forEach(r => sh.deleteRow(r._r)); bump_(name, part);
+    const sh = sheet_(name, part); // v6.7 ลบเป็นช่วงต่อเนื่อง (เร็วกว่าลบทีละแถวมาก)
+    for (let i = 0; i < sub.length;) { let j = i; while (j + 1 < sub.length && sub[j + 1]._r === sub[j]._r - 1) j++; const top = sub[j]._r, n = j - i + 1; if (n > 1 && sh.deleteRows) sh.deleteRows(top, n); else sh.deleteRow(top); i = j + 1; }
+    bump_(name, part);
   });
   delete MEM_[name]; if (name === 'Users') delete MEM_._staff;
   return list.length;
@@ -1044,7 +1046,7 @@ function evMove_(ctx, id, date) { const r = find_('Events', id); if (!r) throw e
   const span = Math.round((new Date(String(r.endDate || r.date) + 'T00:00:00Z') - new Date(r.date + 'T00:00:00Z')) / 864e5), e = new Date(date + 'T00:00:00Z'); e.setUTCDate(e.getUTCDate() + Math.max(0, span || 0));
   return lock_(() => { const p = { date: date, endDate: e.toISOString().slice(0, 10), notified: '', updatedAt: now_() }; updateRow_('Events', r, p); return evOut_(Object.assign({}, r, p)); }); }
 function evRemove_(ctx, id) { const r = find_('Events', id); if (!r) throw err_('ไม่พบกิจกรรม', 'NOTFOUND'); if (r.ownerId !== ctx.user.id && !isAdmin_(ctx.user)) throw err_('ลบได้เฉพาะกิจกรรมของคุณ', 'FORBIDDEN'); return lock_(() => { deleteWhere_('Events', x => x.id === r.id); // v6.6 ลบการแจ้งเตือนและประกาศที่เกิดจากกิจกรรมนี้ด้วย
-    try { deleteWhere_('Notifications', n => n.link === 'calendar:' + r.id); } catch (e) {} try { if (r.annId) deleteWhere_('Announcements', a => a.id === r.annId); else deleteWhere_('Announcements', a => a.type === 'กิจกรรม' && a.title === '📅 ' + r.title && a.ownerId === r.ownerId); } catch (e) {} return true; }); }
+    try { deleteWhere_('Notifications', n => n.link === 'calendar:' + r.id || (r.annId && n.link === 'announcement:' + r.annId)); } catch (e) {} try { if (r.annId) deleteWhere_('Announcements', a => a.id === r.annId); else deleteWhere_('Announcements', a => a.type === 'กิจกรรม' && a.title === '📅 ' + r.title && a.ownerId === r.ownerId); } catch (e) {} return true; }); }
 const naiveAdd_ = (s, min) => new Date(new Date(s.slice(0, 16) + ':00Z').getTime() + min * 6e4).toISOString().slice(0, 16);
 /** ถึงเวลาแจ้งเตือน → ประกาศลงระบบ (ครั้งเดียว) + ส่งรายการกิจกรรมที่ใกล้ถึง/กำลังจัดให้หน้าเว็บแสดงแจ้งเตือน */
 function evDue_(ctx) {
@@ -1280,7 +1282,7 @@ function studentHome_(ctx, view) {
       avgScore: scores.length ? Math.round(scores.reduce((s, x) => s + x, 0) / scores.length) : null },
     pending: asg.filter(a => !a.sub).sort((a, b) => dt_(a.dueAt).localeCompare(dt_(b.dueAt))).slice(0, 6),
     latestScores: (() => { let exr = []; try { const ex = {}; rows_('Exams').forEach(e => ex[e.id] = e); // v6.4 รวมผลสอบที่ตรวจด้วยการสแกน
-      exr = rows_('ExamResults').filter(r => r.studentId === u.id && ex[r.examId]).map(r => ({ id: 'x' + r.id, title: String(ex[r.examId].name || 'ข้อสอบ').replace(/\s*\(กระดาษคำตอบ\)$/, ''), maxScore: String(r2_(Number(r.max || 0) + (r.score2 !== '' && r.score2 !== undefined ? (Number(examCfg_(json_(ex[r.examId].cfg, {})).sheet.p2max) || 0) : 0))), exam: true, sub: { score: String(r2_(Number(r.score || 0) + (Number(r.score2) || 0))), feedback: r.score2 !== '' && r.score2 !== undefined ? 'ผลสอบรวม (ตอนที่ 1 ' + r.score + ' + ตอนที่ 2 ' + r.score2 + ')' : 'ผลสอบ (ตรวจด้วยการสแกน)', gradedAt: r.updatedAt || r.createdAt } })); } catch (e) {}
+      exr = rows_('ExamResults').filter(r => r.studentId === u.id && ex[r.examId]).map(r => ({ id: 'x' + r.id, title: String(ex[r.examId].name || 'ข้อสอบ').replace(/\s*\(กระดาษคำตอบ\)$/, ''), maxScore: String(r2_(Number(r.max || 0) + (r.score2 !== '' && r.score2 !== undefined ? (Number(examCfg_(json_(ex[r.examId].cfg, {})).sheet.p2max) || 0) : 0))), exam: true, sub: { score: String(r2_(Number(r.score || 0) + (Number(r.score2) || 0))), feedback: '', gradedAt: r.updatedAt || r.createdAt }, parts: { p1: String(r2_(Number(r.score || 0))), p1max: String(r2_(Number(r.max || 0))), p2: r.score2 === '' || r.score2 === undefined ? '' : String(r2_(Number(r.score2))), p2max: String(Number(examCfg_(json_(ex[r.examId].cfg, {})).sheet.p2max) || 0) } })); } catch (e) {}
       return graded.concat(exr).sort((a, b) => String(b.sub.gradedAt).localeCompare(String(a.sub.gradedAt))).slice(0, 5); })(),
     announcements: listAnnouncements_(ctx).slice(0, 3),
     term: term_(), view: vf.vt, past: vf.past, total: (() => { try { return totalScore_(u); } catch (e) { return null; } })()
@@ -1866,7 +1868,8 @@ function remove_(ctx, entity, id) {
       counts.Lessons = deleteWhere_('Lessons', l => l.courseId === id);
     }
     if (entity === 'Lessons') counts.Progress = deleteWhere_('Progress', p => p.lessonId === id);
-    if (entity === 'Announcements') { try { counts.Notifications = deleteWhere_('Notifications', n => n.link === 'announcement:' + id); } catch (e) {} } // v6.6 ลบการแจ้งเตือนของประกาศนี้
+    if (entity === 'Announcements') { try { const evs = {}; rows_('Events').forEach(ev => { if (ev.annId === id || (row.type === 'กิจกรรม' && '📅 ' + ev.title === row.title && ev.ownerId === row.ownerId)) evs['calendar:' + ev.id] = 1; }); // v6.7 ประกาศจากกิจกรรม → ลบการแจ้งเตือนของกิจกรรมด้วย
+      counts.Notifications = deleteWhere_('Notifications', n => n.link === 'announcement:' + id || !!evs[n.link]); } catch (e) {} } // v6.6 ลบการแจ้งเตือนของประกาศนี้
     if (entity === 'Assignments') { purgeRows_('Submissions', s => s.assignmentId === id); counts.Submissions = deleteWhere_('Submissions', s => s.assignmentId === id); }
     purge_(fileIds_(row));
     deleteWhere_(entity, r => r.id === id);
@@ -2593,7 +2596,7 @@ function termSources_(ctx) {
   if (cur.sheetId) out.push({ key: 'main', label: termLabel_('main') + ' (ข้อมูลก่อนแยกภาคเรียน)' });
   return { current: cur.sheetId ? cur.key : 'main', currentLabel: termLabel_(cur.sheetId ? cur.key : 'main'), sources: out };
 }
-const IMPORT_KINDS = { students: 1, categories: 1, types: 1, courses: 1, announcements: 1 };
+const IMPORT_KINDS = { students: 1, categories: 1, types: 1, courses: 1, announcements: 1, classes: 1, areas: 1, assignments: 1, papers: 1, exams: 1 }; // v6.7 + ชั้นเรียน กลุ่มสาระ งาน กระดาษคำถาม/คำตอบ
 function sourceItems_(ctx, kind) {
   const u = ctx.user;
   if (kind === 'students') return rows_('Users').filter(x => x.role === 'student').map(x => ({ id: x.id, label: x.prefix + x.fullName, sub: (x.grade || '-') + '/' + (x.room || '-') + ' · เลขที่ ' + (x.classNo || '-') + ' · รหัส ' + x.studentCode, group: (x.grade || '-') + '/' + (x.room || '-') }));
@@ -2601,6 +2604,11 @@ function sourceItems_(ctx, kind) {
   if (kind === 'types') return cfg_().assignmentTypes.split(',').filter(Boolean).map(x => ({ id: x, label: x, sub: '' }));
   if (kind === 'courses') { const ls = rows_('Lessons'); return rows_('Courses').filter(c => isAdmin_(u) || teaches_(u, c)).map(c => ({ id: c.id, label: (c.code ? c.code + ' ' : '') + c.name, sub: ls.filter(l => l.courseId === c.id).length + ' บทเรียน · ' + (c.grade || 'ทุกชั้น') + (c.room ? ' ห้อง ' + c.room : '') })); }
   if (kind === 'announcements') return rows_('Announcements').filter(a => rowOwned_(u, 'Announcements', a)).map(a => ({ id: a.id, label: a.title, sub: (a.type || '') + ' · ' + String(a.createdAt).slice(0, 10) }));
+  if (kind === 'classes') return rows_('Classes').map(c => ({ id: c.grade + '|' + (c.room || ''), label: c.grade + (c.room ? '/' + c.room : ''), sub: c.room ? '' : 'ทั้งระดับชั้น', group: c.grade }));
+  if (kind === 'areas') { const l = String(cfg_().learnAreas || '').split(',').map(x => x.trim()).filter(Boolean); rows_('Categories').forEach(c => { if (c.area && l.indexOf(c.area) < 0) l.push(c.area); }); return l.map(x => ({ id: x, label: x, sub: '' })); }
+  if (kind === 'assignments') { const cs = {}; rows_('Courses').forEach(c => cs[c.id] = c); return rows_('Assignments').filter(a => rowOwned_(u, 'Assignments', a)).map(a => ({ id: a.id, label: a.title, sub: (a.type || '') + ' · ' + ((cs[a.courseId] || {}).name || '-') + ' · คะแนนเต็ม ' + (a.maxScore || '-'), group: (cs[a.courseId] || {}).name || '' })); }
+  if (kind === 'papers') return rows_('ExamPapers').filter(r => isAdmin_(u) || r.ownerId === u.id).map(r => { const d = json_(r.data, {}); return { id: r.id, label: r.title, sub: [d.type, d.code, d.course, d.term].filter(Boolean).join(' · ') }; });
+  if (kind === 'exams') return rows_('Exams').filter(r => isAdmin_(u) || r.ownerId === u.id).map(r => { const c = json_(r.cfg, {}); return { id: r.id, label: r.name, sub: (c.count || '-') + ' ข้อ' + ((c.sheet || {}).courseName ? ' · ' + c.sheet.courseName : '') }; });
   return [];
 }
 function peekTerm_(ctx, from, kind) {
@@ -2620,11 +2628,28 @@ function importTerm_(ctx, from, kind, ids, opts) {
     if (kind === 'types') return { types: cfg_().assignmentTypes.split(',').filter(t => want[t]) };
     if (kind === 'courses') { const cs = rows_('Courses').filter(c => want[c.id] && (isAdmin_(u) || teaches_(u, c))).map(clean); const cid = {}; cs.forEach(c => cid[c.id] = 1);
       return { rows: cs, lessons: opts.lessons === false ? [] : rows_('Lessons').filter(l => cid[l.courseId]).map(clean) }; }
+    if (kind === 'classes') return { rows: rows_('Classes').filter(c => want[c.grade + '|' + (c.room || '')]).map(clean) };
+    if (kind === 'areas') return { areas: sourceItems_(ctx, 'areas').filter(x => want[x.id]).map(x => x.id) };
+    if (kind === 'assignments') { const cs = {}; rows_('Courses').forEach(c => cs[c.id] = c); return { rows: rows_('Assignments').filter(a => want[a.id] && rowOwned_(u, 'Assignments', a)).map(clean), courses: cs }; }
+    if (kind === 'papers') return { rows: rows_('ExamPapers').filter(r => want[r.id] && (isAdmin_(u) || r.ownerId === u.id)).map(clean) };
+    if (kind === 'exams') return { rows: rows_('Exams').filter(r => want[r.id] && (isAdmin_(u) || r.ownerId === u.id)).map(clean) };
     return { rows: rows_('Announcements').filter(a => want[a.id] && rowOwned_(u, 'Announcements', a)).map(clean) };
   });
   return lock_(() => {
     let n = 0; const t = now_();
     if (kind === 'types') { const l = cfg_().assignmentTypes.split(',').filter(Boolean); pick.types.forEach(x => { if (l.indexOf(x) < 0) { l.push(x); n++; } }); setCfg_('assignmentTypes', l.join(',')); }
+    else if (kind === 'areas') { delete MEM_.Config; const l = String(cfg_().learnAreas || '').split(',').map(x => x.trim()).filter(Boolean); pick.areas.forEach(x => { if (l.indexOf(x) < 0) { l.push(x); n++; } }); if (n) setCfg_('learnAreas', l.join(',')); }
+    else if (kind === 'classes') { Object.keys(MEM_).forEach(k => delete MEM_[k]); const have = {}; rows_('Classes').forEach(c => have[c.grade + '|' + (c.room || '')] = 1);
+      const add = pick.rows.filter(c => !have[c.grade + '|' + (c.room || '')]).map(c => Object.assign(c, { id: id_(), createdAt: t })); if (add.length) insertMany_('Classes', add); n = add.length; }
+    else if (kind === 'assignments') { Object.keys(MEM_).forEach(k => delete MEM_[k]); const cur = rows_('Courses'), have = {}; rows_('Assignments').forEach(a => have[a.id] = 1);
+      const due = Utilities.formatDate(new Date(Date.now() + 7 * 864e5), TZ, "yyyy-MM-dd'T'23:59:00"), keyOf = c => (c.code || '') + '|' + c.name;
+      const add = pick.rows.filter(a => !have[a.id]).map(a => { let c = cur.find(x => x.id === a.courseId); if (!c) { const old = pick.courses[a.courseId]; c = old && cur.find(x => keyOf(x) === keyOf(old) && (isAdmin_(u) || teaches_(u, x))); }
+        if (!c) return null; return Object.assign(a, { courseId: c.id, dueAt: due, createdAt: t, updatedAt: t, ownerId: u.id }); }).filter(Boolean);
+      if (add.length) insertMany_('Assignments', add); n = add.length; }
+    else if (kind === 'papers' || kind === 'exams') { const table = kind === 'papers' ? 'ExamPapers' : 'Exams'; Object.keys(MEM_).forEach(k => delete MEM_[k]); const have = {}, fold = {}; rows_(table).forEach(r => have[r.id] = 1); rows_('ExamFolders').forEach(f => fold[f.id] = 1);
+      const add = pick.rows.filter(r => !have[r.id]).map(r => { r.folderId = fold[r.folderId] ? r.folderId : ''; r.createdAt = t; r.updatedAt = t; r.ownerId = r.ownerId || u.id;
+        if (kind === 'papers') { const d = json_(r.data, {}); if (tk && /^25\d\d\//.test(tk)) d.term = tk; r.data = JSON.stringify(d); } else { const c = json_(r.cfg, {}); if (c.sheet && tk && /^25\d\d\//.test(tk)) c.sheet.term = tk; r.cfg = JSON.stringify(c); } return r; });
+      if (add.length) insertMany_(table, add); n = add.length; }
     else {
       const table = { students: 'Users', categories: 'Categories', courses: 'Courses', announcements: 'Announcements' }[kind];
       Object.keys(MEM_).forEach(k => delete MEM_[k]);
@@ -2853,6 +2878,7 @@ function dailyJob() {
     props_().setProperty(key, '1');
   });
   deleteWhere_('Sessions', s => Number(s.expiresAt) < Date.now());
+  try { const old = Utilities.formatDate(new Date(Date.now() - 120 * 864e5), TZ, "yyyy-MM-dd'T'HH:mm:ss"); deleteWhere_('Notifications', x => x.read === 'true' && String(x.createdAt) < old); } catch (e) {} // v6.7 ล้างการแจ้งเตือนเก่าที่อ่านแล้ว (ตารางเล็กลง โหลดเร็วขึ้น)
   if (cfg_().autoBackup === 'true') backup_();
 }
 

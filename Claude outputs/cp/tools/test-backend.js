@@ -588,5 +588,13 @@ const c62 = R('examSave', AD, { name: 'v62', cfg: { count: 10, grid: 'hv', flow:
   const s6 = ex6.cfg.sheet; ok(s6.examType === 'ปลายภาค' && s6.area === 'คณิตศาสตร์' && s6.lay.hgap === 1.6 && s6.lay.p2gap === 5 && s6.lay.blk.info.dx === 3 && !s6.lay.blk.bad && !s6.lay.blk.p2b, 'v6.6 answer sheet course info + spacing + section offsets sanitized');
   R('examKey', AD, ex6.id, { A: [0, 1, 2, 3, 0].map(a => ({ a: [a], p: 1 })) }, false); const r6 = R('examResultSave', AD, ex6.id, { studentId: s9u.id, answers: [[0], [1], [2], [3], [0]] }).data; R('examResultUpdate', AD, r6.id, { score2: 6 });
   const er = R('examResults', AD).data.find(x => x.id === r6.id); ok(er && +er.score2 === 6 && er.p2max === 8, 'v6.6 exam results include part 2 score + max'); }
+// ---- v6.7 ----
+{ const ctxA = { user: ctx.find_('Users', ctx.rows_('Users').find(u => u.role === 'admin').id) };
+  ok(['classes', 'areas', 'assignments', 'papers', 'exams'].every(k => Array.isArray(ctx.sourceItems_(ctxA, k))) && ctx.sourceItems_(ctxA, 'exams').length > 0, 'v6.7 term import: new kinds list items');
+  const n0 = ctx.rows_('Notifications').length; ctx.insertMany_('Notifications', Array.from({ length: 7 }, (_, i) => ({ id: 'zz' + i, ownerId: 'x', title: 't', body: '', link: 'zz', read: 'true', createdAt: '2020-01-01T00:00:00' })));
+  ok(ctx.deleteWhere_('Notifications', n => n.link === 'zz') === 7 && ctx.rows_('Notifications').length === n0, 'v6.7 bulk delete in contiguous ranges');
+  const ls = R('studentHome', s9).data.latestScores.find(x => x.exam && x.parts && +x.parts.p2max > 0); ok(ls && ls.sub.feedback === '' && 'p1' in ls.parts && 'p2' in ls.parts, 'v6.7 latest scores: part 1 / part 2 breakdown, no scan caption');
+  const td = ctx.now_().slice(0, 10), ev = R('evSave', AD, { title: 'กิจกรรมลบจากประกาศ', date: td, allDay: true, remind: 1440 }).data; ctx.eventJob(); const er = ctx.find_('Events', ev.id);
+  R('remove', AD, 'Announcements', er.annId); ok(!ctx.rows_('Notifications').some(n => n.link === 'calendar:' + ev.id), 'v6.7 deleting an event announcement removes the event bell cards'); R('evRemove', AD, ev.id); }
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

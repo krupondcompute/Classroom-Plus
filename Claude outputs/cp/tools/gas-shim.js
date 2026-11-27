@@ -46,6 +46,7 @@
       getDataRange() { return Range(name, 1, 1, Math.max(lastRow(), 1), Math.max(this.getLastColumn(), 1), bid); },
       appendRow(row) { const a = d(), n = lastRow(); a[n] = row.map(x => typeof x === 'string' && x[0] === "'" ? x.slice(1) : x); a.length = n + 1; persist(); },
       deleteRow(r) { d().splice(r - 1, 1); persist(); },
+      deleteRows(r, n) { d().splice(r - 1, n); persist(); },
       setFrozenRows() {}, clearContents() { BK(bid)[name] = []; persist(); }
     };
   }
