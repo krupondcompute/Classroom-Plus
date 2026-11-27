@@ -148,7 +148,7 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
   ok(await page.isVisible('.toast-x:has-text("รวม 5.5")'), 'manual score -> total 5.5');
   await page.evaluate(() => viewer([{ name: 'รูป.png', id: 'x'.repeat(28), url: 'https://drive.google.com/file/d/' + 'x'.repeat(28) + '/view', mime: 'image/png' }, { name: 'งาน.pdf', id: 'y'.repeat(28), url: 'https://drive.google.com/file/d/' + 'y'.repeat(28) + '/view' }]));
   await page.click('#viewer [data-v=in]'); await page.click('#viewer [data-v=in]'); ok((await page.textContent('#viewer .vzoom')) === '150%', 'viewer zoom in');
-  await page.click('#viewer [data-v=next]'); ok(await page.isVisible('#viewer iframe'), 'viewer pdf next');
+  await page.click('#viewer [data-v=next]'); ok(await page.isVisible('#viewer iframe') || await page.isVisible('#viewer .pxy'), 'viewer pdf next');
   await page.screenshot({ path: SHOT + '/14b-viewer.png' });
   await page.click('#viewer [data-v=close]'); ok(!(await page.$('#viewer')), 'viewer close');
   // v4.7: ผู้ใช้ (การ์ด) / ชั้นเรียน / รายวิชา / เครื่องมือครู
@@ -586,6 +586,7 @@ let pass = 0, fail = 0, exPrefsOk; const ok = (c, m) => { if (c) pass++; else { 
   ok(await page.evaluate(() => { const svg = sheetSvg({ id: 'x', name: 't', cfg: { digits: 2, count: 3, fmt: 'c4', nopt: 4, sets: 1, cols: 0, sheet: {} }, key: { A: [{ a: [0], p: 3.333333 }, { a: [0], p: 3.333333 }, { a: [0], p: 3.333334 }] } }); const txt = [...svg.matchAll(/>([^<>]+)</g)].map(m => m[1]).join('|'); return /\|10\|/.test('|' + txt + '|') && !/\d\.\d{3,}/.test(txt); }), 'v6.9 full score shown with at most 2 decimals');
   ok(await page.evaluate(() => { const d = paperExamDraft({ labels: 'th', parts: [{ title: 'ตอนที่ 1', points: '10', questions: Array.from({ length: 13 }, () => ({ q: 'x', choices: ['a', 'b'], ans: 0 })) }] }); return Math.round(d.key.A.reduce((a, k) => a + k.p, 0) * 100) / 100 === 10 && /\(10 คะแนน\)/.test(d.cfg.sheet.part1Type); }), 'v6.9 part points add up exactly (no 10.01)');
   ok(await page.evaluate(() => { const a = buildLayout({ digits: 2, count: 20, nopt: 4, sets: 1, sheet: {} }).box.y, b = buildLayout({ digits: 2, count: 20, nopt: 4, sets: 1, sheet: { hdr: true } }).box.y; return b - a > 4; }), 'v6.9 more header spacing for new sheets (old sheets unchanged for scanning)');
+  ok(await page.evaluate(() => { const d = document.createElement('div'); d.innerHTML = previewsHtml([{ id: 'a'.repeat(28), name: 'x.pdf', mime: 'application/pdf' }, { id: 'b'.repeat(28), name: 'v.mp4', mime: 'video/mp4' }]); return !!d.querySelector('.pxy[data-k=pdf]') && !!d.querySelector('[data-pxyv]') && !!d.querySelector('[data-pxdl]'); }), 'v6.9.1 PDFs open through the system; videos have a "play through system" fallback; download through system');
   // QR: ไอคอนในระบบ + ขนาดโลโก้
   await page.evaluate(() => go('tools')); await idle(); await page.click('[data-tool=qrcode]'); await page.waitForSelector('#qrCv'); await page.click('#qrIconBtn'); await page.click('[data-qric] >> nth=0'); await page.waitForTimeout(600);
   await page.fill('#qrLogoSz', '28').catch(() => page.evaluate(() => { const r = document.querySelector('#qrLogoSz'); r.value = 28; r.dispatchEvent(new Event('input', { bubbles: true })); })); await page.waitForTimeout(300);

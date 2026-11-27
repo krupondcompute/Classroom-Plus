@@ -599,5 +599,8 @@ const c62 = R('examSave', AD, { name: 'v62', cfg: { count: 10, grid: 'hv', flow:
 // ---- v6.8 ----
 { const sh = DB.sheets.Categories; const ix = sh[0].indexOf('area'); sh.forEach(r => r.splice(ix, 1)); vm.runInContext('Object.keys(MEM_).forEach(k => delete MEM_[k])', ctx); ctx.CacheService.getScriptCache().put('v_Categories', 'zz' + Date.now(), 600);
   const c = R('save', AD, 'Categories', { code: 'ศ21101', name: 'ทัศนศิลป์', area: 'ศิลปะ' }); ok(c.ok && DB.sheets.Categories[0].indexOf('area') >= 0 && ctx.rows_('Categories').find(x => x.id === c.data.id).area === 'ศิลปะ', 'v6.8 missing columns added automatically (old/term files) → values saved ' + JSON.stringify([c.error, DB.sheets.Categories[0], (ctx.rows_('Categories').find(x => x.id === (c.data||{}).id)||{}).area])); }
+// ---- v6.9.1 ----
+{ const r1 = R('fileChunk', s9, 'x'.repeat(30), 0), r2 = R('fileChunk', s9, 'bad id!', 0); ok(!r1.ok && !r2.ok && r2.error.includes('ไม่ถูกต้อง'), 'v6.9.1 file proxy: missing/invalid file rejected with a message ' + JSON.stringify([r1.error, r2.error]));
+  ok(R('fileChunk', null, 'x'.repeat(30), 0).code === 'AUTH', 'v6.9.1 file proxy requires login'); }
 console.log(`backend tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

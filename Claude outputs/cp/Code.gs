@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '6.9.0';
+const APP_VERSION = '6.9.1';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -128,7 +128,7 @@ function markDemo_(u) { const l = demoIds_().concat([u.id]).slice(-50); props_()
 function rawUser_(pred) { try { return prows_('Users', 'g').find(pred) || (tenant_().unset ? null : prows_('Users', split_() ? 't' : 'c').find(pred)) || null; } catch (e) { return null; } }
 const DEMO_OK = {}; ('me logout evList evDue studentHome listCourses getCourse getLesson listAssignments listAnnouncements search notifications groupCandidates batch myTeachers staffContact '
   + 'adminDashboard list listSubmissions report classSummary listUsers listTeachers chatContacts chatList chatMessages chatUnread chatTeamMembers getSettings auditLog listBackups '
-  + 'liveList liveGet liveStatus termSources peekTerm fileData scoreTest scoreBooks scoreBook attExport ttGet attOpen attHistory attSummary attDecode myAttend myScores toolLogList qrList paperList examAll examGet examResults').split(' ').forEach(k => DEMO_OK[k] = 1);
+  + 'liveList liveGet liveStatus termSources peekTerm fileData fileChunk scoreTest scoreBooks scoreBook attExport ttGet attOpen attHistory attSummary attDecode myAttend myScores toolLogList qrList paperList examAll examGet examResults').split(' ').forEach(k => DEMO_OK[k] = 1);
 const DEMO_SOFT = { markRead: 1, saveProgress: 1, discardUploads: 1, toolLogAdd: 1 }; // คำสั่งเบื้องหลังที่หน้าเว็บเรียกอัตโนมัติ → ข้ามเงียบ ๆ
 function demoMask_(fn, data) {
   if (!data) return data;
@@ -185,7 +185,7 @@ const ROUTES = {
   auditLog: ['admin', auditLog_], backupNow: ['admin', function () { return backup_(); }],
   listBackups: ['admin', listBackups_], liveList: ['staff', liveList_], liveGet: ['staff', liveGet_], liveSave: ['staff', liveSave_], liveRemove: ['staff', liveRemove_],
   liveControl: ['staff', liveControl_], liveStatus: ['staff', liveStatus_], liveInfo: ['public', liveInfo_], liveJoin: ['public', liveJoin_], liveSubmit: ['public', liveSubmit_], termSources: ['staff', termSources_], repairFiles: ['staff', repairFiles_], peekTerm: ['staff', peekTerm_], importTerm: ['staff', importTerm_], saveTermDb: ['admin', saveTermDb_], createTermDb: ['admin', createTermDb_], removeTermDb: ['admin', removeTermDb_],
-  fileData: ['user', fileData_],
+  fileData: ['user', fileData_], fileChunk: ['user', fileChunk_],
   scoreTest: ['staff', scoreTest_], scoreBooks: ['staff', scoreBooks_], scoreBook: ['staff', scoreBook_], attCopyFrom: ['staff', attCopyFrom_], attExport: ['staff', attExport_],
   ttGet: ['staff', ttGet_], ttSaveCfg: ['staff', ttSaveCfg_], ttSaveSlot: ['staff', ttSaveSlot_], ttDeleteSlot: ['staff', ttDeleteSlot_],
   attOpen: ['staff', attOpen_], attSave: ['staff', attSave_], attHistory: ['staff', attHistory_], attSummary: ['staff', attSummary_], attDecode: ['staff', attDecode_],
@@ -1661,7 +1661,7 @@ function checkFile_(name, size) {
   if (size > MAX_UPLOAD_MB * 1048576) throw err_('ไฟล์ใหญ่เกิน ' + (MAX_UPLOAD_MB / 1024) + ' GB');
 }
 function share_(file) {
-  try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); return true; } catch (e) { return false; } // Workspace บางแห่งห้ามแชร์สาธารณะ
+  try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); return true; } catch (e) { try { file.setSharing(DriveApp.Access.DOMAIN_WITH_LINK, DriveApp.Permission.VIEW); return true; } catch (e2) { return false; } } // Workspace บางแห่งห้ามแชร์สาธารณะ
 }
 function fileOut_(id, name, mime, size, shared) {
   return { id: id, name: name, url: 'https://drive.google.com/file/d/' + id + '/view', mime: mime, size: size, shared: shared,
@@ -3101,21 +3101,39 @@ function attCheckIn_(ctx, slotId) {
 }
 
 /** รูปที่แชร์สาธารณะไม่ได้ (บัญชีโรงเรียน): ส่งข้อมูลรูปผ่านระบบ — เฉพาะไฟล์ในโฟลเดอร์ของระบบเท่านั้น */
-function fileData_(ctx, id) {
+/** v6.9 ตรวจสิทธิ์ไฟล์: อยู่ในโฟลเดอร์ของระบบ (ทุกภาคเรียน/ทุกผู้ดูแล) · ระบบเป็นเจ้าของ · หรือถูกอ้างถึงในข้อมูลรายวิชา/บทเรียน/งาน/ประกาศ → { f, mime, size, name } */
+function fileMeta_(id) {
   id = str_(id, 80); if (!/^[\w-]{20,}$/.test(id)) throw err_('รหัสไฟล์ไม่ถูกต้อง');
-  const ck = 'fd_' + id, c = getBig_(ck); if (c) return c;
-  const roots = {}; [mainDriveId_(), coreDriveId_(), driveId_()].concat(Object.keys(tenants_()).map(k => tenants_()[k].driveId)).forEach(x => { if (x) roots[x] = 1; });
-  try { Object.keys(dbMap_()).forEach(k => { const d = dbMap_()[k].driveId; if (d) roots[d] = 1; }); } catch (e) {}
-  let f = null; try { f = DriveApp.getFileById(id); } catch (e) { throw err_('ไม่พบไฟล์รูปภาพ', 'NOTFOUND'); } const mime = f.getMimeType();
-  if (!/^image\//.test(mime)) throw err_('ไม่ใช่ไฟล์รูปภาพ');
-  let ok = false, q = [f.getParents()], depth = 0;
-  while (q.length && !ok && depth < 8) { const nq = []; q.forEach(it => { while (it.hasNext()) { const p = it.next(); if (roots[p.getId()]) ok = true; else nq.push(p.getParents()); } }); q = nq; depth++; }
-  if (!ok) { try { ok = f.getOwner() && f.getOwner().getEmail() === Session.getEffectiveUser().getEmail(); } catch (e) {} } // ไฟล์ที่ระบบอัปโหลดเอง
-  if (!ok) throw err_('ไม่มีสิทธิ์เข้าถึงไฟล์นี้', 'FORBIDDEN');
-  if (f.getSize() > 6 * 1024 * 1024) throw err_('ไฟล์รูปใหญ่เกินไป');
-  const out = 'data:' + mime + ';base64,' + Utilities.base64Encode(f.getBlob().getBytes());
+  let f = null; try { f = DriveApp.getFileById(id); } catch (e) { throw err_('ไม่พบไฟล์ (อาจถูกลบไปแล้ว) — ให้ครูอัปโหลดใหม่', 'NOTFOUND'); }
+  try { if (f.isTrashed()) throw err_('ไฟล์อยู่ในถังขยะ — ให้ครูกด "ตรวจสอบ/ซ่อมไฟล์" ในหน้ารายวิชา', 'NOTFOUND'); } catch (e) { if (e.code) throw e; }
+  const ck = 'fok_' + id; let ok = cache_().get(ck) === '1';
+  if (!ok) { const roots = {}; [mainDriveId_(), coreDriveId_(), driveId_()].concat(Object.keys(tenants_()).map(k => tenants_()[k].driveId)).forEach(x => { if (x) roots[x] = 1; });
+    try { Object.keys(dbMap_()).forEach(k => { const d = dbMap_()[k].driveId; if (d) roots[d] = 1; }); } catch (e) {}
+    let q = [f.getParents()], depth = 0;
+    while (q.length && !ok && depth < 8) { const nq = []; q.forEach(it => { while (it.hasNext()) { const p = it.next(); if (roots[p.getId()]) ok = true; else nq.push(p.getParents()); } }); q = nq; depth++; }
+    if (!ok) { try { ok = f.getOwner() && f.getOwner().getEmail() === Session.getEffectiveUser().getEmail(); } catch (e) {} } // ไฟล์ที่ระบบอัปโหลดเอง
+    if (!ok) { try { ok = ['Courses', 'Lessons', 'Assignments', 'Announcements'].some(t => rows_(t).some(r => ['cover', 'image', 'videoUrl', 'attachments', 'description', 'body'].some(k => String(r[k] || '').indexOf(id) >= 0))); } catch (e) {} } // ไฟล์ที่ครูแนบจาก Drive ของตนเอง
+    if (!ok) throw err_('ไม่มีสิทธิ์เข้าถึงไฟล์นี้', 'FORBIDDEN');
+    cache_().put(ck, '1', 21600); }
+  return { f: f, mime: f.getMimeType(), size: f.getSize(), name: f.getName() };
+}
+function fileData_(ctx, id) {
+  id = str_(id, 80); const ck = 'fd_' + id, c = getBig_(ck); if (c) return c;
+  const m = fileMeta_(id); if (!/^image\//.test(m.mime)) throw err_('ไม่ใช่ไฟล์รูปภาพ');
+  if (m.size > 6 * 1024 * 1024) throw err_('ไฟล์รูปใหญ่เกินไป');
+  const out = 'data:' + m.mime + ';base64,' + Utilities.base64Encode(m.f.getBlob().getBytes());
   putBig_(ck, out, 21600);
   return out;
+}
+/** v6.9 ส่งไฟล์ทีละส่วน (5 MB) ผ่านระบบ → นักเรียนเปิด PDF/วิดีโอได้แม้ Google Workspace ห้ามแชร์สาธารณะ และไม่ต้องลงชื่อเข้าใช้ Google */
+function fileChunk_(ctx, id, start) {
+  const m = fileMeta_(id), CH = 5 * 1024 * 1024, st = Math.max(0, Math.floor(Number(start) || 0));
+  if (m.size > 600 * 1048576) throw err_('ไฟล์ใหญ่เกิน 600 MB — กรุณาดาวน์โหลดแทน');
+  if (st >= m.size) return { data: '', start: st, size: m.size, mime: m.mime, name: m.name };
+  const end = Math.min(m.size, st + CH) - 1;
+  const r = UrlFetchApp.fetch(DRIVE_API + '/drive/v3/files/' + m.f.getId() + '?alt=media&supportsAllDrives=true', { headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), Range: 'bytes=' + st + '-' + end }, muteHttpExceptions: true });
+  if (r.getResponseCode() >= 300) throw err_('อ่านไฟล์ไม่สำเร็จ (' + r.getResponseCode() + ')');
+  return { data: Utilities.base64Encode(r.getBlob().getBytes()), start: st, size: m.size, mime: m.mime, name: m.name };
 }
 
 /* ---------- v5.5 แจ้งเตือนครู/ผู้ดูแลระบบร่วมกัน ---------- */

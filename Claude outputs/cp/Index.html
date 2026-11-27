@@ -1506,6 +1506,10 @@ body.app footer{align-items:center!important;text-align:center!important;justify
 @media (max-width:767.98px){.stu-row>:nth-child(5){justify-self:stretch!important}.stu-row .sub-acts{width:100%}.stu-row .sub-acts [data-grade]{flex:1 1 auto!important;width:auto!important;border-radius:999px!important;padding:0 18px!important;display:inline-flex!important;gap:6px;justify-content:center;align-items:center;font-weight:700}.stu-row .sub-acts [data-grade] .bl{display:inline!important}}
 
 /* v6.9 */
+.pxy{position:relative;background:var(--surface-2);overflow:auto;-webkit-overflow-scrolling:touch}.pv-doc.pxy{height:min(78vh,900px)}.pxy-load{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:180px;height:100%;color:var(--muted);text-align:center;padding:16px}.pxy-bar{width:min(260px,80%);height:6px;border-radius:6px;background:var(--border);overflow:hidden}.pxy-bar i{display:block;height:100%;width:0;background:var(--blue,#2563eb);transition:width .2s}
+.pdfv{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;background:#525659}.pdfv .pdfp{width:100%;max-width:1000px;height:auto;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.35);border-radius:2px}.pdf-n{color:#fff;font-size:.8rem;opacity:.8;padding-bottom:4px}
+#viewer .vpdf{width:min(1000px,96vw);height:calc(100vh - 140px);overflow:auto}.pxy-btn{margin-top:6px}#viewer .pxy-vbtn{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:3}
+.pxy iframe,.pxy video{width:100%;height:100%;border:0;min-height:300px}
 .ss-scope{min-width:0;max-width:100%}.ss-scope .chip{white-space:normal;max-width:100%;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35;text-align:left;word-break:break-word}
 .file-row:has(.ss-scope){overflow:hidden}.file-row:has(.ss-scope)>.flex-fill{min-width:0!important;flex:1 1 100%}
 @media (min-width:576px){.la-card [data-import] .bt{display:inline!important}.la-card [data-import]{width:auto!important;padding:.25rem .6rem!important;display:inline-flex!important}}
@@ -3117,7 +3121,7 @@ function mountVideo(box, url, prog, lessonId) {
     $('#vSpeed').onchange = () => vid.playbackRate = +$('#vSpeed').value;
   } else {
     const src = v.type === 'vimeo' ? `https://player.vimeo.com/video/${v.id}#t=${pos}s` : `https://drive.google.com/file/d/${v.id}/preview`;
-    box.innerHTML = `<div class="video"><iframe src="${src}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="วิดีโอ"></iframe></div>` + tools(true);
+    box.innerHTML = `<div data-pxywrap><div class="video"><iframe src="${src}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="วิดีโอ"></iframe></div>${v.type !== 'vimeo' ? pxyBtn(v.id) : ''}</div>` + tools(true);
   }
   $('#vDone').onclick = () => { save(last, true); $('#vDone').disabled = true; $('#vDone').innerHTML = '<i class="fa-solid fa-circle-check"></i> ดูครบแล้ว'; };
 }
@@ -4842,6 +4846,41 @@ const kindOf = f => { const e = extOf(f.name), m = String(f.mime || '');
   return 'doc'; };
 const KIND_TH = { image: 'รูปภาพ', video: 'วิดีโอ', audio: 'เสียง', pdf: 'PDF', doc: 'ไฟล์' };
 const thumbUrl = f => { const id = f.id || driveId(f.url); return id ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w480` : ''; };
+/* ====== v6.9 เปิดไฟล์จาก Google Drive ผ่านระบบ (ไม่ต้องแชร์สาธารณะ / ไม่ต้องลงชื่อเข้าใช้ Google) ======
+ * PDF → แสดงด้วย pdf.js (ทุกอุปกรณ์รวมมือถือ) · วิดีโอ/เสียง → เล่นจากไฟล์ที่โหลดผ่านระบบ · ดาวน์โหลดผ่านระบบ */
+const PXY = new Map();
+const b64u8 = b => { const s = atob(b || ''), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; };
+function driveBlob(id, onp) { if (PXY.has(id)) return PXY.get(id);
+  const p = (async () => { const first = await call('fileChunk', [id, 0], { loader: false, retry: 2 }); const p0 = b64u8(first.data), step = p0.length || 1; let got = p0.length; onp && onp(got / (first.size || 1));
+    const starts = []; for (let s0 = got; s0 < first.size; s0 += step) starts.push(s0); const res = new Array(starts.length); let k = 0;
+    const worker = async () => { while (k < starts.length) { const i = k++; const r = await call('fileChunk', [id, starts[i]], { loader: false, retry: 2 }); res[i] = b64u8(r.data); got += res[i].length; onp && onp(got / first.size); } };
+    await Promise.all([worker(), worker(), worker()]);
+    return { url: URL.createObjectURL(new Blob([p0].concat(res), { type: first.mime || 'application/octet-stream' })), mime: first.mime, name: first.name, size: first.size }; })();
+  PXY.set(id, p); p.catch(() => PXY.delete(id)); return p; }
+let PDFJS = null;
+const loadPdfJs = () => PDFJS || (PDFJS = new Promise((res, rej) => { const B = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/', sc = document.createElement('script'); sc.src = B + 'pdf.min.js';
+  sc.onload = async () => { try { const w = await (await fetch(B + 'pdf.worker.min.js')).text(); pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([w], { type: 'text/javascript' })); } catch (e) { pdfjsLib.GlobalWorkerOptions.workerSrc = B + 'pdf.worker.min.js'; } res(pdfjsLib); };
+  sc.onerror = () => { PDFJS = null; rej(new Error('pdf.js')); }; document.head.appendChild(sc); }));
+async function renderPdf(box, url) { const lib = await loadPdfJs(), doc = await lib.getDocument(url).promise, p1 = await doc.getPage(1), v1 = p1.getViewport({ scale: 1 });
+  box.innerHTML = ''; box.classList.add('pdfv'); const io = new IntersectionObserver(es => es.forEach(async e => { if (!e.isIntersecting) return; const c = e.target; io.unobserve(c);
+    const pg = await doc.getPage(+c.dataset.n), v0 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: Math.min(3, Math.max(1, (box.clientWidth || 600) / v0.width) * (devicePixelRatio || 1)) });
+    c.width = vp.width; c.height = vp.height; await pg.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise; }), { root: box.classList.contains('vpdf') ? null : box, rootMargin: '600px' });
+  for (let n = 1; n <= doc.numPages; n++) { const c = document.createElement('canvas'); c.className = 'pdfp'; c.dataset.n = n; c.style.aspectRatio = v1.width + '/' + v1.height; box.appendChild(c); io.observe(c); }
+  box.insertAdjacentHTML('beforeend', `<div class="pdf-n">${doc.numPages} หน้า</div>`); }
+async function pxyLoad(el) { if (el.dataset.on) return; el.dataset.on = '1'; const id = el.dataset.pxy, k = el.dataset.k;
+  el.innerHTML = `<div class="pxy-load"><i class="fa-solid fa-spinner fa-spin"></i> กำลังเปิดไฟล์ผ่านระบบ... <b class="pxy-pc">0%</b><div class="pxy-bar"><i></i></div></div>`;
+  try { const b = await driveBlob(id, r => { const pc = Math.round(Math.min(1, r) * 100); const t = el.querySelector('.pxy-pc'), bar = el.querySelector('.pxy-bar i'); if (t) t.textContent = pc + '%'; if (bar) bar.style.width = pc + '%'; });
+    if (k === 'pdf') { try { await renderPdf(el, b.url); } catch (e) { el.innerHTML = `<iframe src="${b.url}" title="PDF"></iframe>`; } }
+    else if (k === 'video') el.innerHTML = `<video src="${b.url}" controls playsinline style="width:100%;height:100%;background:#000"></video>`;
+    else if (k === 'audio') el.innerHTML = `<audio src="${b.url}" controls style="width:100%"></audio>`;
+    else el.innerHTML = `<iframe src="${b.url}" title="ไฟล์"></iframe>`;
+  } catch (e) { el.innerHTML = `<div class="pxy-load text-danger"><i class="fa-solid fa-triangle-exclamation"></i> เปิดไฟล์ไม่ได้: ${esc(e.message || '')}<br><button type="button" class="btn btn-sm btn-soft mt-2" data-pxyre>ลองใหม่</button></div>`; delete el.dataset.on; } }
+const PXY_IO = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { PXY_IO.unobserve(e.target); pxyLoad(e.target); } }), { rootMargin: '300px' }) : null; // โหลดเมื่อเลื่อนมาถึง
+new MutationObserver(() => $$('.pxy:not([data-on]):not([data-io])').forEach(el => { el.dataset.io = '1'; if (PXY_IO) PXY_IO.observe(el); else pxyLoad(el); })).observe(document.body, { childList: true, subtree: true });
+document.addEventListener('click', async e => { const re = e.target.closest('[data-pxyre]'); if (re) { const el = re.closest('.pxy'); delete el.dataset.on; return pxyLoad(el); }
+  const pv = e.target.closest('[data-pxyv]'); if (pv) { e.preventDefault(); const box = pv.closest('[data-pxywrap]') || pv.parentElement; const tgt = box.querySelector('.ratio,.video,.vin') || box; tgt.innerHTML = `<div class="pxy" data-pxy="${esc(pv.dataset.pxyv)}" data-k="${esc(pv.dataset.k || 'video')}" style="width:100%;height:100%"></div>`; pv.remove(); return; }
+  const dl = e.target.closest('[data-pxdl]'); if (dl && !e.ctrlKey && !e.metaKey) { e.preventDefault(); try { Loader.show('กำลังดาวน์โหลด...'); const b = await driveBlob(dl.dataset.pxdl); const a = document.createElement('a'); a.href = b.url; a.download = dl.dataset.name || b.name || 'file'; document.body.appendChild(a); a.click(); a.remove(); } catch (er) { window.open(dl.href, '_blank', 'noopener'); } finally { Loader.hide(); } } });
+const pxyBtn = (id, k = 'video') => `<button type="button" class="btn btn-sm btn-soft pxy-btn" data-pxyv="${esc(id)}" data-k="${k}" title="ใช้เมื่อวิดีโอจาก Google Drive เปิดไม่ได้ (บัญชีโรงเรียนห้ามแชร์สาธารณะ)"><i class="fa-solid fa-play"></i> เปิดไม่ได้? เล่นผ่านระบบ</button>`;
 /** แถบภาพตัวอย่างไฟล์ (แตะเพื่อเปิดเต็มจอ) */
 function thumbsHtml(files) {
   if (!files || !files.length) return '';
@@ -4853,9 +4892,10 @@ function previewsHtml(files, grid) {
   if (!files || !files.length) return '';
   return `<div class="pv-list ${grid ? 'pv-grid' : ''}" data-vfiles='${esc(JSON.stringify(files))}'>${files.map((f, i) => { const k = kindOf(f), id = f.id || driveId(f.url);
     const body = k === 'image' ? `<img src="${safeUrl('https://lh3.googleusercontent.com/d/' + id + '=w1600')}" alt="${esc(f.name)}" loading="lazy" data-vw="${i}" onerror="this.onerror=null;this.src='https://drive.google.com/thumbnail?id=${esc(id)}&sz=w1600'">`
-      : `<div class="ratio ${k === 'audio' ? '' : k === 'video' ? 'ratio-16x9' : 'pv-doc'}" ${k === 'audio' ? 'style="height:90px"' : ''}><iframe src="https://drive.google.com/file/d/${esc(id)}/preview" loading="lazy" allow="autoplay; fullscreen" allowfullscreen title="${esc(f.name)}"></iframe></div>`;
+      : k === 'pdf' && id ? `<div class="pv-doc pxy" data-pxy="${esc(id)}" data-k="pdf"></div>` // v6.9 PDF ผ่านระบบ
+      : `<div data-pxywrap><div class="ratio ${k === 'audio' ? '' : k === 'video' ? 'ratio-16x9' : 'pv-doc'}" ${k === 'audio' ? 'style="height:90px"' : ''}><iframe src="https://drive.google.com/file/d/${esc(id)}/preview" loading="lazy" allow="autoplay; fullscreen" allowfullscreen title="${esc(f.name)}"></iframe></div>${id && (k === 'video' || k === 'audio') ? pxyBtn(id, k) : ''}</div>`;
     return `<div class="pv-item"><div class="pv-head"><span class="pv-ic k-${k}"><i class="fa-solid ${fileIcon(f.name)}"></i></span><span class="pv-name" title="${esc(f.name)}">${esc(f.name)}<small>${KIND_TH[k] || 'ไฟล์'}${f.size ? ' · ' + fmtSize(f.size) : ''}</small></span>
-      <span class="pv-acts">${id ? `<a class="btn btn-sm btn-success" href="${esc(dlUrl({ id }))}" target="_blank" rel="noopener" aria-label="ดาวน์โหลด ${esc(f.name)}" title="ดาวน์โหลด"><i class="fa-solid fa-download"></i><span>ดาวน์โหลด</span></a>` : ''}<button type="button" class="btn btn-sm btn-soft" data-vw="${i}" aria-label="เต็มจอ ${esc(f.name)}" title="เต็มจอ"><i class="fa-solid fa-expand"></i><span>เต็มจอ</span></button></span></div>${body}</div>`; }).join('')}</div>`;
+      <span class="pv-acts">${id ? `<a class="btn btn-sm btn-success" href="${esc(dlUrl({ id }))}" data-pxdl="${esc(id)}" data-name="${esc(f.name)}" target="_blank" rel="noopener" aria-label="ดาวน์โหลด ${esc(f.name)}" title="ดาวน์โหลด"><i class="fa-solid fa-download"></i><span>ดาวน์โหลด</span></a>` : ''}<button type="button" class="btn btn-sm btn-soft" data-vw="${i}" aria-label="เต็มจอ ${esc(f.name)}" title="เต็มจอ"><i class="fa-solid fa-expand"></i><span>เต็มจอ</span></button></span></div>${body}</div>`; }).join('')}</div>`;
 }
 function viewer(files, start = 0, opt = {}) {
   $('#viewer')?.remove();
@@ -4867,7 +4907,8 @@ function viewer(files, start = 0, opt = {}) {
     const f = files[i], k = kindOf(f), id = f.id || driveId(f.url); z = 1; px = py = 0;
     let body;
     if (k === 'image') body = `<img src="${safeUrl(id ? 'https://lh3.googleusercontent.com/d/' + id + '=w2400' : f.url)}" alt="${esc(f.name)}" data-alt="${id ? esc('https://drive.google.com/thumbnail?id=' + id + '&sz=w2400') : ''}" draggable="false">`;
-    else if (id) body = `<iframe src="https://drive.google.com/file/d/${esc(id)}/preview" allow="autoplay; fullscreen" allowfullscreen title="${esc(f.name)}"></iframe>`;
+    else if (id && k === 'pdf') body = `<div class="vpdf pxy" data-pxy="${esc(id)}" data-k="pdf"></div>`;
+    else if (id) body = `<iframe src="https://drive.google.com/file/d/${esc(id)}/preview" allow="autoplay; fullscreen" allowfullscreen title="${esc(f.name)}"></iframe>${k === 'video' || k === 'audio' ? pxyBtn(id, k).replace('pxy-btn', 'pxy-btn pxy-vbtn') : ''}`;
     else if (k === 'video') body = `<video src="${safeUrl(f.url)}" controls autoplay playsinline></video>`;
     else body = `<iframe src="${safeUrl(embedUrl(f.url))}" title="${esc(f.name)}"></iframe>`;
     v.innerHTML = `<div class="vbar"><span class="name"><i class="fa-solid ${fileIcon(f.name)}"></i> ${esc(f.name)} ${files.length > 1 ? `<small class="opacity-75">(${i + 1}/${files.length})</small>` : ''}</span>
