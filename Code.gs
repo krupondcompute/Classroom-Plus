@@ -3,7 +3,7 @@
  * ฐานข้อมูล: Google Sheets | ไฟล์: Google Drive | หน้าเว็บ: Index.html (HTML Service)
  * Admin เปลี่ยน Sheet ID / Drive ID ได้จากหน้า "ตั้งค่าระบบ" (เก็บใน Script Properties)
  */
-const APP_VERSION = '6.9.1';
+const APP_VERSION = '7.0.0';
 const TZ = 'Asia/Bangkok';
 const DEFAULTS = {
   SHEET_ID: '14mpQC_8KSKd-V8Wn_sj2gdreJfB_q9haOnarBbqQ4r8',
@@ -98,7 +98,7 @@ function doPost(e) {
 /** จุดเข้าเดียวจากหน้าเว็บ: google.script.run.rpc(fn, token, args) */
 function rpc(fn, token, args, vt) {
   try {
-    useTenant_(''); useTerm_(''); // ยืนยันตัวตนกับภาคเรียนปัจจุบันเสมอ แล้วจึงสลับไปภาคเรียนที่กำลังดู
+    useTenant_(''); useTerm_(''); LOGQ_ = []; // ยืนยันตัวตนกับภาคเรียนปัจจุบันเสมอ แล้วจึงสลับไปภาคเรียนที่กำลังดู
     const route = ROUTES[fn];
     if (!route) throw err_('ไม่พบคำสั่ง ' + fn);
     const ctx = { token: token, user: null };
@@ -111,9 +111,11 @@ function rpc(fn, token, args, vt) {
     if (ctx.user && tenant_().unset && !SETUP_OK[fn]) throw err_('กรุณาตั้งค่าฐานข้อมูล (Google Sheet และ Google Drive) ของคุณก่อนใช้งาน — ไปที่ ตั้งค่าระบบ → ฐานข้อมูล', 'TENANT_SETUP');
     if (vt && ctx.user && staff_(ctx.user)) useTerm_(String(vt)); // นักเรียนใช้ภาคเรียนของบัญชีตนเองเสมอ
     let data = route[1].apply(null, [ctx].concat(args || []));
+    flushLogs_(); try { flushPurge_(); } catch (e) {} // v7.0 ลบไฟล์ที่ไม่มีข้อมูลใดอ้างถึงแล้ว (ย้ายลงถังขยะ)
     if (isDemo_(ctx.user)) data = demoMask_(fn, data);
     return JSON.parse(JSON.stringify({ ok: true, data: data === undefined ? null : data }));
   } catch (e) {
+    try { flushLogs_(); } catch (x) {}
     if (!e.code) console.error(fn, e && e.stack);
     return { ok: false, error: e.message || String(e), code: e.code || 'ERR' };
   }
@@ -433,9 +435,13 @@ function dt_(s) { return String(s || '').replace(' ', 'T'); }
 function err_(msg, code) { const e = new Error(msg); e.code = code || 'VALIDATION'; return e; }
 function json_(s, d) { try { return s ? JSON.parse(s) : d; } catch (e) { return d; } }
 function str_(v, max) { return String(v === undefined || v === null ? '' : v).trim().slice(0, max || 500); }
+let LOGQ_ = null; // v7.0 รวมบันทึก AuditLog ของคำขอนี้ แล้วเขียนครั้งเดียวตอนจบ (บันทึกข้อมูลเร็วขึ้น)
 function log_(userId, action, detail) {
-  try { insert_('AuditLog', { id: id_(), userId: userId || '', action: action, detail: str_(typeof detail === 'object' ? JSON.stringify(detail) : detail, 1000), createdAt: now_() }); } catch (e) {}
+  const row = { id: id_(), userId: userId || '', action: action, detail: str_(typeof detail === 'object' ? JSON.stringify(detail) : detail, 1000), createdAt: now_() };
+  if (LOGQ_) { LOGQ_.push(row); return; }
+  try { insert_('AuditLog', row); } catch (e) {}
 }
+function flushLogs_() { const q = LOGQ_; LOGQ_ = null; if (q && q.length) try { insertMany_('AuditLog', q); } catch (e) {} }
 
 /* ============================== Setup & Config ============================== */
 /** รันครั้งแรกจากตัวแก้ไข Apps Script (หรือระบบรันเองเมื่อมีผู้เปิดเว็บครั้งแรก) — ไม่ลบข้อมูลเดิม */
@@ -1736,18 +1742,20 @@ function fileIds_(row) {
   ['cover', 'image', 'avatar', 'videoUrl'].forEach(k => { const i = driveIdOf_(row[k]); if (i) ids.push(i); });
   return ids;
 }
-function purge_(ids, onlyOwner) {
+/** v7.0 ลบไฟล์อย่างปลอดภัย: เก็บรายการไว้ แล้วตรวจหลังบันทึกเสร็จ (flushPurge_) — ถ้ายังมีข้อมูลอื่นอ้างถึงไฟล์ (เช่น รายวิชาที่ดึงไปใช้อีกภาคเรียน) จะไม่ลบ
+ *  และย้ายลงถังขยะแทนการลบถาวร (กู้คืนได้ 30 วันด้วยปุ่ม "ตรวจสอบ/ซ่อมไฟล์") */
+function purge_(ids, onlyOwner) { const q = MEM_._purge || (MEM_._purge = []); (ids || []).filter(Boolean).forEach(i => q.push([String(i), onlyOwner || ''])); }
+function flushPurge_() {
+  const q = MEM_._purge; if (!q || !q.length) return; MEM_._purge = [];
+  const T = ['Courses', 'Lessons', 'Assignments', 'Submissions', 'Announcements', 'ExamPapers', 'Events', 'ChatMessages', 'Users', 'QrCodes'];
+  let blob = null; const refs = () => blob !== null ? blob : (blob = T.map(t => { try { delete MEM_[t]; return JSON.stringify(rows_(t)); } catch (e) { return ''; } }).join('\n') + (() => { try { return JSON.stringify(cfg_()); } catch (e) { return ''; } })());
+  let other = null; const otherRefs = () => { if (other !== null) return other; other = ''; const t0 = Date.now(), cur = termDb_();
+    try { const keys = Object.keys(dbMap_()).concat(cur.sheetId ? ['main'] : []); keys.forEach(k => { if (Date.now() - t0 > 15000 || (k !== 'main' && dbMap_()[k].sheetId === cur.sheetId)) return;
+      try { other += withTerm_(k, () => ['Courses', 'Lessons', 'Assignments', 'Announcements'].map(t => JSON.stringify(rows_(t))).join('\n')); } catch (e) {} }); } catch (e) {} return other; }; // ข้อมูลภาคเรียนอื่นที่อาจใช้ไฟล์ร่วมกัน
   const seen = {};
-  (ids || []).filter(Boolean).forEach(id => {
-    if (seen[id]) return; seen[id] = 1;
-    try {
-      const f = DriveApp.getFileById(id), d = String(f.getDescription() || '');
-      if (d.indexOf('cp:') !== 0 || (onlyOwner && d !== 'cp:' + onlyOwner)) return;
-      const r = UrlFetchApp.fetch(DRIVE_API + '/drive/v3/files/' + id + '?supportsAllDrives=true', { method: 'delete', muteHttpExceptions: true,
-        headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } });
-      if (r.getResponseCode() >= 300) f.setTrashed(true);
-    } catch (e) {}
-  });
+  q.forEach(([id, own]) => { if (seen[id]) return; seen[id] = 1;
+    try { if (refs().indexOf(id) >= 0 || (!own && otherRefs().indexOf(id) >= 0)) return; const f = DriveApp.getFileById(id), d = String(f.getDescription() || '');
+      if (d.indexOf('cp:') !== 0 || (own && d !== 'cp:' + own)) return; f.setTrashed(true); } catch (e) {} });
 }
 function purgeRows_(name, pred) { const ids = []; rows_(name).filter(pred).forEach(r => fileIds_(r).forEach(i => ids.push(i))); purge_(ids); }
 /** ไฟล์ที่อัปโหลดในฟอร์มแต่ไม่ได้บันทึก (กดยกเลิก/ลบออกก่อนบันทึก) */
@@ -2688,12 +2696,25 @@ function repairFiles_(ctx, courseId) {
   const u = ctx.user, c = find_('Courses', courseId); if (!c || !(isAdmin_(u) || teaches_(u, c))) throw err_('ไม่พบรายวิชา', 'NOTFOUND');
   const rows = [['Courses', c, c.name]].concat(rows_('Lessons').filter(l => l.courseId === c.id).map(l => ['Lessons', l, 'บทเรียน: ' + l.title]), rows_('Assignments').filter(a => a.courseId === c.id).map(a => ['Assignments', a, 'งาน: ' + a.title]));
   const st = { ok: 0, copied: 0, restored: 0, shared: 0, missing: 0, where: [] }, term = driveId_(), map = {}, seen = {}, t0 = Date.now(); let folder = null;
+  const names = {}; rows.forEach(([t, r]) => ['attachments', 'files'].forEach(k => json_(r[k], []).forEach(f => { const i = f && (f.id || driveIdOf_(f.url)); if (i && f.name) names[i] = String(f.name); })));
+  // v7.0 ข้อมูลแถวเดียวกันในภาคเรียนอื่น (ชีต Lessons/Courses/Assignments ของภาคเรียนเดิม) → ใช้ไฟล์จากแถวต้นทางเมื่อไฟล์ในภาคนี้หาไม่เจอ
+  const alt = {}; try { const cur = termDb_(), keys = Object.keys(dbMap_()).concat(cur.sheetId ? ['main'] : []), t0 = Date.now();
+    keys.forEach(k => { if (Date.now() - t0 > 20000 || (k !== 'main' && dbMap_()[k].sheetId === cur.sheetId)) return;
+      try { withTerm_(k, () => rows.forEach(([t, r]) => { const o = find_(t, r.id); if (!o) return; const mine = fileIds_(r), theirs = fileIds_(o);
+        ['cover', 'image', 'videoUrl'].forEach(f => { const a = driveIdOf_(r[f]), b = driveIdOf_(o[f]); if (a && b && a !== b) (alt[a] = alt[a] || []).push(b); });
+        ['attachments', 'files'].forEach(f => { const on = {}; json_(o[f], []).forEach(x => { const i = x && (x.id || driveIdOf_(x.url)); if (i && x.name) on[x.name] = i; });
+          json_(r[f], []).forEach(x => { const i = x && (x.id || driveIdOf_(x.url)); if (i && x.name && on[x.name] && on[x.name] !== i) (alt[i] = alt[i] || []).push(on[x.name]); }); }); })); } catch (e) {} }); } catch (e) {}
   const inTerm = f => { let q = [f.getParents()], d = 0; while (q.length && d < 8) { const nq = []; for (const it of q) while (it.hasNext()) { const p = it.next(); if (p.getId() === term) return true; nq.push(p.getParents()); } q = nq; d++; } return false; };
   rows.forEach(([t, r, label]) => fileIds_(r).forEach(id => { if (seen[id] || Date.now() - t0 > 240000) return; seen[id] = 1;
     try { const f = DriveApp.getFileById(id); try { if (f.isTrashed()) { f.setTrashed(false); st.restored++; } } catch (e) {}
       if (!inTerm(f) && f.getSize() <= 300 * 1048576) { folder = folder || folderFor_(u, 'ไฟล์นำเข้าจากภาคเรียนก่อน'); const cp = f.makeCopy(f.getName(), folder); try { cp.setDescription(f.getDescription() || ('cp:' + u.id)); } catch (e) {} if (share_(cp)) st.shared++; map[id] = cp.getId(); st.copied++; }
       else { let pub = false; try { pub = f.getSharingAccess() === DriveApp.Access.ANYONE_WITH_LINK; } catch (e) {} if (!pub && share_(f)) st.shared++; st.ok++; }
-    } catch (e) { st.missing++; if (st.where.indexOf(label) < 0) st.where.push(label); } }));
+    } catch (e) { // v7.0 ไม่พบไฟล์เดิม → ค้นหาไฟล์ชื่อเดียวกันในโฟลเดอร์ของระบบแล้วผูกให้ใหม่
+      let fixed = false; const nm = names[id];
+      (alt[id] || []).forEach(b => { if (fixed) return; try { const g = DriveApp.getFileById(b); fileMeta_(b); let nid = b; if (!inTerm(g) && g.getSize() <= 300 * 1048576) { folder = folder || folderFor_(u, 'ไฟล์นำเข้าจากภาคเรียนก่อน'); const cp = g.makeCopy(g.getName(), folder); try { cp.setDescription(g.getDescription() || ('cp:' + u.id)); } catch (x) {} nid = cp.getId(); share_(cp); } else share_(g); map[id] = nid; st.relinked = (st.relinked || 0) + 1; fixed = true; } catch (x) {} });
+      if (nm) try { const it = DriveApp.searchFiles("title = '" + nm.replace(/\\/g, '').replace(/'/g, "\\'") + "' and trashed = false"); let n = 0;
+        while (it.hasNext() && n++ < 10 && !fixed) { const g = it.next(); try { fileMeta_(g.getId()); map[id] = g.getId(); if (share_(g)) st.shared++; st.relinked = (st.relinked || 0) + 1; fixed = true; } catch (x) {} } } catch (x) {}
+      if (!fixed) { st.missing++; if (st.where.indexOf(label) < 0) st.where.push(label + (nm ? ' (' + nm + ')' : '')); } } }));
   if (Object.keys(map).length) lock_(() => rows.forEach(([t, r]) => { const patch = {}; Object.keys(r).forEach(k => { if (k[0] === '_' || typeof r[k] !== 'string' || !r[k]) return; let v = r[k]; Object.keys(map).forEach(a => { if (v.indexOf(a) >= 0) v = v.split(a).join(map[a]); }); if (v !== r[k]) patch[k] = v; }); if (Object.keys(patch).length) updateRow_(t, r, patch); }));
   log_(u.id, 'repair_files', c.id + ' ' + JSON.stringify(st)); return st;
 }
@@ -3104,7 +3125,7 @@ function attCheckIn_(ctx, slotId) {
 /** v6.9 ตรวจสิทธิ์ไฟล์: อยู่ในโฟลเดอร์ของระบบ (ทุกภาคเรียน/ทุกผู้ดูแล) · ระบบเป็นเจ้าของ · หรือถูกอ้างถึงในข้อมูลรายวิชา/บทเรียน/งาน/ประกาศ → { f, mime, size, name } */
 function fileMeta_(id) {
   id = str_(id, 80); if (!/^[\w-]{20,}$/.test(id)) throw err_('รหัสไฟล์ไม่ถูกต้อง');
-  let f = null; try { f = DriveApp.getFileById(id); } catch (e) { throw err_('ไม่พบไฟล์ (อาจถูกลบไปแล้ว) — ให้ครูอัปโหลดใหม่', 'NOTFOUND'); }
+  let f = null; try { f = DriveApp.getFileById(id); } catch (e) { throw err_('ไม่พบไฟล์ — ให้ครูกด "ตรวจสอบ/ซ่อมไฟล์" ในหน้ารายวิชา หรืออัปโหลดใหม่', 'NOTFOUND'); }
   try { if (f.isTrashed()) throw err_('ไฟล์อยู่ในถังขยะ — ให้ครูกด "ตรวจสอบ/ซ่อมไฟล์" ในหน้ารายวิชา', 'NOTFOUND'); } catch (e) { if (e.code) throw e; }
   const ck = 'fok_' + id; let ok = cache_().get(ck) === '1';
   if (!ok) { const roots = {}; [mainDriveId_(), coreDriveId_(), driveId_()].concat(Object.keys(tenants_()).map(k => tenants_()[k].driveId)).forEach(x => { if (x) roots[x] = 1; });

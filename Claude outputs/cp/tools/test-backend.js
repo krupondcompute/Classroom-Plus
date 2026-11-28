@@ -129,6 +129,10 @@ R('save', A2(), 'Assignments', { id: a2.id, attachments: [up1, up2] });
 R('save', A2(), 'Assignments', { id: a2.id, attachments: [up2] });
 ok(!DB.files[up1.id] && DB.files[up2.id], 'removed attachment purged');
 R('remove', A2(), 'Assignments', a2.id); ok(!DB.files[up2.id], 'delete purges files');
+{ const cid = R('save', A2(), 'Courses', { name: 'วิชาไฟล์ร่วม' }).data.id, up3 = R('uploadFile', A2(), { name: 'c.pdf', data: Buffer.from('z').toString('base64'), folder: 'บทเรียน/x' }).data;
+  const l1 = R('save', A2(), 'Lessons', { courseId: cid, title: 'บท 1', attachments: [up3] }).data, l2 = R('save', A2(), 'Lessons', { courseId: cid, title: 'บท 1 (สำเนาภาคใหม่)', attachments: [up3] }).data;
+  R('remove', A2(), 'Lessons', l1.id); ok(!!DB.files[up3.id], 'v7.0 file still used by another lesson is NOT deleted');
+  R('remove', A2(), 'Lessons', l2.id); ok(!DB.files[up3.id], 'v7.0 file deleted (to trash) when nothing references it'); }
 const up3 = R('uploadFile', A2(), { name: 'c.pdf', data: 'eA==' }).data; R('discardUploads', T2(), [up3.id]); ok(DB.files[up3.id], 'cannot discard others file');
 R('discardUploads', A2(), [up3.id]); ok(!DB.files[up3.id], 'discard own upload');
 const bt = R('batch', A2(), [['list', ['Courses']], ['listUsers', []], ['nope', []]]); ok(bt.ok && bt.data[0].ok && bt.data[1].ok && !bt.data[2].ok, 'batch');
